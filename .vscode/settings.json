@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "stdint.h": "c",
+        "windows.h": "c",
+        "mykey.h": "c",
+        "malloc.h": "c",
+        "mymemory.h": "c",
+        "gl.h": "c"
+    }
+}
