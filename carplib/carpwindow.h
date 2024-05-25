@@ -4,7 +4,7 @@
 #include "mytype.h"
 #include <stdalign.h> //alignof
 
-typedef struct 
+typedef struct CarpWindow
 {
     s32 width;
     s32 height;

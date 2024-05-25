@@ -1,7 +1,6 @@
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 
-
 #include "carpwindow.h"
 #include "carpgl.h"
 #include "mykey.h"
@@ -9,7 +8,10 @@
 #include "mymemory.h"
 
 #include <stdio.h>
-#include <GL/GL.h>
+
+#ifndef MAPVK_VSC_TO_VK 
+    #define MAPVK_VSC_TO_VK     (1)
+#endif
 
 static b8 s_quitRequested = false;
 static b8 s_resized = false;
@@ -17,7 +19,6 @@ static b8 s_resized = false;
 static const char className[] = "CarpWindow";
 
 static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
 #define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
@@ -33,7 +34,7 @@ PFNCREATECONTEXTATTRIB_CARP createContextAttribs = NULL;
 typedef HGLRC (APIENTRYP PFNSWAPINTERVALEXT_CARP)(int);
 PFNSWAPINTERVALEXT_CARP swapIntervalEXT = NULL;
 
-typedef struct 
+typedef struct CarpWindowWin32
 {
     HWND hwnd;
     HDC dc;
@@ -98,6 +99,7 @@ static b8 s_initWindow(CarpWindow* window, const char* windowName, s32 width, s3
         printf("Window dc is null!\n");
         return false;
     }
+    printf("Window created!\n");
 
     return true;
 }
@@ -176,7 +178,6 @@ static b8 s_initGL(CarpWindow* window)
         0, 0,
     };
 
-
     HGLRC shareContext = 0;
 
     HGLRC modernRC = createContextAttribs(wnd->dc, shareContext, attrs);
@@ -188,6 +189,9 @@ static b8 s_initGL(CarpWindow* window)
             wnd->hglrc = modernRC;
         }
     }
+    int version = gladLoaderLoadGL();
+    printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+
 	//Checking GL version
 	const GLubyte* GLVersionString = glGetString(GL_VERSION);
     printf("GL version: %s\n", GLVersionString);
@@ -360,10 +364,16 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 height)
 {
     if(!s_initWindow(window, windowName, width, height))
+    {
+        printf("Window init failed\n");
         return false;
+    }
 
     if(!s_initGL(window))
+    {
+        printf("GL init failed\n");
         return false;
+    }
     return true;
 }
 
@@ -371,6 +381,8 @@ b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 he
 void carpWindow_destroy(CarpWindow* window)
 {
     CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
+
+    gladLoaderUnloadGL();
 }
 
 b8 carpWindow_update(CarpWindow* window, f32 dt)

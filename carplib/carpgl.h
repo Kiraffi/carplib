@@ -1,7 +1,9 @@
 #ifndef CARPGL_HH
 #define CARPGL_HH
 
-#include <gl/GL.h>
+
+#include "../external/glad/gl.h"
+//#include <gl/GL.h>
 
 #include "mytype.h"
 

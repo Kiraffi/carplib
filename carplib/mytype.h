@@ -2,6 +2,7 @@
 #define MYTYPE_HH
 
 #include <stdint.h>
+#include <stdbool.h>
 
 typedef int8_t s8;
 typedef int16_t s16;
@@ -16,11 +17,5 @@ typedef uint64_t u64;
  
 typedef float f32;
 typedef double f64;
-
-#undef true
-#define true -1
-
-#undef false
-#define false 0
 
 #endif

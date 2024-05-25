@@ -1,7 +1,9 @@
 
+#include "external/glad/gl.c"
 
 
-#if _MSC_VER > 0
+#if _WIN32
+//#if _MSC_VER > 0
     #include "carplib/carpwindow_win32.c"
 #else
     #include "carplib/carpwindow_linux.c"
@@ -16,7 +18,7 @@
 #include "carplib/carpgl.c"
 
 
-//#include <malloc.h> // malloc, otherwise tcc will coredump
+#include <malloc.h> // malloc, otherwise tcc will coredump
 #include <stdalign.h> //alignof
 #include <stdbool.h> //bool
 #include <stdio.h> //printf
@@ -43,11 +45,15 @@ s32 theMain()
     }
     MyMemory* memory = myMemory_get();
 
+    printf("Creating window\n");
+
     if(!carpWindow_init(&memory->window, "My window", WINDOW_WIDTH, WINDOW_HEIGHT))
     {
+        printf("Failed to init windows\n");
         myMemory_deinit();
         return -1;
     }
+    printf("Window start running\n");
     memory->window.running = true;
     while(memory->window.running)
     {
@@ -56,7 +62,7 @@ s32 theMain()
         
 
     }
-
+    printf("Window finished running\n");
     carpWindow_destroy(&memory->window);
     myMemory_deinit();
     return 0;

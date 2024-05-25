@@ -7,10 +7,6 @@
         "label": "Compile",
         "type": "process",
         "command": "./comp.bat",
-        //"windows": {
-        //  "command": ".\\scripts\\test.cmd"
-        //},
-        //"group": "test",
         "presentation": {
           "reveal": "always",
           "panel": "new"
