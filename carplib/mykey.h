@@ -3,16 +3,17 @@
 
 #include "mytype.h"
 
-typedef enum 
+typedef enum MyKey
 {
     MyKey_InvalidKey = -1,
     MyKey_Backspace = 8,
     MyKey_Tab = 9,
     MyKey_Enter = 13,
-    
+
     MyKey_Shift = 16,
     MyKey_Ctrl = 17,
     MyKey_Alt = 18,
+    MyKey_Menu = 19,
 
     MyKey_Escape = 27,
     MyKey_Space = 32,
@@ -54,7 +55,7 @@ typedef enum
     MyKey_Caret = 94,
     MyKey_Underscore = 95,
     MyKey_Backquote = 96,
-    
+
     MyKey_A = 65,
     MyKey_B,
     MyKey_C,

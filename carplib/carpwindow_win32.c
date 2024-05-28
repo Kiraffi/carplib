@@ -9,7 +9,7 @@
 
 #include <stdio.h>
 
-#ifndef MAPVK_VSC_TO_VK 
+#ifndef MAPVK_VSC_TO_VK
     #define MAPVK_VSC_TO_VK     (1)
 #endif
 
@@ -41,7 +41,7 @@ typedef struct CarpWindowWin32
     HGLRC hglrc;
 } CarpWindowWin32;
 
-static b8 s_initWindow(CarpWindow* window, const char* windowName, s32 width, s32 height)
+static b8 s_initWindow(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
 
@@ -55,20 +55,20 @@ static b8 s_initWindow(CarpWindow* window, const char* windowName, s32 width, s3
     wndclass.lpszClassName = className;
     RegisterClassA(&wndclass);
 
-    DWORD winStyle = 
-        WS_OVERLAPPED 
-        | WS_CAPTION  
-        | WS_THICKFRAME 
-        | WS_SYSMENU 
-        | WS_MINIMIZEBOX 
+    DWORD winStyle =
+        WS_OVERLAPPED
+        | WS_CAPTION
+        | WS_THICKFRAME
+        | WS_SYSMENU
+        | WS_MINIMIZEBOX
         | WS_MAXIMIZEBOX;
     DWORD winExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
-    RECT rect = { .left = 0, .top = 0, .right = 0, .bottom = 0 };
+    RECT rect = { .left = x, .top = y, .right = 0, .bottom = 0 };
 
     window->width = width;
     window->height = height;
-    rect.right = width;
-    rect.bottom = height;
+    rect.right = width + x;
+    rect.bottom = height + y;
 
     AdjustWindowRectEx(&rect, winStyle, false, winExStyle);
 
@@ -204,7 +204,7 @@ static b8 s_initGL(CarpWindow* window)
     return true;
 }
 
-static MyKey s_getKey(u32 key) 
+static MyKey s_getKey(u32 key)
 {
     s32 keyCode = (s32)(MapVirtualKeyA(key, MAPVK_VSC_TO_VK));
     MyKey result;
@@ -228,7 +228,7 @@ static MyKey s_getKey(u32 key)
         case VK_F10: result = MyKey_F10; break;
         case VK_F11: result = MyKey_F11; break;
         case VK_F12: result = MyKey_F12; break;
-        
+
         case VK_CONTROL: result = MyKey_Ctrl; break;
         case VK_SHIFT: result = MyKey_Shift; break;
         case VK_MENU: result = MyKey_Alt; break;
@@ -298,7 +298,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
         case WM_KEYDOWN:
         case WM_SYSKEYDOWN:
         {
-            s8 down = (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) ? 1 : 0; 
+            s8 down = (uMsg == WM_KEYDOWN || uMsg == WM_SYSKEYDOWN) ? 1 : 0;
             u32 button = (u32)(HIWORD((u32)lParam)) & ((u32)(0x1ff)); //0x1ff;
             s32 translated = s_getKey(button);
             if ((translated & 0x40000000) == 0x40000000)
@@ -361,9 +361,9 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 
-b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 height)
+b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
-    if(!s_initWindow(window, windowName, width, height))
+    if(!s_initWindow(window, windowName, width, height, x, y))
     {
         printf("Window init failed\n");
         return false;
@@ -416,7 +416,7 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
             case WM_KEYDOWN:
             case WM_SYSKEYDOWN:
             {
-                s8 down = (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN) ? 1 : 0; 
+                s8 down = (msg.message == WM_KEYDOWN || msg.message == WM_SYSKEYDOWN) ? 1 : 0;
                 u32 button = (u32)(HIWORD((u32)msg.lParam)) & ((u32)(0x1ff)); //0x1ff;
                 s32 translated = s_getKey(button);
                 if ((translated & 0x40000000) == 0x40000000)
@@ -446,9 +446,9 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
             {
                 dispatch = true;
             }
-        
+
         }
-        
+
         //if(dispatch)
         {
             TranslateMessage(&msg);

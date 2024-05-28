@@ -5,6 +5,7 @@
         "mykey.h": "c",
         "malloc.h": "c",
         "mymemory.h": "c",
-        "gl.h": "c"
+        "gl.h": "c",
+        "xkblib.h": "c"
     }
 }

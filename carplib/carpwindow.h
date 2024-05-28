@@ -16,7 +16,7 @@ typedef struct CarpWindow
 } CarpWindow;
 
 
-b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 height);
+b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y);
 void carpWindow_destroy(CarpWindow* window);
 b8 carpWindow_update(CarpWindow* window, f32 dt);
 

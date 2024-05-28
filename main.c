@@ -7,7 +7,7 @@
     #include "carplib/carpwindow_win32.c"
 #else
     #include "carplib/carpwindow_linux.c"
-#endif 
+#endif
 
 #include "carplib/carpwindow.h"
 
@@ -30,9 +30,8 @@
 
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
-#define WINDOW_POS_X 500
-#define WINDOW_POS_Y 500
-#define BORDER_WIDTH 0
+#define WINDOW_POS_X 1000
+#define WINDOW_POS_Y 1000
 
 
 
@@ -47,7 +46,12 @@ s32 theMain()
 
     printf("Creating window\n");
 
-    if(!carpWindow_init(&memory->window, "My window", WINDOW_WIDTH, WINDOW_HEIGHT))
+    if(!carpWindow_init(&memory->window,
+        "My window",
+        WINDOW_WIDTH,
+        WINDOW_HEIGHT,
+        WINDOW_POS_X,
+        WINDOW_POS_Y))
     {
         printf("Failed to init windows\n");
         myMemory_deinit();
@@ -58,8 +62,6 @@ s32 theMain()
     while(memory->window.running)
     {
         carpWindow_update(&memory->window, 0.0f);
-
-        
 
     }
     printf("Window finished running\n");
