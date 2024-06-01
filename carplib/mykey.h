@@ -162,4 +162,11 @@ typedef enum MyKey
 
 } MyKey;
 
-#endif
+void carpKeys_resetState();
+void carpKeys_setKeyState(MyKey key, bool down);
+
+bool carpKeys_wasPressed(MyKey key);
+bool carpKeys_wasReleased(MyKey key);
+bool carpKeys_isDown(MyKey key);
+
+#endif // MYKEYS_HH

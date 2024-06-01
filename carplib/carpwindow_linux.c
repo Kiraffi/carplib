@@ -7,6 +7,7 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <GL/glext.h>
+#include "../external/glad/gl.h"
 
 #include <stdio.h>
 
@@ -16,6 +17,13 @@
 
 #define BORDER_WIDTH 0
 
+typedef GLXContext (*GLXCreateContextAttribs)(Display* dpy, GLXFBConfig config, GLXContext shareContext, bool directRendering, const int* attribList);
+GLXCreateContextAttribs glxCreateContextAttribsFn = NULL;
+
+typedef void (*GLXSwapIntervalEXT)(Display *dpy, GLXDrawable drawable, int interval);
+GLXSwapIntervalEXT glxSwapIntervalEXTFn = NULL;
+
+
 static void s_destroyDisplay(CarpWindow* window);
 static void s_destroyWindow(CarpWindow* window);
 static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y);
@@ -23,10 +31,13 @@ static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s
 typedef struct CarpWindowInternal
 {
     Display* carpDisplay;
+    WindowSizeChangedFn carpWindowSizeChangedFn;
     Window carpWindowRoot;
     Window carpWindow;
-    int carpWindowSrc;
-     Atom wmDeleteWindow;
+    Colormap carpColormap;
+    int carpWindowScreen;
+    Atom wmDeleteWindow;
+    GLXContext carpGLContext;
 
 } CarpWindowInternal;
 
@@ -82,6 +93,13 @@ static MyKey s_getKeyFromSym(KeySym key)
     return result;
 }
 
+KeySym s_getKeySym(CarpWindow* window, XKeyEvent* event)
+{
+    KeySym sym;
+    XLookupString(event, NULL, 0, &sym, NULL);
+    return sym;
+}
+
 
 
 static void s_destroyDisplay(CarpWindow* window)
@@ -90,6 +108,20 @@ static void s_destroyDisplay(CarpWindow* window)
     if(window == NULL)
         return;
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+
+
+    if(wnd->carpColormap != 0)
+    {
+        XFreeColormap(wnd->carpDisplay, wnd->carpColormap);
+        wnd->carpColormap = 0;
+    }
+    if(wnd->carpGLContext != NULL)
+    {
+        glXDestroyContext(wnd->carpDisplay, wnd->carpGLContext);
+        wnd->carpGLContext = NULL;
+    }
+
+
     if(wnd->carpDisplay == NULL)
     {
         return;
@@ -108,6 +140,11 @@ static void s_destroyWindow(CarpWindow* window)
 
 static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
+    // TODO: Notice this, if using multisamples, should pass it as init?
+    static const int multisample = 0;
+
+    if(window == NULL)
+        return false;
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
     wnd->carpDisplay = XOpenDisplay(NULL);
     if(wnd->carpDisplay == NULL)
@@ -116,13 +153,114 @@ static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s
         s_destroyDisplay(window);
         return false;
     }
-    wnd->carpWindowSrc = DefaultScreen(wnd->carpDisplay);
-    wnd->carpWindowRoot = RootWindow(wnd->carpDisplay, wnd->carpWindowSrc);
+    wnd->carpWindowScreen = DefaultScreen(wnd->carpDisplay);
+    wnd->carpWindowRoot = RootWindow(wnd->carpDisplay, wnd->carpWindowScreen);
+
+
+    int majorGlxVersion = 0;
+    int minorGlxVersion = 0;
+
+    int queryGlx  = glXQueryVersion(wnd->carpDisplay, &majorGlxVersion, &minorGlxVersion);
+    printf("Query glx result: %i, major: %i, minor: %i\n", queryGlx, majorGlxVersion, minorGlxVersion);
+    if(queryGlx == 0 || majorGlxVersion < 1 || (majorGlxVersion == 1 && minorGlxVersion < 4))
+    {
+        printf("Need to have glx 1.4 at least.\n");
+        return false;
+    }
+
+
+    int attribs[] = {
+        GLX_X_RENDERABLE    , 1,
+        GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
+        GLX_RENDER_TYPE     , GLX_RGBA_BIT,
+        GLX_X_VISUAL_TYPE   , GLX_TRUE_COLOR,
+        GLX_RED_SIZE        , 8,
+        GLX_GREEN_SIZE      , 8,
+        GLX_BLUE_SIZE       , 8,
+        GLX_ALPHA_SIZE      , 8,
+        GLX_DEPTH_SIZE      , 24,
+        GLX_STENCIL_SIZE    , 8,
+        GLX_DOUBLEBUFFER    , 1,
+        0,0
+    };
+
+    int fbCount = 0;
+    GLXFBConfig* fbConfigs = glXChooseFBConfig(wnd->carpDisplay, wnd->carpWindowScreen, attribs, &fbCount);
+    if(fbConfigs == NULL)
+    {
+        printf("Failed to retrieve framebuffer.\n");
+        return false;
+    }
+
+    printf("Found %i matching framebuffers.\n", fbCount);
+
+    int bestFBConfigIndex =  -1;
+    int bestNumSamp = -1;
+
+    bool foundSRGB = false;
+    bool foundMultisample = false;
+
+    for(int i = 0; i < fbCount; ++i)
+    {
+        GLXFBConfig fbConf = fbConfigs[i];
+        XVisualInfo* visualInfoTmp = glXGetVisualFromFBConfig( wnd->carpDisplay, fbConf);
+
+        if(visualInfoTmp != NULL)
+        {
+            int sampBuf = 0;
+            int samples = 0;
+            int srgb = 0;
+
+            glXGetFBConfigAttrib( wnd->carpDisplay, fbConf, GLX_SAMPLE_BUFFERS, &sampBuf );
+            glXGetFBConfigAttrib( wnd->carpDisplay, fbConf, GLX_SAMPLES, &samples  );
+            glXGetFBConfigAttrib( wnd->carpDisplay, fbConf, GLX_FRAMEBUFFER_SRGB_CAPABLE_ARB, &srgb);
+
+            if(bestFBConfigIndex < 0 || (srgb > 0 && !foundSRGB)
+                || (srgb > 0 && multisample == samples))
+            {
+                foundSRGB = srgb > 0;
+                bestFBConfigIndex = i;
+                bestNumSamp = samples;
+            }
+        }
+        XFree(visualInfoTmp);
+    }
+    printf("Best visual info index: %i\n", bestFBConfigIndex);
+    GLXFBConfig bestFBConfig = fbConfigs[bestFBConfigIndex];
+    XFree(fbConfigs); // Make sure to free this!
+
+    XVisualInfo* visualInfo = glXGetVisualFromFBConfig(wnd->carpDisplay, bestFBConfig);
+    if(visualInfo == NULL)
+    {
+        printf("Could not create correct visualInfo window.\n");
+        return false;
+    }
+
+    if(visualInfo->visual == NULL)
+    {
+        printf("Could not create correct visualInfo->visual.\n");
+        XFree(visualInfo);
+        return false;
+    }
+
+    if(wnd->carpWindowScreen != visualInfo->screen)
+    {
+        printf("screenId(%i) does not match visualInfo->screen(%i)", wnd->carpWindowScreen, visualInfo->screen);
+        XFree(visualInfo);
+        return false;
+    }
 
     XSetWindowAttributes xwa;
-    xwa.background_pixel = WhitePixel(wnd->carpDisplay, wnd->carpWindowSrc);
-    xwa.border_pixel = BlackPixel(wnd->carpDisplay, wnd->carpWindowSrc);
-    xwa.event_mask = ButtonPressMask;
+    xwa.background_pixel = WhitePixel(wnd->carpDisplay, wnd->carpWindowScreen);
+    xwa.border_pixel = BlackPixel(wnd->carpDisplay, wnd->carpWindowScreen);
+    xwa.event_mask =
+        StructureNotifyMask
+            | SubstructureRedirectMask | SubstructureNotifyMask
+            //| ResizeRedirectMask
+            | KeyPressMask | KeyReleaseMask
+            | ButtonPressMask | ButtonReleaseMask
+            | ExposureMask;
+    xwa.colormap = XCreateColormap(wnd->carpDisplay, wnd->carpWindowRoot, visualInfo->visual, AllocNone);
 
     wnd->carpWindow = XCreateWindow(
         wnd->carpDisplay,
@@ -132,26 +270,71 @@ static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s
         width,
         height,
         BORDER_WIDTH,
-        DefaultDepth(wnd->carpDisplay, wnd->carpWindowSrc),
+        visualInfo->depth, //DefaultDepth(wnd->carpDisplay, wnd->carpWindowScreen),
         InputOutput,
-        DefaultVisual(wnd->carpDisplay, wnd->carpWindowSrc),
-        CWBackPixel | CWEventMask | CWBorderPixel,
+        visualInfo->visual, // DefaultVisual(wnd->carpDisplay, wnd->carpWindowScreen),
+        CWBackPixel | CWColormap  | CWBorderPixel | CWEventMask | CWBorderPixel,
         &xwa);
 
-    XSelectInput(wnd->carpDisplay,
-        wnd->carpWindow,
-        StructureNotifyMask | SubstructureRedirectMask | SubstructureNotifyMask
-            | ResizeRedirectMask | KeyPressMask | KeyReleaseMask
-            | ButtonPressMask | ButtonReleaseMask);
+    XFree(visualInfo);
 
-    XMapWindow(wnd->carpDisplay, wnd->carpWindow);
+    int contextAttribs[] = {
+        GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
+        GLX_CONTEXT_MINOR_VERSION_ARB, 6,
+        GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
+        GLX_CONTEXT_FLAGS_ARB, GLX_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
+        0, 0
+    };
+
+
+    glxCreateContextAttribsFn = (GLXCreateContextAttribs)glXGetProcAddress((const GLubyte*)("glXCreateContextAttribsARB"));
+    if(glxCreateContextAttribsFn == NULL)
+    {
+        printf("Couldnt find glXCreateContextAttribsARB function\n");
+        return false;
+    }
+    glxSwapIntervalEXTFn = (GLXSwapIntervalEXT)glXGetProcAddress((const GLubyte*)("glXSwapIntervalEXT"));
+    if(glxSwapIntervalEXTFn == NULL)
+    {
+        printf("Could not find glXSwapIntervalEXT function\n");
+    }
+
+    wnd->carpGLContext = glxCreateContextAttribsFn(wnd->carpDisplay, bestFBConfig, NULL, true, contextAttribs);
+    if(wnd->carpGLContext == NULL)
+    {
+        printf("Failed to create opengl context. Might need some cleaning up?\n");
+        return false;
+    }
+
+    // sync
+    XSync(wnd->carpDisplay, false);
+
+    printf("make current: %i\n", glXMakeCurrent(wnd->carpDisplay, wnd->carpWindow, wnd->carpGLContext));
+
 
     // Handle pressing X-button on window
     wnd->wmDeleteWindow = XInternAtom(wnd->carpDisplay, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(wnd->carpDisplay, wnd->carpWindow, &wnd->wmDeleteWindow, 1);
 
+
+    printf("Clear: %i\n", XClearWindow(wnd->carpDisplay, wnd->carpWindow));
+    printf("xmap raised: %i\n", XMapRaised(wnd->carpDisplay, wnd->carpWindow));
+
+    carpWindow_setWindowTitle(window, windowName);
+
+    int version = gladLoaderLoadGL();
+    printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+
+	//Checking GL version
+	const GLubyte* GLVersionString = glGetString(GL_VERSION);
+    printf("GL version: %s\n", GLVersionString);
+
+
     return true;
 }
+
+
+
 
 void carpWindow_destroy(CarpWindow* window)
 {
@@ -164,50 +347,111 @@ b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 he
     return s_initDisplay(window, windowName, width, height, x, y);
 }
 
-KeySym s_getKeySym(CarpWindow* window, XKeyEvent* event)
-{
-    KeySym sym;
-    XLookupString(event, NULL, 0, &sym, NULL);
-    return sym;
-}
-
 b8 carpWindow_update(CarpWindow* window, f32 dt)
 {
+
+    if(window == NULL)
+        return false;
+    carpKeys_resetState();
+
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
     int minKeyCodes = 0;
     int maxKeyCodes = 0;
     XDisplayKeycodes(wnd->carpDisplay, &minKeyCodes, &maxKeyCodes);
 
-    // reminder for keyboard symbols: XK_Escape
     XEvent event;
     while(XPending(wnd->carpDisplay))
     {
         XNextEvent(wnd->carpDisplay, &event);
         switch(event.type)
         {
-            case KeyPress: printf("Key pressed: %i, state: %i, symbol: %i\n",
-                event.xkey.keycode, event.xkey.state, (int)s_getKeySym(window, &event.xkey));
-                if(s_getKeyFromSym(s_getKeySym(window, &event.xkey)) == MyKey_Escape)
-                    window->running = false;
+            case KeyPress:
+            {
+                KeySym keysym = s_getKeyFromSym(s_getKeySym(window, &event.xkey));
+                carpKeys_setKeyState(keysym, true);
+
                 break;
-            case KeyRelease: printf("Key released: %i, state: %i, symbol: %i\n",
-                event.xkey.keycode, event.xkey.state, (int)s_getKeySym(window, &event.xkey));
+            }
+            case KeyRelease:
+            {
+                KeySym keysym = s_getKeyFromSym(s_getKeySym(window, &event.xkey));
+                carpKeys_setKeyState(keysym, false);
                 break;
-            case ButtonPress: printf("Mouse button pressed: %i\n", event.xbutton.button);
+            }
+            case ButtonPress:
+            {
+                printf("Mouse button pressed: %i\n", event.xbutton.button);
                 break;
-            case ButtonRelease: printf("Mouse button released: %i\n", event.xbutton.button);
+            }
+            case ButtonRelease:
+            {
+                printf("Mouse button released: %i\n", event.xbutton.button);
                 break;
+            }
             case ClientMessage:
+            {
                 if ((Atom)event.xclient.data.l[0] == wnd->wmDeleteWindow)
                     window->running = false;
                 break;
-
+            }
+            case ConfigureNotify:
+            {
+                window->width = event.xconfigure.width;
+                window->height = event.xconfigure.height;
+                if(wnd->carpWindowSizeChangedFn)
+                {
+                    wnd->carpWindowSizeChangedFn(window->width, window->height);
+                }
+                break;
+            }
             case DestroyNotify:
+            {
                 window->running = false;
                 break;
+            }
         }
 
     }
 
     return true;
+}
+
+void carpWindow_setWindowTitle(CarpWindow* window, const char* title)
+{
+    if(window == NULL || title == NULL)
+    {
+        return;
+    }
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    XStoreName(wnd->carpDisplay, wnd->carpWindow, title);
+}
+
+void carpWindow_swapBuffers(CarpWindow* window)
+{
+    if(window == NULL)
+    {
+        return;
+    }
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    glXSwapBuffers(wnd->carpDisplay, wnd->carpWindow);
+}
+void carpWindow_enableVSync(CarpWindow* window, bool vSyncEnabled)
+{
+    if(window == NULL || glxSwapIntervalEXTFn == NULL)
+    {
+        return;
+    }
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    glxSwapIntervalEXTFn(wnd->carpDisplay, wnd->carpWindow, vSyncEnabled ? 1 : 0);
+}
+
+
+void carpWindow_setWindowSizeChangedFn(CarpWindow* window, WindowSizeChangedFn windowSizeChangedFn)
+{
+    if(window == NULL)
+    {
+        return;
+    }
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    wnd->carpWindowSizeChangedFn = windowSizeChangedFn;
 }

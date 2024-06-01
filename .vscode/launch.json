@@ -7,11 +7,20 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Debug",
+            "name": "Debug windows",
             "program": "${workspaceFolder}/main.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
-            "preLaunchTask": "Compile"
+            "preLaunchTask": "Compile windows"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug linux",
+            "program": "${workspaceFolder}/main.out",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Compile linux"
         },
         {
             "type": "cmake",

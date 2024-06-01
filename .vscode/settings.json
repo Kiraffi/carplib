@@ -6,6 +6,9 @@
         "malloc.h": "c",
         "mymemory.h": "c",
         "gl.h": "c",
-        "xkblib.h": "c"
+        "xkblib.h": "c",
+        "stdlib.h": "c",
+        "stdbool.h": "c",
+        "mytype.h": "c"
     }
 }

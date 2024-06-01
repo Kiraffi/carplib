@@ -4,13 +4,24 @@
     "version": "2.0.0",
     "tasks": [
       {
-        "label": "Compile",
+        "label": "Compile windows",
         "type": "process",
         "command": "./comp.bat",
         "presentation": {
           "reveal": "always",
           "panel": "new"
         }
+      },
+      {
+        "label": "Compile linux",
+        "type": "process",
+        "command": "clang",
+        "args": ["-g", "main.c", "-omain.out", "-std=c11", "-lX11", "-lGL"],
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        }
       }
+
     ]
   }

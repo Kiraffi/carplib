@@ -3,18 +3,19 @@
 
 #include "carpwindow.h"
 
+#define MAX_AMOUNT_INPUT 1024
 typedef struct MyInput
 {
-    u8 keysDown[1024];
-    u8 keysHalfPress[1024];
+    u8 _Alignas(16) keysDown[MAX_AMOUNT_INPUT];
+    u8 _Alignas(16) keysHalfPress[MAX_AMOUNT_INPUT];
 } MyInput;
 
 
 
 typedef struct MyMemory
 {
-    CarpWindow window;
-    MyInput input;
+    CarpWindow _Alignas(16) window;
+    MyInput _Alignas(16) input;
 
 } MyMemory;
 
