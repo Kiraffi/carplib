@@ -12,7 +12,7 @@ static bool sIsValidKeyboardKey(CarpKeyboardKey key)
 static bool sIsKeyboardKeyDown(CarpMemory* mem, CarpKeyboardKey key)
 {
     return mem && sIsValidKeyboardKey(key)
-        ? mem->carp_inputKeysState.carp_keyboard_buttonDown[(int)key]
+        ? mem->carp_keyboardState.carp_keyboard_buttonDown[(int)key]
         : false;
 }
 
@@ -20,7 +20,7 @@ static bool sIsKeyboardKeyDown(CarpMemory* mem, CarpKeyboardKey key)
 static b8 sGetKeyboardKeyHalfPressCount(CarpMemory* mem, CarpKeyboardKey key)
 {
     return mem && sIsValidKeyboardKey(key)
-        ? mem->carp_inputKeysState.carp_keyboard_halfPress[(int)key]
+        ? mem->carp_keyboardState.carp_keyboard_halfPress[(int)key]
         : 0;
 }
 
@@ -32,7 +32,7 @@ void carp_keyboard_resetState()
         return;
 
     for(int i = 0; i < MAX_AMOUNT_INPUT; ++i)
-        mem->carp_inputKeysState.carp_keyboard_halfPress[i] = 0;
+        mem->carp_keyboardState.carp_keyboard_halfPress[i] = 0;
 }
 
 void carp_keyboard_setKeyState(CarpKeyboardKey key, bool keyDown)
@@ -41,8 +41,8 @@ void carp_keyboard_setKeyState(CarpKeyboardKey key, bool keyDown)
     if(mem == NULL || !sIsValidKeyboardKey(key))
         return;
 
-    mem->carp_inputKeysState.carp_keyboard_halfPress[(int)key]++;
-    mem->carp_inputKeysState.carp_keyboard_buttonDown[(int)key] = keyDown ? 1 : 0;
+    mem->carp_keyboardState.carp_keyboard_halfPress[(int)key]++;
+    mem->carp_keyboardState.carp_keyboard_buttonDown[(int)key] = keyDown ? 1 : 0;
 }
 
 

@@ -33,7 +33,7 @@ typedef struct CarpMouseState
 typedef struct CarpMemory
 {
     CarpWindow _Alignas(16) carp_window;
-    CarpKeyboardState _Alignas(16) carp_inputKeysState;
+    CarpKeyboardState _Alignas(16) carp_keyboardState;
     CarpMouseState _Alignas(16) carp_mouseState;
 
 } CarpMemory;
