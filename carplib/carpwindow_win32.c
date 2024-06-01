@@ -4,7 +4,7 @@
 #include <windows.h>
 
 #include "carpgl.h"
-#include "carpinputkey.h"
+#include "carpkeyboard.h"
 #include "carpmemory.h"
 #include "carpmouse.h"
 
@@ -468,7 +468,7 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
             case WM_MOUSEWHEEL:
             {
                 int16_t wheelAmount = HIWORD(msg.wParam);
-                carp_mouse_addWheelMovement(wheelAmount);
+                carp_mouse_addWheelMovement(0, wheelAmount);
                 break;
             }
 
@@ -544,7 +544,7 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
 
     if (ScreenToClient(wnd->hwnd, &mousePos))
     {
-        if(mousePos.x >= 0 
+        if(mousePos.x >= 0
             && mousePos.y >= 0
             && mousePos.x < carp_window->width
             && mousePos.y < carp_window->height

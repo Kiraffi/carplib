@@ -1,7 +1,7 @@
 #ifndef MYMOUSE_HH
 #define MYMOUSE_HH
 
-#include "mytype.h"
+#include "carptype.h"
 
 typedef enum CarpMouseButton
 {
@@ -17,11 +17,12 @@ typedef enum CarpMouseButton
 void carp_mouse_resetState();
 void carp_mouse_setButtonState(CarpMouseButton button, bool down);
 void carp_mouse_setPosition(int x, int y);
-void carp_mouse_addWheelMovement(int wheel);
+void carp_mouse_addWheelMovement(int x, int y);
 
 int carp_mouse_getMousePositionX();
 int carp_mouse_getMousePositionY();
-int carp_mouse_getMouseWheel();
+int carp_mouse_getMouseWheelX();
+int carp_mouse_getMouseWheelY();
 
 bool carp_mouse_wasButtonPressed(CarpMouseButton button);
 bool carp_mouse_wasButtonReleased(CarpMouseButton button);

@@ -1,7 +1,7 @@
 #ifndef CARPWINDOW_HH
 #define CARPWINDOW_HH
 
-#include "mytype.h"
+#include "carptype.h"
 #include <stdalign.h> //alignof
 
 typedef void (*WindowSizeChangedFn)(int,int);

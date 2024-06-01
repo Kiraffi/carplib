@@ -17,14 +17,15 @@ typedef struct CarpMouseState
 {
     u8 _Alignas(16) carp_mouse_buttonDown[MAX_AMOUNT_MOUSEINPUT];
     u8 _Alignas(16) carp_mouse_buttonHalfPress[MAX_AMOUNT_MOUSEINPUT];
-    
+
     int carp_mouse_x;
     int carp_mouse_y;
-    int carp_mouse_xMove;
-    int carp_mouse_yMove;
-    
-    int carp_mouse_wheel;
-    int carp_mouse_padding[3];
+    int carp_mouse_moveX;
+    int carp_mouse_moveY;
+
+    int carp_mouse_wheelX;
+    int carp_mouse_wheelY;
+    int carp_mouse_padding[2];
 } CarpMouseState;
 
 

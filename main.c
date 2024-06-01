@@ -12,7 +12,7 @@
 
 
 #include "carplib/carpgl.c"
-#include "carplib/carpinputkey.c"
+#include "carplib/carpkeyboard.c"
 #include "carplib/carpmemory.c"
 #include "carplib/carpmouse.c"
 #include "carplib/carpshader.c"
@@ -124,14 +124,16 @@ static s32 sMainAfterWindow()
         carpWindow_update(&memory->carp_window, 0.0f);
         if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
             memory->carp_window.running = false;
-        printf("Mouse x:%i, y: %i, l:%i, m:%i, r:%i, x:%i, wheel:%i\n",
+        printf("Mouse x:%i, y: %i, l:%i, m:%i, r:%i, b4:%i, b5:%i, wheel x:%i, y:%i\n",
             carp_mouse_getMousePositionX(),
             carp_mouse_getMousePositionY(),
             carp_mouse_isButtonDown(CarpMouseButton_Left),
             carp_mouse_isButtonDown(CarpMouseButton_Middle),
             carp_mouse_isButtonDown(CarpMouseButton_Right),
             carp_mouse_isButtonDown(CarpMouseButton_Button4),
-            carp_mouse_getMouseWheel()
+            carp_mouse_isButtonDown(CarpMouseButton_Button5),
+            carp_mouse_getMouseWheelX(),
+            carp_mouse_getMouseWheelY()
         );
 
         glClearColor(0.2f, 1.0f, 1.0f, 1.0f);

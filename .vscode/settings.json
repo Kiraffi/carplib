@@ -2,13 +2,13 @@
     "files.associations": {
         "stdint.h": "c",
         "windows.h": "c",
-        "mykey.h": "c",
         "malloc.h": "c",
-        "mymemory.h": "c",
         "gl.h": "c",
         "xkblib.h": "c",
         "stdlib.h": "c",
         "stdbool.h": "c",
-        "mytype.h": "c"
+        "carptype.h": "c",
+        "carpmemory.h": "c",
+        "carpkeyboard.h": "c"
     }
 }

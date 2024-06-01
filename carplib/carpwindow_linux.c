@@ -11,8 +11,9 @@
 
 #include <stdio.h>
 
-#include "mykey.h"
-#include "mytype.h"
+#include "carpkeyboard.h"
+#include "carpmouse.h"
+#include "carptype.h"
 #include "carpwindow.h"
 
 #define BORDER_WIDTH 0
@@ -85,7 +86,7 @@ static CarpKeyboardKey s_getKeyFromSym(KeySym key)
             }
             else
             {
-                result = CarpKeyboardKey_InvalidKey;
+                result = CarpKeyboardKey_Invalid;
             }
         }
     };
@@ -250,7 +251,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
         return false;
     }
 
-    XSetWindowAttributes xwa;
+    XSetWindowAttributes xwa = {0};
     xwa.background_pixel = WhitePixel(wnd->carpDisplay, wnd->carpWindowScreen);
     xwa.border_pixel = BlackPixel(wnd->carpDisplay, wnd->carpWindowScreen);
     xwa.event_mask =
@@ -353,6 +354,7 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
     if(carp_window == NULL)
         return false;
     carp_keyboard_resetState();
+    carp_mouse_resetState();
 
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     int minKeyCodes = 0;
@@ -379,15 +381,27 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
                 break;
             }
             case ButtonPress:
-            {
-                printf("Mouse button pressed: %i\n", event.xbutton.button);
-                break;
-            }
             case ButtonRelease:
             {
-                printf("Mouse button released: %i\n", event.xbutton.button);
+                bool down = event.type == ButtonPress;
+                switch(event.xbutton.button)
+                {
+                    case Button1: carp_mouse_setButtonState(CarpMouseButton_Left, down); break;
+                    case Button2: carp_mouse_setButtonState(CarpMouseButton_Middle, down); break;
+                    case Button3: carp_mouse_setButtonState(CarpMouseButton_Right, down); break;
+                    case Button5 + 3: carp_mouse_setButtonState(CarpMouseButton_Button4, down); break;
+                    case Button5 + 4: carp_mouse_setButtonState(CarpMouseButton_Button5, down); break;
+
+                    case Button4: carp_mouse_addWheelMovement(1, 0); break;
+                    case Button5: carp_mouse_addWheelMovement(-1, 0); break;
+                    case Button5 + 1: carp_mouse_addWheelMovement(0, 1); break;
+                    case Button5 + 2: carp_mouse_addWheelMovement(0, -1); break;
+
+                    default: break;
+                }
                 break;
             }
+
             case ClientMessage:
             {
                 if ((Atom)event.xclient.data.l[0] == wnd->wmDeleteWindow)
@@ -396,11 +410,15 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
             }
             case ConfigureNotify:
             {
-                carp_window->width = event.xconfigure.width;
-                carp_window->height = event.xconfigure.height;
-                if(wnd->carpWindowSizeChangedFn)
+                if(carp_window->width != event.xconfigure.width
+                    || carp_window->height != event.xconfigure.height)
                 {
-                    wnd->carpWindowSizeChangedFn(carp_window->width, carp_window->height);
+                    carp_window->width = event.xconfigure.width;
+                    carp_window->height = event.xconfigure.height;
+                    if(wnd->carpWindowSizeChangedFn)
+                    {
+                        wnd->carpWindowSizeChangedFn(carp_window->width, carp_window->height);
+                    }
                 }
                 break;
             }
@@ -412,7 +430,31 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
         }
 
     }
+    int mousePosX = 0;
+    int mousePosY = 0;
+    int mouseWindowPosX = 0;
+    int mouseWindowPosY = 0;
 
+    unsigned int tmpMask = 0;
+
+    Window tmpWindow1 = {0};
+    Window tmpWindow2 = {0};
+
+
+    if(XQueryPointer(wnd->carpDisplay, wnd->carpWindow, &tmpWindow1, &tmpWindow2,
+        &mousePosX, &mousePosY,
+        &mouseWindowPosX, &mouseWindowPosY,
+        &tmpMask))
+    {
+        if(mouseWindowPosX >= 0
+            && mouseWindowPosY >= 0
+            && mouseWindowPosX < carp_window->width
+            && mouseWindowPosY < carp_window->height
+        )
+        {
+            carp_mouse_setPosition(mouseWindowPosX, mouseWindowPosY);
+        }
+    }
     return true;
 }
 

@@ -1,7 +1,7 @@
 #ifndef MYKEYS_HH
 #define MYKEYS_HH
 
-#include "mytype.h"
+#include "carptype.h"
 
 typedef enum CarpKeyboardKey
 {

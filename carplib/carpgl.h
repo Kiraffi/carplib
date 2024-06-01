@@ -5,7 +5,7 @@
 #include "../external/glad/gl.h"
 //#include <gl/GL.h>
 
-#include "mytype.h"
+#include "carptype.h"
 
 
 #if defined(_WIN32) && !defined(APIENTRY)

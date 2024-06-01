@@ -3,8 +3,8 @@
 
 static bool sIsValidMouseButton(CarpMouseButton button)
 {
-    return button != CarpMouseButton_Invalid 
-        && (int)button >= 0 
+    return button != CarpMouseButton_Invalid
+        && (int)button >= 0
         && (int)button < MAX_AMOUNT_MOUSEINPUT;
 }
 
@@ -31,7 +31,8 @@ void carp_mouse_resetState()
     if(mem == NULL)
         return;
 
-    mem->carp_mouseState.carp_mouse_wheel = 0;
+    mem->carp_mouseState.carp_mouse_wheelX = 0;
+    mem->carp_mouseState.carp_mouse_wheelY = 0;
     for(int i = 0; i < MAX_AMOUNT_MOUSEINPUT; ++i)
         mem->carp_mouseState.carp_mouse_buttonHalfPress[i] = 0;
 }
@@ -41,21 +42,22 @@ void carp_mouse_setPosition(int x, int y)
     CarpMemory* mem = carpMemory_get();
     if(mem == NULL)
         return;
-    mem->carp_mouseState.carp_mouse_xMove = x - mem->carp_mouseState.carp_mouse_x;
-    mem->carp_mouseState.carp_mouse_yMove = y - mem->carp_mouseState.carp_mouse_y;
+    mem->carp_mouseState.carp_mouse_moveX = x - mem->carp_mouseState.carp_mouse_x;
+    mem->carp_mouseState.carp_mouse_moveY = y - mem->carp_mouseState.carp_mouse_y;
 
     mem->carp_mouseState.carp_mouse_x = x;
     mem->carp_mouseState.carp_mouse_y = y;
 }
 
-void carp_mouse_addWheelMovement(int wheel)
+void carp_mouse_addWheelMovement(int x, int y)
 {
     CarpMemory* mem = carpMemory_get();
     if(mem == NULL)
         return;
-    
-    mem->carp_mouseState.carp_mouse_wheel += wheel;
-    
+
+    mem->carp_mouseState.carp_mouse_wheelX += x;
+    mem->carp_mouseState.carp_mouse_wheelY += y;
+
 }
 
 void carp_mouse_setButtonState(CarpMouseButton button, bool down)
@@ -84,12 +86,19 @@ int carp_mouse_getMousePositionY()
     return mem->carp_mouseState.carp_mouse_y;
 }
 
-int carp_mouse_getMouseWheel()
+int carp_mouse_getMouseWheelX()
 {
     CarpMemory* mem = carpMemory_get();
     if(mem == NULL)
         return 0;
-    return mem->carp_mouseState.carp_mouse_wheel;
+    return mem->carp_mouseState.carp_mouse_wheelX;
+}
+int carp_mouse_getMouseWheelY()
+{
+    CarpMemory* mem = carpMemory_get();
+    if(mem == NULL)
+        return 0;
+    return mem->carp_mouseState.carp_mouse_wheelY;
 }
 
 
