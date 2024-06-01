@@ -1,3 +1,5 @@
+#if _WIN32
+
 #include "carpwindow.h"
 
 #define WIN32_LEAN_AND_MEAN 1
@@ -12,6 +14,10 @@
 
 #ifndef MAPVK_VSC_TO_VK
     #define MAPVK_VSC_TO_VK     (1)
+#endif
+
+#ifndef WM_MOUSEHWHEEL
+    #define WM_MOUSEHWHEEL 0x020E
 #endif
 
 static b8 s_quitRequested = false;
@@ -471,6 +477,12 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
                 carp_mouse_addWheelMovement(0, wheelAmount);
                 break;
             }
+            case WM_MOUSEHWHEEL:
+            {
+                int16_t wheelAmount = HIWORD(msg.wParam);
+                carp_mouse_addWheelMovement(wheelAmount, 0);
+                break;
+            }
 
             case WM_KEYUP:
             case WM_SYSKEYUP:
@@ -597,3 +609,8 @@ void carpWindow_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChange
     CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
     wnd->carpWindowSizeChangedFn = windowSizeChangedFn;
 }
+
+
+
+
+#endif // _WIN32

@@ -1,3 +1,5 @@
+#if !_WIN32
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -497,3 +499,8 @@ void carpWindow_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChange
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     wnd->carpWindowSizeChangedFn = windowSizeChangedFn;
 }
+
+
+
+
+#endif // !_WIN32

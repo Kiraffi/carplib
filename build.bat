@@ -3,8 +3,8 @@ rem @echo off
 
 set path=%path%;"c:/programming/c/tinycc-mob/win32/"
 
-rem set compiler="tcc.exe"
-set compiler="clang"
+set compiler="tcc.exe"
+rem set compiler="clang"
 
 set links=-lopengl32 -lgdi32 -luser32 -lwinmm
 set linkfolders=-Lc:/windows/SysWOW64
