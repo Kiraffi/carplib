@@ -15,8 +15,8 @@ typedef struct CarpPixelShader
 } CarpPixelShader;
 
 
-CarpPixelShader carpShader_compilePixelShader(const char* vertexCode, const char* fragCode);
-void carpShader_deletePixelShader(CarpPixelShader* shader);
+CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const char* fragCode);
+void carp_shader_deletePixelShader(CarpPixelShader* shader);
 
 
 

@@ -16,6 +16,15 @@
         {
             "type": "lldb",
             "request": "launch",
+            "name": "Debug windows from bat",
+            "program": "${workspaceFolder}/main.exe",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Compile windows bat"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
             "name": "Debug linux",
             "program": "${workspaceFolder}/main.out",
             "args": [],

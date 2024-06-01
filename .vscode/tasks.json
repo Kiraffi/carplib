@@ -6,7 +6,27 @@
       {
         "label": "Compile windows",
         "type": "process",
-        "command": "./comp.bat",
+        "command": "clang",
+        "args": [
+          "-g",
+          "main.c",
+          "-omain.exe",
+          "-std=c11",
+          "-lopengl32",
+          "-lgdi32",
+          "-luser32",
+          "-lwinmm",
+          "-Lc:/windows/SysWOW64"
+        ],
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        }
+      },
+      {
+        "label": "Compile windows bat",
+        "type": "process",
+        "command": "./build.bat",
         "presentation": {
           "reveal": "always",
           "panel": "new"
@@ -16,12 +36,18 @@
         "label": "Compile linux",
         "type": "process",
         "command": "clang",
-        "args": ["-g", "main.c", "-omain.out", "-std=c11", "-lX11", "-lGL"],
+        "args": [
+          "-g",
+          "main.c",
+          "-omain.out",
+          "-std=c11",
+          "-lX11",
+          "-lGL"
+        ],
         "presentation": {
           "reveal": "always",
           "panel": "new"
         }
       }
-
     ]
   }

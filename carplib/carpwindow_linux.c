@@ -24,9 +24,9 @@ typedef void (*GLXSwapIntervalEXT)(Display *dpy, GLXDrawable drawable, int inter
 GLXSwapIntervalEXT glxSwapIntervalEXTFn = NULL;
 
 
-static void s_destroyDisplay(CarpWindow* window);
-static void s_destroyWindow(CarpWindow* window);
-static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y);
+static void s_destroyDisplay(CarpWindow* carp_window);
+static void s_destroyWindow(CarpWindow* carp_window);
+static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y);
 
 typedef struct CarpWindowInternal
 {
@@ -44,36 +44,36 @@ typedef struct CarpWindowInternal
 
 
 
-static MyKey s_getKeyFromSym(KeySym key)
+static CarpKeyboardKey s_getKeyFromSym(KeySym key)
 {
-    MyKey result = MyKey_InvalidKey;
+    CarpKeyboardKey result = CarpKeyboardKey_Invalid;
     switch(key)
     {
-        case XK_Left: result = MyKey_Left; break;
-        case XK_Up: result = MyKey_Up; break;
-        case XK_Right: result = MyKey_Right; break;
-        case XK_Down: result = MyKey_Down; break;
-        case XK_Escape: result = MyKey_Escape; break;
-        case XK_Return: result = MyKey_Enter; break;
-        case XK_F1: result = MyKey_F1; break;
-        case XK_F2: result = MyKey_F2; break;
-        case XK_F3: result = MyKey_F3; break;
-        case XK_F4: result = MyKey_F4; break;
-        case XK_F5: result = MyKey_F5; break;
-        case XK_F6: result = MyKey_F6; break;
-        case XK_F7: result = MyKey_F7; break;
-        case XK_F8: result = MyKey_F8; break;
-        case XK_F9: result = MyKey_F9; break;
-        case XK_F10: result = MyKey_F10; break;
-        case XK_F11: result = MyKey_F11; break;
-        case XK_F12: result = MyKey_F12; break;
+        case XK_Left: result = CarpKeyboardKey_Left; break;
+        case XK_Up: result = CarpKeyboardKey_Up; break;
+        case XK_Right: result = CarpKeyboardKey_Right; break;
+        case XK_Down: result = CarpKeyboardKey_Down; break;
+        case XK_Escape: result = CarpKeyboardKey_Escape; break;
+        case XK_Return: result = CarpKeyboardKey_Enter; break;
+        case XK_F1: result = CarpKeyboardKey_F1; break;
+        case XK_F2: result = CarpKeyboardKey_F2; break;
+        case XK_F3: result = CarpKeyboardKey_F3; break;
+        case XK_F4: result = CarpKeyboardKey_F4; break;
+        case XK_F5: result = CarpKeyboardKey_F5; break;
+        case XK_F6: result = CarpKeyboardKey_F6; break;
+        case XK_F7: result = CarpKeyboardKey_F7; break;
+        case XK_F8: result = CarpKeyboardKey_F8; break;
+        case XK_F9: result = CarpKeyboardKey_F9; break;
+        case XK_F10: result = CarpKeyboardKey_F10; break;
+        case XK_F11: result = CarpKeyboardKey_F11; break;
+        case XK_F12: result = CarpKeyboardKey_F12; break;
 
-        case XK_Control_L: result = MyKey_LCtrl; break;
-        case XK_Control_R: result = MyKey_RCtrl; break;
-        case XK_Alt_L: result = MyKey_LAlt; break;
-        case XK_Alt_R: result = MyKey_RAlt; break;
-        case XK_Shift_L: result = MyKey_LShift; break;
-        case XK_Shift_R: result = MyKey_RShift; break;
+        case XK_Control_L: result = CarpKeyboardKey_LCtrl; break;
+        case XK_Control_R: result = CarpKeyboardKey_RCtrl; break;
+        case XK_Alt_L: result = CarpKeyboardKey_LAlt; break;
+        case XK_Alt_R: result = CarpKeyboardKey_RAlt; break;
+        case XK_Shift_L: result = CarpKeyboardKey_LShift; break;
+        case XK_Shift_R: result = CarpKeyboardKey_RShift; break;
 
         default:
         {
@@ -81,11 +81,11 @@ static MyKey s_getKeyFromSym(KeySym key)
             {
                 if(key >= XK_a && key <= XK_z)
                     key -= 32;
-                result = (MyKey)(key);
+                result = (CarpKeyboardKey)(key);
             }
             else
             {
-                result = MyKey_InvalidKey;
+                result = CarpKeyboardKey_InvalidKey;
             }
         }
     };
@@ -93,7 +93,7 @@ static MyKey s_getKeyFromSym(KeySym key)
     return result;
 }
 
-KeySym s_getKeySym(CarpWindow* window, XKeyEvent* event)
+KeySym s_getKeySym(CarpWindow* carp_window, XKeyEvent* event)
 {
     KeySym sym;
     XLookupString(event, NULL, 0, &sym, NULL);
@@ -102,12 +102,12 @@ KeySym s_getKeySym(CarpWindow* window, XKeyEvent* event)
 
 
 
-static void s_destroyDisplay(CarpWindow* window)
+static void s_destroyDisplay(CarpWindow* carp_window)
 {
 
-    if(window == NULL)
+    if(carp_window == NULL)
         return;
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
 
 
     if(wnd->carpColormap != 0)
@@ -128,29 +128,29 @@ static void s_destroyDisplay(CarpWindow* window)
     }
     XCloseDisplay(wnd->carpDisplay);
 }
-static void s_destroyWindow(CarpWindow* window)
+static void s_destroyWindow(CarpWindow* carp_window)
 {
-    if(window == NULL)
+    if(carp_window == NULL)
         return;
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     XUnmapWindow(wnd->carpDisplay, wnd->carpWindow);
     XDestroyWindow(wnd->carpDisplay, wnd->carpWindow);
 }
 
 
-static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     // TODO: Notice this, if using multisamples, should pass it as init?
     static const int multisample = 0;
 
-    if(window == NULL)
+    if(carp_window == NULL)
         return false;
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     wnd->carpDisplay = XOpenDisplay(NULL);
     if(wnd->carpDisplay == NULL)
     {
         printf("Failed to create display\n");
-        s_destroyDisplay(window);
+        s_destroyDisplay(carp_window);
         return false;
     }
     wnd->carpWindowScreen = DefaultScreen(wnd->carpDisplay);
@@ -232,7 +232,7 @@ static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s
     XVisualInfo* visualInfo = glXGetVisualFromFBConfig(wnd->carpDisplay, bestFBConfig);
     if(visualInfo == NULL)
     {
-        printf("Could not create correct visualInfo window.\n");
+        printf("Could not create correct visualInfo carp_window.\n");
         return false;
     }
 
@@ -312,7 +312,7 @@ static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s
     printf("make current: %i\n", glXMakeCurrent(wnd->carpDisplay, wnd->carpWindow, wnd->carpGLContext));
 
 
-    // Handle pressing X-button on window
+    // Handle pressing X-button on carp_window
     wnd->wmDeleteWindow = XInternAtom(wnd->carpDisplay, "WM_DELETE_WINDOW", False);
     XSetWMProtocols(wnd->carpDisplay, wnd->carpWindow, &wnd->wmDeleteWindow, 1);
 
@@ -320,7 +320,7 @@ static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s
     printf("Clear: %i\n", XClearWindow(wnd->carpDisplay, wnd->carpWindow));
     printf("xmap raised: %i\n", XMapRaised(wnd->carpDisplay, wnd->carpWindow));
 
-    carpWindow_setWindowTitle(window, windowName);
+    carpWindow_setWindowTitle(carp_window, windowName);
 
     int version = gladLoaderLoadGL();
     printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
@@ -336,25 +336,25 @@ static b8 s_initDisplay(CarpWindow* window, const char* windowName, s32 width, s
 
 
 
-void carpWindow_destroy(CarpWindow* window)
+void carpWindow_destroy(CarpWindow* carp_window)
 {
-    s_destroyWindow(window);
-    s_destroyDisplay(window);
+    s_destroyWindow(carp_window);
+    s_destroyDisplay(carp_window);
 }
 
-b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+b8 carpWindow_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
-    return s_initDisplay(window, windowName, width, height, x, y);
+    return s_initDisplay(carp_window, windowName, width, height, x, y);
 }
 
-b8 carpWindow_update(CarpWindow* window, f32 dt)
+b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
 {
 
-    if(window == NULL)
+    if(carp_window == NULL)
         return false;
-    carpKeys_resetState();
+    carp_keyboard_resetState();
 
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     int minKeyCodes = 0;
     int maxKeyCodes = 0;
     XDisplayKeycodes(wnd->carpDisplay, &minKeyCodes, &maxKeyCodes);
@@ -367,15 +367,15 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
         {
             case KeyPress:
             {
-                KeySym keysym = s_getKeyFromSym(s_getKeySym(window, &event.xkey));
-                carpKeys_setKeyState(keysym, true);
+                KeySym keysym = s_getKeyFromSym(s_getKeySym(carp_window, &event.xkey));
+                carp_keyboard_setKeyState(keysym, true);
 
                 break;
             }
             case KeyRelease:
             {
-                KeySym keysym = s_getKeyFromSym(s_getKeySym(window, &event.xkey));
-                carpKeys_setKeyState(keysym, false);
+                KeySym keysym = s_getKeyFromSym(s_getKeySym(carp_window, &event.xkey));
+                carp_keyboard_setKeyState(keysym, false);
                 break;
             }
             case ButtonPress:
@@ -391,22 +391,22 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
             case ClientMessage:
             {
                 if ((Atom)event.xclient.data.l[0] == wnd->wmDeleteWindow)
-                    window->running = false;
+                    carp_window->running = false;
                 break;
             }
             case ConfigureNotify:
             {
-                window->width = event.xconfigure.width;
-                window->height = event.xconfigure.height;
+                carp_window->width = event.xconfigure.width;
+                carp_window->height = event.xconfigure.height;
                 if(wnd->carpWindowSizeChangedFn)
                 {
-                    wnd->carpWindowSizeChangedFn(window->width, window->height);
+                    wnd->carpWindowSizeChangedFn(carp_window->width, carp_window->height);
                 }
                 break;
             }
             case DestroyNotify:
             {
-                window->running = false;
+                carp_window->running = false;
                 break;
             }
         }
@@ -416,42 +416,42 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
     return true;
 }
 
-void carpWindow_setWindowTitle(CarpWindow* window, const char* title)
+void carpWindow_setWindowTitle(CarpWindow* carp_window, const char* title)
 {
-    if(window == NULL || title == NULL)
+    if(carp_window == NULL || title == NULL)
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     XStoreName(wnd->carpDisplay, wnd->carpWindow, title);
 }
 
-void carpWindow_swapBuffers(CarpWindow* window)
+void carpWindow_swapBuffers(CarpWindow* carp_window)
 {
-    if(window == NULL)
+    if(carp_window == NULL)
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     glXSwapBuffers(wnd->carpDisplay, wnd->carpWindow);
 }
-void carpWindow_enableVSync(CarpWindow* window, bool vSyncEnabled)
+void carpWindow_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 {
-    if(window == NULL || glxSwapIntervalEXTFn == NULL)
+    if(carp_window == NULL || glxSwapIntervalEXTFn == NULL)
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     glxSwapIntervalEXTFn(wnd->carpDisplay, wnd->carpWindow, vSyncEnabled ? 1 : 0);
 }
 
 
-void carpWindow_setWindowSizeChangedFn(CarpWindow* window, WindowSizeChangedFn windowSizeChangedFn)
+void carpWindow_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
 {
-    if(window == NULL)
+    if(carp_window == NULL)
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     wnd->carpWindowSizeChangedFn = windowSizeChangedFn;
 }

@@ -10,19 +10,12 @@
     #include "carplib/carpwindow_linux.c"
 #endif
 
-#include "carplib/carpwindow.h"
 
-#include "carplib/mymemory.h"
-
-#include "carplib/mymemory.c"
-#include "carplib/carpgl.h"
 #include "carplib/carpgl.c"
-#include "carplib/mykey.c"
-#include "carplib/mykey.h"
-
-#include "carplib/shader.h"
-#include "carplib/shader.c"
-
+#include "carplib/carpinputkey.c"
+#include "carplib/carpmemory.c"
+#include "carplib/carpmouse.c"
+#include "carplib/carpshader.c"
 
 
 #include <malloc.h> // malloc, otherwise tcc will coredump
@@ -72,13 +65,13 @@ static void sWindowSizeChanged(int width, int height)
 
 static s32 sMainAfterWindow()
 {
-    MyMemory* memory = myMemory_get();
+    CarpMemory* memory = carpMemory_get();
 
-    CarpPixelShader shader = carpShader_compilePixelShader(vertexShaderCode, fragmentShaderCode);
+    CarpPixelShader shader = carp_shader_compilePixelShader(vertexShaderCode, fragmentShaderCode);
     if(!shader.isValid)
     {
         printf("Failed to compile shader\n");
-        carpShader_deletePixelShader(&shader);
+        carp_shader_deletePixelShader(&shader);
         return -1;
     }
 
@@ -120,18 +113,26 @@ static s32 sMainAfterWindow()
 
 
 
-    carpWindow_setWindowSizeChangedFn(&memory->window, sWindowSizeChanged);
-    carpWindow_enableVSync(&memory->window, false);
+    carpWindow_setWindowSizeChangedFn(&memory->carp_window, sWindowSizeChanged);
+    carpWindow_enableVSync(&memory->carp_window, true);
 
     printf("Window start running\n");
-    memory->window.running = true;
+    memory->carp_window.running = true;
 
-    while(memory->window.running)
+    while(memory->carp_window.running)
     {
-        carpWindow_update(&memory->window, 0.0f);
-        if(carpKeys_wasPressed(MyKey_Escape))
-            memory->window.running = false;
-
+        carpWindow_update(&memory->carp_window, 0.0f);
+        if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
+            memory->carp_window.running = false;
+        printf("Mouse x:%i, y: %i, l:%i, m:%i, r:%i, x:%i, wheel:%i\n",
+            carp_mouse_getMousePositionX(),
+            carp_mouse_getMousePositionY(),
+            carp_mouse_isButtonDown(CarpMouseButton_Left),
+            carp_mouse_isButtonDown(CarpMouseButton_Middle),
+            carp_mouse_isButtonDown(CarpMouseButton_Right),
+            carp_mouse_isButtonDown(CarpMouseButton_Button4),
+            carp_mouse_getMouseWheel()
+        );
 
         glClearColor(0.2f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -142,23 +143,23 @@ static s32 sMainAfterWindow()
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glDisableVertexAttribArray(0);
 
-        carpWindow_swapBuffers(&memory->window);
+        carpWindow_swapBuffers(&memory->carp_window);
     }
     printf("Window finished running\n");
 
 
-    carpShader_deletePixelShader(&shader);
+    carp_shader_deletePixelShader(&shader);
 
     return 0;
 }
 
 static s32 sMain()
 {
-    MyMemory* memory = myMemory_get();
+    CarpMemory* memory = carpMemory_get();
 
     printf("Creating window\n");
 
-    if(!carpWindow_init(&memory->window,
+    if(!carpWindow_init(&memory->carp_window,
         "My window",
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
@@ -170,21 +171,21 @@ static s32 sMain()
     }
     sMainAfterWindow();
 
-   carpWindow_destroy(&memory->window);
+   carpWindow_destroy(&memory->carp_window);
 
     return 0;
 }
 
 int main(int argc, char** argv)
 {
-    if(!myMemory_init())
+    if(!carpMemory_init())
     {
         printf("Failed to init the memory\n");
         return -1;
     }
     int result = sMain();
 
-    myMemory_deinit();
+    carpMemory_deinit();
 
     return result;
 }

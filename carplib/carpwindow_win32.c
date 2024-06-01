@@ -1,11 +1,12 @@
+#include "carpwindow.h"
+
 #define WIN32_LEAN_AND_MEAN 1
 #include <windows.h>
 
-#include "carpwindow.h"
 #include "carpgl.h"
-#include "mykey.h"
-
-#include "mymemory.h"
+#include "carpinputkey.h"
+#include "carpmemory.h"
+#include "carpmouse.h"
 
 #include <stdio.h>
 
@@ -29,21 +30,23 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 
 typedef HGLRC (APIENTRYP PFNCREATECONTEXTATTRIB_CARP)(HDC hdc, HGLRC hglrc, const s32* attribList);
-PFNCREATECONTEXTATTRIB_CARP createContextAttribs = NULL;
+PFNCREATECONTEXTATTRIB_CARP winCreateContextAttribs = NULL;
 
 typedef HGLRC (APIENTRYP PFNSWAPINTERVALEXT_CARP)(int);
-PFNSWAPINTERVALEXT_CARP swapIntervalEXT = NULL;
+PFNSWAPINTERVALEXT_CARP winSwapIntervalEXTFn = NULL;
 
 typedef struct CarpWindowWin32
 {
     HWND hwnd;
     HDC dc;
     HGLRC hglrc;
+    WindowSizeChangedFn carpWindowSizeChangedFn;
+
 } CarpWindowWin32;
 
-static b8 s_initWindow(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+static b8 s_initWindow(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
 
     WNDCLASSA wndclass = {0};
 
@@ -65,8 +68,8 @@ static b8 s_initWindow(CarpWindow* window, const char* windowName, s32 width, s3
     DWORD winExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
     RECT rect = { .left = x, .top = y, .right = 0, .bottom = 0 };
 
-    window->width = width;
-    window->height = height;
+    carp_window->width = width;
+    carp_window->height = height;
     rect.right = width + x;
     rect.bottom = height + y;
 
@@ -104,9 +107,9 @@ static b8 s_initWindow(CarpWindow* window, const char* windowName, s32 width, s3
     return true;
 }
 
-static b8 s_initGL(CarpWindow* window)
+static b8 s_initGL(CarpWindow* carp_window)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
 
     PIXELFORMATDESCRIPTOR pxFormatDesired = {0};
     pxFormatDesired.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -153,25 +156,18 @@ static b8 s_initGL(CarpWindow* window)
     }
     // should check extensions support
 
-    PROC proc = wglGetProcAddress("wglCreateContextAttribsARB\0");
-    if (proc == 0)
+    winCreateContextAttribs = (PFNCREATECONTEXTATTRIB_CARP)wglGetProcAddress("wglCreateContextAttribsARB\0");
+    if (winCreateContextAttribs == NULL)
     {
         printf("wglCreateContextAttribsARB not found!\n");
         return false;
     }
 
-    createContextAttribs = (PFNCREATECONTEXTATTRIB_CARP)proc;
-
-    PROC proc2 = wglGetProcAddress("wglSwapIntervalEXT\0");
-    if (proc2 != 0)
-    {
-
-        swapIntervalEXT = (PFNSWAPINTERVALEXT_CARP)proc2;
-    }
+    winSwapIntervalEXTFn = (PFNSWAPINTERVALEXT_CARP)wglGetProcAddress("wglSwapIntervalEXT\0");
 
     int attrs[] = {
         WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
-        WGL_CONTEXT_MINOR_VERSION_ARB, 5,
+        WGL_CONTEXT_MINOR_VERSION_ARB, 6,
         WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
         //WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_COMPATIBILITY_PROFILE_BIT_ARB,
         WGL_CONTEXT_PROFILE_MASK_ARB, WGL_CONTEXT_CORE_PROFILE_BIT_ARB,
@@ -180,7 +176,7 @@ static b8 s_initGL(CarpWindow* window)
 
     HGLRC shareContext = 0;
 
-    HGLRC modernRC = createContextAttribs(wnd->dc, shareContext, attrs);
+    HGLRC modernRC = winCreateContextAttribs(wnd->dc, shareContext, attrs);
     if (modernRC != 0)
     {
         if (wglMakeCurrent(wnd->dc, modernRC) != 0)
@@ -196,7 +192,7 @@ static b8 s_initGL(CarpWindow* window)
 	const GLubyte* GLVersionString = glGetString(GL_VERSION);
     printf("GL version: %s\n", GLVersionString);
 
-    window->resized = true;
+    carp_window->resized = true;
 
 
 
@@ -204,41 +200,41 @@ static b8 s_initGL(CarpWindow* window)
     return true;
 }
 
-static MyKey s_getKey(u32 key)
+static CarpKeyboardKey s_getKey(u32 key)
 {
     s32 keyCode = (s32)(MapVirtualKeyA(key, MAPVK_VSC_TO_VK));
-    MyKey result;
+    CarpKeyboardKey result;
     switch(keyCode)
     {
-        case VK_LEFT: result = MyKey_Left; break;
-        case VK_UP: result = MyKey_Up; break;
-        case VK_RIGHT: result = MyKey_Right; break;
-        case VK_DOWN: result = MyKey_Down; break;
-        case VK_ESCAPE: result = MyKey_Escape; break;
-        case VK_RETURN: result = MyKey_Enter; break;
-        case VK_F1: result = MyKey_F1; break;
-        case VK_F2: result = MyKey_F2; break;
-        case VK_F3: result = MyKey_F3; break;
-        case VK_F4: result = MyKey_F4; break;
-        case VK_F5: result = MyKey_F5; break;
-        case VK_F6: result = MyKey_F6; break;
-        case VK_F7: result = MyKey_F7; break;
-        case VK_F8: result = MyKey_F8; break;
-        case VK_F9: result = MyKey_F9; break;
-        case VK_F10: result = MyKey_F10; break;
-        case VK_F11: result = MyKey_F11; break;
-        case VK_F12: result = MyKey_F12; break;
+        case VK_LEFT: result = CarpKeyboardKey_Left; break;
+        case VK_UP: result = CarpKeyboardKey_Up; break;
+        case VK_RIGHT: result = CarpKeyboardKey_Right; break;
+        case VK_DOWN: result = CarpKeyboardKey_Down; break;
+        case VK_ESCAPE: result = CarpKeyboardKey_Escape; break;
+        case VK_RETURN: result = CarpKeyboardKey_Enter; break;
+        case VK_F1: result = CarpKeyboardKey_F1; break;
+        case VK_F2: result = CarpKeyboardKey_F2; break;
+        case VK_F3: result = CarpKeyboardKey_F3; break;
+        case VK_F4: result = CarpKeyboardKey_F4; break;
+        case VK_F5: result = CarpKeyboardKey_F5; break;
+        case VK_F6: result = CarpKeyboardKey_F6; break;
+        case VK_F7: result = CarpKeyboardKey_F7; break;
+        case VK_F8: result = CarpKeyboardKey_F8; break;
+        case VK_F9: result = CarpKeyboardKey_F9; break;
+        case VK_F10: result = CarpKeyboardKey_F10; break;
+        case VK_F11: result = CarpKeyboardKey_F11; break;
+        case VK_F12: result = CarpKeyboardKey_F12; break;
 
-        case VK_CONTROL: result = MyKey_Ctrl; break;
-        case VK_SHIFT: result = MyKey_Shift; break;
-        case VK_MENU: result = MyKey_Alt; break;
+        case VK_CONTROL: result = CarpKeyboardKey_Ctrl; break;
+        case VK_SHIFT: result = CarpKeyboardKey_Shift; break;
+        case VK_MENU: result = CarpKeyboardKey_Alt; break;
 
-        case VK_LCONTROL: result = MyKey_LCtrl; break;
-        case VK_RCONTROL: result = MyKey_RCtrl; break;
-        case VK_LMENU: result = MyKey_LAlt; break;
-        case VK_RMENU: result = MyKey_RAlt; break;
-        case VK_LSHIFT: result = MyKey_LShift; break;
-        case VK_RSHIFT: result = MyKey_RShift; break;
+        case VK_LCONTROL: result = CarpKeyboardKey_LCtrl; break;
+        case VK_RCONTROL: result = CarpKeyboardKey_RCtrl; break;
+        case VK_LMENU: result = CarpKeyboardKey_LAlt; break;
+        case VK_RMENU: result = CarpKeyboardKey_RAlt; break;
+        case VK_LSHIFT: result = CarpKeyboardKey_LShift; break;
+        case VK_RSHIFT: result = CarpKeyboardKey_RShift; break;
 
         default:
         {
@@ -246,11 +242,11 @@ static MyKey s_getKey(u32 key)
             {
                 if(keyCode >= 97 && keyCode <= 122)
                     keyCode -= 32;
-                result = (MyKey)(keyCode);
+                result = (CarpKeyboardKey)(keyCode);
             }
             else
             {
-                result = MyKey_InvalidKey;
+                result = CarpKeyboardKey_Invalid;
             }
         }
     };
@@ -305,17 +301,11 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             {
                 translated = (translated & 0x1ff) + 512;
             }
-            if( translated != MyKey_InvalidKey && translated < 1024)
+            if( translated != CarpKeyboardKey_Invalid && translated < 1024)
             {
-                MyMemory* mymemory = myMemory_get();
-                mymemory->input.keysDown[translated] = down;
-                mymemory->input.keysHalfPress[translated] += 1;
+                carp_keyboard_setKeyState(translated, down);
             }
 
-            if (down && translated == VK_ESCAPE)
-            {
-                s_quitRequested = true;
-            }
             break;
             //println!("button down: {}, b2: {}, transl: {}",  button, msg.wParam, transusize);
         };
@@ -332,6 +322,8 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_EXITSIZEMOVE:
         {
+            int width = LOWORD(lParam);
+            int height = HIWORD(lParam);
             /*
             let width = LOWORD(lParam as u32);
             let height = HIWORD(lParam as u32);
@@ -340,6 +332,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             */
 
             s_resized = true;
+
         };
 
         default:
@@ -351,7 +344,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
                 || ( uMsg >= WM_NCMOUSEMOVE && uMsg <= WM_NCMBUTTONDBLCLK))
             )
             {
-                //println!("window message: {}, lparam: {}, wparam: {}", uMsg, wParam, lParam);
+                //println!("carp_window message: {}, lparam: {}, wparam: {}", uMsg, wParam, lParam);
             }
         }
     }
@@ -361,15 +354,20 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 
-b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+b8 carpWindow_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
-    if(!s_initWindow(window, windowName, width, height, x, y))
+    if(carp_window == NULL)
+    {
+        return false;
+    }
+
+    if(!s_initWindow(carp_window, windowName, width, height, x, y))
     {
         printf("Window init failed\n");
         return false;
     }
 
-    if(!s_initGL(window))
+    if(!s_initGL(carp_window))
     {
         printf("GL init failed\n");
         return false;
@@ -378,38 +376,101 @@ b8 carpWindow_init(CarpWindow* window, const char* windowName, s32 width, s32 he
 }
 
 
-void carpWindow_destroy(CarpWindow* window)
+void carpWindow_destroy(CarpWindow* carp_window)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
+    if(carp_window == NULL)
+    {
+        return;
+    }
+
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
 
     gladLoaderUnloadGL();
 }
 
-b8 carpWindow_update(CarpWindow* window, f32 dt)
+b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
+    if(carp_window == NULL)
+    {
+        return false;
+    }
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
 
     MSG msg = {0};
 
-    MyMemory* mymemory = myMemory_get();
-    memset(mymemory->input.keysDown, 0, 1024);
-    memset(mymemory->input.keysHalfPress, 0, 1024);
+    carp_keyboard_resetState();
+    carp_mouse_resetState();
 
     while(PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE) != 0
-        && window->running)
+        && carp_window->running)
     {
         LONG t = GetMessageTime();
         PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE);
         //printf("Message time: %u\n", (u32)t);
         b8 dispatch = false;
-
         switch(msg.message)
         {
             case WM_QUIT:
             {
-                window->running = false;
+                carp_window->running = false;
                 break;
             };
+
+            case WM_LBUTTONDOWN:
+            case WM_MBUTTONDOWN:
+            case WM_RBUTTONDOWN:
+            case WM_XBUTTONDOWN:
+            case WM_LBUTTONUP:
+            case WM_MBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_XBUTTONUP:
+            {
+                bool down = false;
+                CarpMouseButton mouseButton = CarpMouseButton_Invalid;
+                switch(msg.message)
+                {
+                    case WM_LBUTTONDOWN:
+                    case WM_MBUTTONDOWN:
+                    case WM_RBUTTONDOWN:
+                    case WM_XBUTTONDOWN:
+                        down = true;
+                        break;
+                    default:
+                        break;
+                }
+                switch(msg.message)
+                {
+                    case WM_LBUTTONDOWN:
+                    case WM_LBUTTONUP:
+                        mouseButton = CarpMouseButton_Left;
+                        break;
+                    case WM_MBUTTONDOWN:
+                    case WM_MBUTTONUP:
+                        mouseButton = CarpMouseButton_Middle;
+                        break;
+                    case WM_RBUTTONDOWN:
+                    case WM_RBUTTONUP:
+                        mouseButton = CarpMouseButton_Right;
+                        break;
+                    case WM_XBUTTONDOWN:
+                    case WM_XBUTTONUP:
+                        mouseButton = CarpMouseButton_Button4;
+                        break;
+                    default:
+                        break;
+                }
+                carp_mouse_setButtonState(mouseButton, down);
+                //dispatch = true;
+                break;
+            }
+
+
+            case WM_MOUSEWHEEL:
+            {
+                int16_t wheelAmount = HIWORD(msg.wParam);
+                carp_mouse_addWheelMovement(wheelAmount);
+                break;
+            }
 
             case WM_KEYUP:
             case WM_SYSKEYUP:
@@ -423,22 +484,15 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
                 {
                     translated = (translated & 0x1ff) + 512;
                 }
-                if( translated != MyKey_InvalidKey && translated < 1024)
+                if( translated != CarpKeyboardKey_Invalid && translated < 1024)
                 {
-                    MyMemory* mymemory = myMemory_get();
-                    mymemory->input.keysDown[translated] = down;
-                    mymemory->input.keysHalfPress[translated] += 1;
+                    carp_keyboard_setKeyState(translated, down);
                 }
                 else
                 {
                     dispatch = true;
                 }
 
-                if (down && translated == VK_ESCAPE)
-                {
-                    s_quitRequested = true;
-                    dispatch = true;
-                }
                 break;
                 //println!("button down: {}, b2: {}, transl: {}",  button, msg.wParam, transusize);
             };
@@ -456,14 +510,6 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
         }
     }
 
-    for(int i = 0; i < 1024; ++i)
-    {
-        if(mymemory->input.keysHalfPress[i] > 0)
-        {
-            printf("button: %i was pressed/released: %u times\n", i, mymemory->input.keysHalfPress[i]);
-        }
-    }
-
     if(s_resized)
     {
         RECT rect = {0};
@@ -472,34 +518,82 @@ b8 carpWindow_update(CarpWindow* window, f32 dt)
             DWORD width = rect.right - rect.left;
             DWORD height = rect.bottom - rect.top;
 
-            if (window->width != width || window->height != height)
+            if (carp_window->width != width || carp_window->height != height)
             {
-                window->resized = true;
+                carp_window->resized = true;
+                carp_window->width = width;
+                carp_window->height = height;
+
+                if(wnd->carpWindowSizeChangedFn)
+                {
+                    wnd->carpWindowSizeChangedFn(width, height);
+                }
             }
-            window->width = width;
-            window->height = height;
 
 
             s_resized = false;
         }
     }
-    if (s_quitRequested && window->running)
+    if (s_quitRequested && carp_window->running)
     {
         PostMessageA(wnd->hwnd, WM_CLOSE, 0, 0);
     }
 
-    //window->running = false;
+    POINT mousePos;
+    GetCursorPos(&mousePos);
+
+    if (ScreenToClient(wnd->hwnd, &mousePos))
+    {
+        if(mousePos.x >= 0 
+            && mousePos.y >= 0
+            && mousePos.x < carp_window->width
+            && mousePos.y < carp_window->height
+        )
+        {
+            carp_mouse_setPosition(mousePos.x, mousePos.y);
+        }
+    }
+
     return true;
 }
 
-void carpWindow_setWindowTitle(CarpWindow* window, const char* title)
+void carpWindow_setWindowTitle(CarpWindow* carp_window, const char* title)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
+    if(carp_window == NULL)
+    {
+        return;
+    }
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
     SetWindowTextA(wnd->hwnd, title);
 }
 
-void carpWindow_swapBuffers(CarpWindow* window)
+void carpWindow_swapBuffers(CarpWindow* carp_window)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&window->data);
+    if(carp_window == NULL)
+    {
+        return;
+    }
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
     SwapBuffers(wnd->dc);
+}
+
+void carpWindow_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
+{
+    if(carp_window == NULL || winSwapIntervalEXTFn == NULL)
+    {
+        return;
+    }
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    winSwapIntervalEXTFn(vSyncEnabled ? 1 : 0);
+}
+
+
+void carpWindow_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
+{
+    if(carp_window == NULL)
+    {
+        return;
+    }
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    wnd->carpWindowSizeChangedFn = windowSizeChangedFn;
 }

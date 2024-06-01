@@ -1,4 +1,4 @@
-#include "shader.h"
+#include "carpshader.h"
 
 #ifndef GL_COMPILE_STATUS
 #define GL_COMPILE_STATUS 0x8B81
@@ -54,7 +54,7 @@ static GLuint sCompileShader(int shaderType, const char* code)
 
 
 
-CarpPixelShader carpShader_compilePixelShader(const char* vertexCode, const char* fragCode)
+CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const char* fragCode)
 {
     CarpPixelShader result = {0};
 
@@ -115,7 +115,7 @@ CarpPixelShader carpShader_compilePixelShader(const char* vertexCode, const char
     return result;
 }
 
-void carpShader_deletePixelShader(CarpPixelShader* shader)
+void carp_shader_deletePixelShader(CarpPixelShader* shader)
 {
     if(shader)
     {
