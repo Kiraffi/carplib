@@ -8,10 +8,18 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug",
-            "program": "${workspaceFolder}/a.exe",
+            "program": "${workspaceFolder}/main.exe",
             "args": [],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Compile"
+        },
+        {
+            "type": "cmake",
+            "request": "launch",
+            "name": "Debug portfile(s)",
+            "cmakeDebugType": "external",
+            "pipeName": "\\\\.\\pipe\\vcpkg_ext_portfile_dbg",
+            "preLaunchTask": "Debug vcpkg commands"
         }
     ]
 }

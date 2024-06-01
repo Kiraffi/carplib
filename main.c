@@ -35,7 +35,7 @@
 
 
 
-s32 theMain()
+static s32 sMain()
 {
     if(!myMemory_init())
     {
@@ -72,5 +72,5 @@ s32 theMain()
 
 int main(int argc, char** argv)
 {
-    return theMain();
+    return sMain();
 }

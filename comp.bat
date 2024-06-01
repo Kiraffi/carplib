@@ -1,8 +1,14 @@
 rem @echo off
 @setlocal
 
+set path=%path%;"c:/programming/c/tinycc-mob/win32/"
 
-set compiler="c:/programming/c/tinycc-mob/win32/tcc.exe"
+set compiler="tcc.exe"
 rem set compiler="clang"
 
-%compiler% main.c -std=c11 -lopengl32 -lgdi32 -luser32 -lwinmm -Lc:/windows/SysWOW64
+set links=-lopengl32 -lgdi32 -luser32 -lwinmm
+set linkfolders=-Lc:/windows/SysWOW64
+
+set final=%links% %linkfolders%
+
+%compiler% main.c -g -std=c11 %final%  
