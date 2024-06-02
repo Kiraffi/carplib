@@ -19,14 +19,14 @@ typedef struct CarpWindow
     _Alignas(16) char data[768];
 } CarpWindow;
 
-b8 carpWindow_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y);
-void carpWindow_destroy(CarpWindow* carp_window);
-b8 carpWindow_update(CarpWindow* carp_window, f32 dt);
+b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y);
+void carp_window_destroy(CarpWindow* carp_window);
+b8 carp_window_update(CarpWindow* carp_window, f32 dt);
 
-void carpWindow_setWindowTitle(CarpWindow* carp_window, const char* title);
-void carpWindow_swapBuffers(CarpWindow* carp_window);
-void carpWindow_enableVSync(CarpWindow* carp_window, bool vSyncEnabled);
+void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title);
+void carp_window_swapBuffers(CarpWindow* carp_window);
+void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled);
 
-void carpWindow_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn);
+void carp_window_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn);
 
 #endif

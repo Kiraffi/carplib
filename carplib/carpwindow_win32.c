@@ -360,7 +360,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 
-b8 carpWindow_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     if(carp_window == NULL)
     {
@@ -382,7 +382,7 @@ b8 carpWindow_init(CarpWindow* carp_window, const char* windowName, s32 width, s
 }
 
 
-void carpWindow_destroy(CarpWindow* carp_window)
+void carp_window_destroy(CarpWindow* carp_window)
 {
     if(carp_window == NULL)
     {
@@ -394,7 +394,7 @@ void carpWindow_destroy(CarpWindow* carp_window)
     gladLoaderUnloadGL();
 }
 
-b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
+b8 carp_window_update(CarpWindow* carp_window, f32 dt)
 {
     if(carp_window == NULL)
     {
@@ -569,7 +569,7 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
     return true;
 }
 
-void carpWindow_setWindowTitle(CarpWindow* carp_window, const char* title)
+void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
 {
     if(carp_window == NULL)
     {
@@ -579,7 +579,7 @@ void carpWindow_setWindowTitle(CarpWindow* carp_window, const char* title)
     SetWindowTextA(wnd->hwnd, title);
 }
 
-void carpWindow_swapBuffers(CarpWindow* carp_window)
+void carp_window_swapBuffers(CarpWindow* carp_window)
 {
     if(carp_window == NULL)
     {
@@ -589,7 +589,7 @@ void carpWindow_swapBuffers(CarpWindow* carp_window)
     SwapBuffers(wnd->dc);
 }
 
-void carpWindow_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
+void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 {
     if(carp_window == NULL || winSwapIntervalEXTFn == NULL)
     {
@@ -600,7 +600,7 @@ void carpWindow_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 }
 
 
-void carpWindow_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
+void carp_window_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
 {
     if(carp_window == NULL)
     {

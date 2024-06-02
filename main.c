@@ -113,15 +113,15 @@ static s32 sMainAfterWindow()
 
 
 
-    carpWindow_setWindowSizeChangedFn(&memory->carp_window, sWindowSizeChanged);
-    carpWindow_enableVSync(&memory->carp_window, true);
+    carp_window_setWindowSizeChangedFn(&memory->carp_window, sWindowSizeChanged);
+    carp_window_enableVSync(&memory->carp_window, true);
 
     printf("Window start running\n");
     memory->carp_window.running = true;
 
     while(memory->carp_window.running)
     {
-        carpWindow_update(&memory->carp_window, 0.0f);
+        carp_window_update(&memory->carp_window, 0.0f);
         if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
             memory->carp_window.running = false;
         printf("Mouse x:%i, y: %i, l:%i, m:%i, r:%i, b4:%i, b5:%i, wheel x:%i, y:%i\n",
@@ -145,7 +145,7 @@ static s32 sMainAfterWindow()
         glDrawArrays(GL_TRIANGLES, 0, 3);
         glDisableVertexAttribArray(0);
 
-        carpWindow_swapBuffers(&memory->carp_window);
+        carp_window_swapBuffers(&memory->carp_window);
     }
     printf("Window finished running\n");
 
@@ -161,7 +161,7 @@ static s32 sMain()
 
     printf("Creating window\n");
 
-    if(!carpWindow_init(&memory->carp_window,
+    if(!carp_window_init(&memory->carp_window,
         "My window",
         WINDOW_WIDTH,
         WINDOW_HEIGHT,
@@ -173,7 +173,7 @@ static s32 sMain()
     }
     sMainAfterWindow();
 
-   carpWindow_destroy(&memory->carp_window);
+   carp_window_destroy(&memory->carp_window);
 
     return 0;
 }

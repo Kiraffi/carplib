@@ -323,7 +323,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     printf("Clear: %i\n", XClearWindow(wnd->carpDisplay, wnd->carpWindow));
     printf("xmap raised: %i\n", XMapRaised(wnd->carpDisplay, wnd->carpWindow));
 
-    carpWindow_setWindowTitle(carp_window, windowName);
+    carp_window_setWindowTitle(carp_window, windowName);
 
     int version = gladLoaderLoadGL();
     printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
@@ -339,18 +339,18 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 
 
 
-void carpWindow_destroy(CarpWindow* carp_window)
+void carp_window_destroy(CarpWindow* carp_window)
 {
     s_destroyWindow(carp_window);
     s_destroyDisplay(carp_window);
 }
 
-b8 carpWindow_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     return s_initDisplay(carp_window, windowName, width, height, x, y);
 }
 
-b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
+b8 carp_window_update(CarpWindow* carp_window, f32 dt)
 {
 
     if(carp_window == NULL)
@@ -460,7 +460,7 @@ b8 carpWindow_update(CarpWindow* carp_window, f32 dt)
     return true;
 }
 
-void carpWindow_setWindowTitle(CarpWindow* carp_window, const char* title)
+void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
 {
     if(carp_window == NULL || title == NULL)
     {
@@ -470,7 +470,7 @@ void carpWindow_setWindowTitle(CarpWindow* carp_window, const char* title)
     XStoreName(wnd->carpDisplay, wnd->carpWindow, title);
 }
 
-void carpWindow_swapBuffers(CarpWindow* carp_window)
+void carp_window_swapBuffers(CarpWindow* carp_window)
 {
     if(carp_window == NULL)
     {
@@ -479,7 +479,7 @@ void carpWindow_swapBuffers(CarpWindow* carp_window)
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     glXSwapBuffers(wnd->carpDisplay, wnd->carpWindow);
 }
-void carpWindow_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
+void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 {
     if(carp_window == NULL || glxSwapIntervalEXTFn == NULL)
     {
@@ -490,7 +490,7 @@ void carpWindow_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 }
 
 
-void carpWindow_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
+void carp_window_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
 {
     if(carp_window == NULL)
     {
