@@ -38,8 +38,8 @@ typedef struct CarpMemory
 
 } CarpMemory;
 
-b8 carpMemory_init();
-void carpMemory_deinit();
-CarpMemory* carpMemory_get();
+b8 carp_memory_init();
+void carp_memory_destroy();
+CarpMemory* carp_memory_get();
 
 #endif

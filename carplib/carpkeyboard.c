@@ -27,7 +27,7 @@ static b8 sGetKeyboardKeyHalfPressCount(CarpMemory* mem, CarpKeyboardKey key)
 
 void carp_keyboard_resetState()
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return;
 
@@ -37,7 +37,7 @@ void carp_keyboard_resetState()
 
 void carp_keyboard_setKeyState(CarpKeyboardKey key, bool keyDown)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidKeyboardKey(key))
         return;
 
@@ -48,7 +48,7 @@ void carp_keyboard_setKeyState(CarpKeyboardKey key, bool keyDown)
 
 bool carp_keyboard_wasKeyPressed(CarpKeyboardKey key)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidKeyboardKey(key))
         return false;
 
@@ -58,7 +58,7 @@ bool carp_keyboard_wasKeyPressed(CarpKeyboardKey key)
 
 bool carp_keyboard_wasKeyReleased(CarpKeyboardKey key)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidKeyboardKey(key))
         return false;
 
@@ -68,7 +68,7 @@ bool carp_keyboard_wasKeyReleased(CarpKeyboardKey key)
 
 bool carp_keyboard_isKeyDown(CarpKeyboardKey key)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidKeyboardKey(key))
         return false;
 

@@ -19,10 +19,10 @@ void carp_mouse_setButtonState(CarpMouseButton button, bool down);
 void carp_mouse_setPosition(int x, int y);
 void carp_mouse_addWheelMovement(int x, int y);
 
-int carp_mouse_getMousePositionX();
-int carp_mouse_getMousePositionY();
-int carp_mouse_getMouseWheelX();
-int carp_mouse_getMouseWheelY();
+int carp_mouse_getPositionX();
+int carp_mouse_getPositionY();
+int carp_mouse_getWheelX();
+int carp_mouse_getWheelY();
 
 bool carp_mouse_wasButtonPressed(CarpMouseButton button);
 bool carp_mouse_wasButtonReleased(CarpMouseButton button);

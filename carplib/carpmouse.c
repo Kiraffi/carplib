@@ -27,7 +27,7 @@ static b8 sGetMouseButtonHalfPressCount(CarpMemory* mem, CarpMouseButton key)
 
 void carp_mouse_resetState()
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return;
 
@@ -39,7 +39,7 @@ void carp_mouse_resetState()
 
 void carp_mouse_setPosition(int x, int y)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return;
     mem->carp_mouseState.carp_mouse_moveX = x - mem->carp_mouseState.carp_mouse_x;
@@ -51,7 +51,7 @@ void carp_mouse_setPosition(int x, int y)
 
 void carp_mouse_addWheelMovement(int x, int y)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return;
 
@@ -62,7 +62,7 @@ void carp_mouse_addWheelMovement(int x, int y)
 
 void carp_mouse_setButtonState(CarpMouseButton button, bool down)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidMouseButton(button))
         return;
 
@@ -71,31 +71,31 @@ void carp_mouse_setButtonState(CarpMouseButton button, bool down)
 }
 
 
-int carp_mouse_getMousePositionX()
+int carp_mouse_getPositionX()
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return 0;
     return mem->carp_mouseState.carp_mouse_x;
 }
-int carp_mouse_getMousePositionY()
+int carp_mouse_getPositionY()
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return 0;
     return mem->carp_mouseState.carp_mouse_y;
 }
 
-int carp_mouse_getMouseWheelX()
+int carp_mouse_getWheelX()
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return 0;
     return mem->carp_mouseState.carp_mouse_wheelX;
 }
-int carp_mouse_getMouseWheelY()
+int carp_mouse_getWheelY()
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return 0;
     return mem->carp_mouseState.carp_mouse_wheelY;
@@ -104,7 +104,7 @@ int carp_mouse_getMouseWheelY()
 
 bool carp_mouse_wasButtonPressed(CarpMouseButton button)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidMouseButton(button))
         return false;
 
@@ -114,7 +114,7 @@ bool carp_mouse_wasButtonPressed(CarpMouseButton button)
 
 bool carp_mouse_wasButtonReleased(CarpMouseButton button)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidMouseButton(button))
         return false;
 
@@ -124,7 +124,7 @@ bool carp_mouse_wasButtonReleased(CarpMouseButton button)
 
 bool carp_mouse_isButtonDown(CarpMouseButton button)
 {
-    CarpMemory* mem = carpMemory_get();
+    CarpMemory* mem = carp_memory_get();
     if(mem == NULL || !sIsValidMouseButton(button))
         return false;
 

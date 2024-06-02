@@ -9,7 +9,7 @@
 CarpMemory* s_carpMemory = NULL;
 
 
-b8 carpMemory_init()
+b8 carp_memory_init()
 {
     if(s_carpMemory != NULL)
         return false;
@@ -18,7 +18,7 @@ b8 carpMemory_init()
     return s_carpMemory != NULL;
 }
 
-void carpMemory_deinit()
+void carp_memory_destroy()
 {
     if(s_carpMemory != NULL)
     {
@@ -27,7 +27,7 @@ void carpMemory_deinit()
     s_carpMemory = NULL;
 }
 
-CarpMemory* carpMemory_get()
+CarpMemory* carp_memory_get()
 {
     return s_carpMemory;
 }
