@@ -158,6 +158,8 @@ typedef enum CarpKeyboardKey
     CarpKeyboardKey_AudioMute,
     CarpKeyboardKey_MediaSelect,
 
+    CarpKeyboardKey_MouseXButton1,
+    CarpKeyboardKey_MouseXButton2,
 
 
 } CarpKeyboardKey;

@@ -2,21 +2,23 @@
 #define CARPWINDOW_HH
 
 #include "carptype.h"
-#include <stdalign.h> //alignof
 
 typedef void (*WindowSizeChangedFn)(int,int);
 
 
 typedef struct CarpWindow
 {
-    f64 runningTime;
-    s32 width;
-    s32 height;
-    b8 running;
-    b8 resized;
+    _Alignas(16) struct
+    { 
+        f64 runningTime;
+        s32 width;
+        s32 height;
+        b8 running;
+        b8 resized;
 
-    char windowName[104];
-    _Alignas(16) char data[768];
+        char windowName[104];
+        char data[768];
+    };
 } CarpWindow;
 
 b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y);

@@ -96,7 +96,7 @@ static CarpKeyboardKey s_getKeyFromSym(KeySym key)
     return result;
 }
 
-KeySym s_getKeySym(CarpWindow* carp_window, XKeyEvent* event)
+static KeySym s_getKeySym(CarpWindow* carp_window, XKeyEvent* event)
 {
     KeySym sym;
     XLookupString(event, NULL, 0, &sym, NULL);
