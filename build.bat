@@ -8,5 +8,6 @@ set links=-lopengl32 -lgdi32 -luser32 -lwinmm
 set linkfolders=-Lc:/windows/SysWOW64
 
 set final=%links% %linkfolders%
+md buildout
 
-%compiler% main.c -omain.exe -m64 -std=c11 %final%  
+%compiler% compileall.c -obuildout/main.exe -m64 -std=c11 %final%  

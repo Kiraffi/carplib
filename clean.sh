@@ -1,6 +1,6 @@
 #!/bin/bash
 
-rm *.exe
-rm *.ilk
-rm *.pdb
-rm *.out
+rm buildout/*.exe
+rm buildout/*.ilk
+rm buildout/*.pdb
+rm buildout/*.out

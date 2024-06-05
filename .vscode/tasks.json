@@ -9,8 +9,8 @@
         "command": "clang",
         "args": [
           "-g",
-          "main.c",
-          "-omain.exe",
+          "compileall.c",
+          "-obuildout/main.exe",
           "-std=c11",
           "-lopengl32",
           "-lgdi32",
@@ -21,6 +21,20 @@
         "presentation": {
           "reveal": "always",
           "panel": "new"
+        },
+        "dependsOn": [
+          "Create Build Directory"
+        ]
+      },
+      {
+        "label": "Create Build Directory",
+        "type": "shell",
+        "linux": {
+            "command": "mkdir -p ./buildout"
+        },
+        "windows": {
+            "command": "cmd",
+            "args": ["/C", "if not exist .\\buildout mkdir .\\buildout"]
         }
       },
       {
@@ -38,8 +52,8 @@
         "command": "clang",
         "args": [
           "-g",
-          "main.c",
-          "-omain.out",
+          "compileall.c",
+          "-obuildout/main.out",
           "-std=c11",
           "-lX11",
           "-lGL"
@@ -47,7 +61,10 @@
         "presentation": {
           "reveal": "always",
           "panel": "new"
-        }
+        },
+        "dependsOn": [
+          "Create Build Directory"
+        ]
       }
     ]
   }

@@ -1,25 +1,25 @@
 #define WIN32_LEAN_AND_MEAN 1
 
-#include "external/glad/gl.c"
-
-
-#if _WIN32
+#include "external/glad/gl.h"
 //#if _MSC_VER > 0
-    #include "carplib/carpwindow_win32.c"
-#else
-    #include "carplib/carpwindow_linux.c"
+//#include <xmmintrin.h>
+//endif
+#if __TINYC__
+    //_Static_assert(3 == 4, "Tcc will assert on compile time");
+
 #endif
+_Static_assert(4 == 4, "4 should be 4, this will not cause compile time assert");
+//_Static_assert(3 == 4, "3 should not be 4, this will cause compile time assert");
 
 
-#include "carplib/carpgl.c"
-#include "carplib/carpkeyboard.c"
-#include "carplib/carpmemory.c"
-#include "carplib/carpmouse.c"
-#include "carplib/carpshader.c"
-
+#include "carplib/carpgl.h"
+#include "carplib/carpkeyboard.h"
+#include "carplib/carpmemory.h"
+#include "carplib/carpmouse.h"
+#include "carplib/carpshader.h"
+#include "carplib/carpwindow.h"
 
 #include <malloc.h> // malloc, otherwise tcc will coredump
-#include <stdalign.h> //alignof
 #include <stdbool.h> //bool
 #include <stdio.h> //printf
 #include <stdlib.h> //free
@@ -50,8 +50,6 @@ static const char fragmentShaderCode[] =
     "{ \n"
     "    color = vec4(1.0, 0.0, 0.0, 1.0); \n"
     "} \n";
-
-
 
 
 static void sWindowSizeChanged(int width, int height)
@@ -124,6 +122,7 @@ static s32 sMainAfterWindow()
         carp_window_update(&memory->carp_window, 0.0f);
         if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
             memory->carp_window.running = false;
+            /*
         printf("Mouse x:%i, y: %i, l:%i, m:%i, r:%i, b4:%i, b5:%i, wheel x:%i, y:%i\n",
             carp_mouse_getPositionX(),
             carp_mouse_getPositionY(),
@@ -135,7 +134,7 @@ static s32 sMainAfterWindow()
             carp_mouse_getWheelX(),
             carp_mouse_getWheelY()
         );
-
+*/
         glClearColor(0.2f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
