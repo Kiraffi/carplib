@@ -51,7 +51,7 @@ f32 carp_math_len_v2(CarpV2 a);
 
 
 
-typedef struct Vec3A
+typedef struct CarpV3A
 {
     _Alignas(16) union
     {
@@ -68,39 +68,39 @@ typedef struct Vec3A
         #endif
 
     };
-} Vec3A;
+} CarpV3A;
 
-Vec3A carp_math_neg_v3(Vec3A a);
-Vec3A carp_math_normalize_v3(Vec3A a);
-Vec3A carp_math_lerp_v3(Vec3A a, Vec3A b, f32 t);
+CarpV3A carp_math_neg_v3(CarpV3A a);
+CarpV3A carp_math_normalize_v3(CarpV3A a);
+CarpV3A carp_math_lerp_v3(CarpV3A a, CarpV3A b, f32 t);
 
-Vec3A carp_math_add_v3_v3(Vec3A a, Vec3A b);
-Vec3A carp_math_add_v3_3(Vec3A a, f32 f);
-Vec3A carp_math_add_f_v3(f32 f, Vec3A);
+CarpV3A carp_math_add_v3_v3(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_add_v3_3(CarpV3A a, f32 f);
+CarpV3A carp_math_add_f_v3(f32 f, CarpV3A);
 
-Vec3A carp_math_sub_v3_v3(Vec3A a, Vec3A b);
-Vec3A carp_math_sub_v3_3(Vec3A a, f32 f);
-Vec3A carp_math_sub_f_v3(f32 f, Vec3A);
+CarpV3A carp_math_sub_v3_v3(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_sub_v3_3(CarpV3A a, f32 f);
+CarpV3A carp_math_sub_f_v3(f32 f, CarpV3A);
 
-Vec3A carp_math_mul_v3_v3(Vec3A a, Vec3A b);
-Vec3A carp_math_mul_v3_3(Vec3A a, f32 f);
-Vec3A carp_math_mul_f_v3(f32 f, Vec3A);
+CarpV3A carp_math_mul_v3_v3(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_mul_v3_3(CarpV3A a, f32 f);
+CarpV3A carp_math_mul_f_v3(f32 f, CarpV3A);
 
-Vec3A carp_math_div_v3_v3(Vec3A a, Vec3A b);
-Vec3A carp_math_div_v3_3(Vec3A a, f32 f);
-Vec3A carp_math_div_f_v3(f32 f, Vec3A);
+CarpV3A carp_math_div_v3_v3(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_div_v3_3(CarpV3A a, f32 f);
+CarpV3A carp_math_div_f_v3(f32 f, CarpV3A);
 
-Vec3A carp_math_min_v3_v3(Vec3A a, Vec3A b);
-Vec3A carp_math_max_v3_v3(Vec3A a, Vec3A b);
-Vec3A carp_math_cross(Vec3A, Vec3A b);
-Vec3A carp_math_proj(Vec3A, Vec3A b);
-Vec3A carp_math_reject(Vec3A, Vec3A b);
+CarpV3A carp_math_min_v3_v3(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_max_v3_v3(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_cross(CarpV3A, CarpV3A b);
+CarpV3A carp_math_proj(CarpV3A, CarpV3A b);
+CarpV3A carp_math_reject(CarpV3A, CarpV3A b);
 
-f32 carp_math_dot_v3(Vec3A a, Vec3A b);
-f32 carp_math_min_v3_f(Vec3A a);
-f32 carp_math_max_v3_f(Vec3A a);
-f32 carp_math_sqrLen_v3(Vec3A a);
-f32 carp_math_len_v3(Vec3A a);
+f32 carp_math_dot_v3(CarpV3A a, CarpV3A b);
+f32 carp_math_min_v3_f(CarpV3A a);
+f32 carp_math_max_v3_f(CarpV3A a);
+f32 carp_math_sqrLen_v3(CarpV3A a);
+f32 carp_math_len_v3(CarpV3A a);
 
 
 
