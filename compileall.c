@@ -13,6 +13,7 @@
 
 #include "carplib/carpgl.c"
 #include "carplib/carpkeyboard.c"
+#include "carplib/carpmath.c"
 #include "carplib/carpmemory.c"
 #include "carplib/carpmouse.c"
 #include "carplib/carpshader.c"
