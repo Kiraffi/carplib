@@ -241,6 +241,8 @@ static CarpKeyboardKey s_getKey(u32 key)
         case VK_RMENU: result = CarpKeyboardKey_RAlt; break;
         case VK_LSHIFT: result = CarpKeyboardKey_LShift; break;
         case VK_RSHIFT: result = CarpKeyboardKey_RShift; break;
+        case VK_XBUTTON1: result = CarpKeyboardKey_MouseXButton1; break;
+        case VK_XBUTTON2: result = CarpKeyboardKey_MouseXButton2; break;
 
         default:
         {
@@ -271,6 +273,63 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             PostQuitMessage(0);
             break;
         }
+
+            case WM_LBUTTONDOWN:
+            case WM_MBUTTONDOWN:
+            case WM_RBUTTONDOWN:
+            case WM_XBUTTONDOWN:
+            case WM_LBUTTONUP:
+            case WM_MBUTTONUP:
+            case WM_RBUTTONUP:
+            case WM_XBUTTONUP:
+            {
+                bool down = false;
+                CarpMouseButton mouseButton = CarpMouseButton_Invalid;
+                switch(uMsg)
+                {
+                    case WM_LBUTTONDOWN:
+                    case WM_MBUTTONDOWN:
+                    case WM_RBUTTONDOWN:
+                    case WM_XBUTTONDOWN:
+                        down = true;
+                        break;
+                    default:
+                        break;
+                }
+
+                switch(uMsg)
+                {
+                    case WM_LBUTTONDOWN:
+                    case WM_LBUTTONUP:
+                        mouseButton = CarpMouseButton_Left;
+                        break;
+                    case WM_MBUTTONDOWN:
+                    case WM_MBUTTONUP:
+                        mouseButton = CarpMouseButton_Middle;
+                        break;
+                    case WM_RBUTTONDOWN:
+                    case WM_RBUTTONUP:
+                        mouseButton = CarpMouseButton_Right;
+                        break;
+                    case WM_XBUTTONDOWN:
+                    case WM_XBUTTONUP:
+                    {
+                        u32 button = (u32)(HIWORD((u32)lParam)) & ((u32)(0x1ff)); //0x1ff;
+                        s32 translated = s_getKey(button);
+                        if(translated == CarpKeyboardKey_MouseXButton2)
+                            mouseButton = CarpMouseButton_Button5;
+                        else
+                            mouseButton = CarpMouseButton_Button4;
+
+                        break;
+                    }
+                    default:
+                        break;
+                }
+                carp_mouse_setButtonState(mouseButton, down);
+                //dispatch = true;
+                break;
+            }
 
         /*
         WM_SIZE =>
@@ -309,6 +368,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             if( translated != CarpKeyboardKey_Invalid && translated < 1024)
             {
+                printf("key: %i\n", translated);
                 carp_keyboard_setKeyState(translated, down);
             }
 
@@ -422,53 +482,6 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
                 break;
             };
 
-            case WM_LBUTTONDOWN:
-            case WM_MBUTTONDOWN:
-            case WM_RBUTTONDOWN:
-            case WM_XBUTTONDOWN:
-            case WM_LBUTTONUP:
-            case WM_MBUTTONUP:
-            case WM_RBUTTONUP:
-            case WM_XBUTTONUP:
-            {
-                bool down = false;
-                CarpMouseButton mouseButton = CarpMouseButton_Invalid;
-                switch(msg.message)
-                {
-                    case WM_LBUTTONDOWN:
-                    case WM_MBUTTONDOWN:
-                    case WM_RBUTTONDOWN:
-                    case WM_XBUTTONDOWN:
-                        down = true;
-                        break;
-                    default:
-                        break;
-                }
-                switch(msg.message)
-                {
-                    case WM_LBUTTONDOWN:
-                    case WM_LBUTTONUP:
-                        mouseButton = CarpMouseButton_Left;
-                        break;
-                    case WM_MBUTTONDOWN:
-                    case WM_MBUTTONUP:
-                        mouseButton = CarpMouseButton_Middle;
-                        break;
-                    case WM_RBUTTONDOWN:
-                    case WM_RBUTTONUP:
-                        mouseButton = CarpMouseButton_Right;
-                        break;
-                    case WM_XBUTTONDOWN:
-                    case WM_XBUTTONUP:
-                        mouseButton = CarpMouseButton_Button4;
-                        break;
-                    default:
-                        break;
-                }
-                carp_mouse_setButtonState(mouseButton, down);
-                //dispatch = true;
-                break;
-            }
 
 
             case WM_MOUSEWHEEL:
