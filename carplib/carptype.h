@@ -1,5 +1,5 @@
-#ifndef MYTYPE_HH
-#define MYTYPE_HH
+#ifndef CARP_TYPE_HH
+#define CARP_TYPE_HH
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -19,4 +19,4 @@ typedef uint64_t u64;
 typedef float f32;
 typedef double f64;
 
-#endif
+#endif // CARP_TYPE_HH

@@ -26,7 +26,7 @@
             "type": "lldb",
             "request": "launch",
             "name": "Debug linux",
-            "program": "${workspaceFolder}/main.out",
+            "program": "${workspaceFolder}/buildout/main.out",
             "args": [],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Compile linux"

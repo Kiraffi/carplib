@@ -15,7 +15,7 @@ f32 carp_math_max_f(f32 a, f32 b);
 typedef struct CarpV2
 {
     _Alignas(8) struct
-    { 
+    {
         f32 x;
         f32 y;
     };
@@ -55,7 +55,7 @@ typedef struct CarpV3A
 {
     _Alignas(16) union
     {
-        struct 
+        struct
         {
             float x;
             float y;
@@ -76,25 +76,25 @@ CarpV3A carp_math_lerp_v3(CarpV3A a, CarpV3A b, f32 t);
 
 CarpV3A carp_math_add_v3_v3(CarpV3A a, CarpV3A b);
 CarpV3A carp_math_add_v3_3(CarpV3A a, f32 f);
-CarpV3A carp_math_add_f_v3(f32 f, CarpV3A);
+CarpV3A carp_math_add_f_v3(f32 f, CarpV3A b);
 
 CarpV3A carp_math_sub_v3_v3(CarpV3A a, CarpV3A b);
-CarpV3A carp_math_sub_v3_3(CarpV3A a, f32 f);
-CarpV3A carp_math_sub_f_v3(f32 f, CarpV3A);
+CarpV3A carp_math_sub_v3_f(CarpV3A a, f32 f);
+CarpV3A carp_math_sub_f_v3(f32 f, CarpV3A b);
 
 CarpV3A carp_math_mul_v3_v3(CarpV3A a, CarpV3A b);
-CarpV3A carp_math_mul_v3_3(CarpV3A a, f32 f);
-CarpV3A carp_math_mul_f_v3(f32 f, CarpV3A);
+CarpV3A carp_math_mul_v3_f(CarpV3A a, f32 f);
+CarpV3A carp_math_mul_f_v3(f32 f, CarpV3A b);
 
 CarpV3A carp_math_div_v3_v3(CarpV3A a, CarpV3A b);
-CarpV3A carp_math_div_v3_3(CarpV3A a, f32 f);
-CarpV3A carp_math_div_f_v3(f32 f, CarpV3A);
+CarpV3A carp_math_div_v3_f(CarpV3A a, f32 f);
+CarpV3A carp_math_div_f_v3(f32 f, CarpV3A b);
 
 CarpV3A carp_math_min_v3_v3(CarpV3A a, CarpV3A b);
 CarpV3A carp_math_max_v3_v3(CarpV3A a, CarpV3A b);
-CarpV3A carp_math_cross(CarpV3A, CarpV3A b);
-CarpV3A carp_math_proj(CarpV3A, CarpV3A b);
-CarpV3A carp_math_reject(CarpV3A, CarpV3A b);
+CarpV3A carp_math_cross(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_project(CarpV3A a, CarpV3A b);
+CarpV3A carp_math_reject(CarpV3A a, CarpV3A b);
 
 f32 carp_math_dot_v3(CarpV3A a, CarpV3A b);
 f32 carp_math_min_v3_f(CarpV3A a);

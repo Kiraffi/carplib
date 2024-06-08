@@ -56,7 +56,8 @@
           "-obuildout/main.out",
           "-std=c11",
           "-lX11",
-          "-lGL"
+          "-lGL",
+          "-lm"
         ],
         "presentation": {
           "reveal": "always",
