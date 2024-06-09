@@ -9,6 +9,7 @@
         "stdbool.h": "c",
         "carptype.h": "c",
         "carpmemory.h": "c",
-        "carpkeyboard.h": "c"
+        "carpkeyboard.h": "c",
+        "mmintrin.h": "c"
     }
 }
