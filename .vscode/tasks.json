@@ -12,6 +12,7 @@
           "compileall.c",
           "-obuildout/main.exe",
           "-std=c11",
+          "-m64",
           "-lopengl32",
           "-lgdi32",
           "-luser32",
@@ -56,6 +57,7 @@
           "-obuildout/main.out",
           "-std=c11",
           "-lX11",
+          "-m64",
           "-lGL",
           "-lm"
         ],

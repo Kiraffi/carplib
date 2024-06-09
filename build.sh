@@ -5,7 +5,7 @@ mkdir buildout
 
 
 compiler=$1
-compileoptions="-std=c11 -lX11 -lGL -lm"
+compileoptions="-std=c11 -lX11 -lGL -lm -m64"
 compileincludes=""
 tcccompileoptionsextra="-L../tinycc -I../tinycc/include"
 

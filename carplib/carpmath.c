@@ -3,15 +3,65 @@
 #include <math.h>
 #include <stdio.h>
 
-f32 carp_math_min_f(f32 a, f32 b) { return a < b ? a : b; }
-f32 carp_math_max_f(f32 a, f32 b) { return a > b ? a : b; }
+f32 carp_math_min_f_f(f32 a, f32 b)
+{
+    f32 result;
+    #ifndef __TINYC__
+        result = a < b ? a : b;
+    #else
+        __asm__ volatile  (
+            "minps %%xmm1, %%xmm0\n\t"
+            "movd %%xmm0, %[res]\n\t"
+            : [res] "+m" (result)
+        );
+
+    #endif
+    return result;
+}
+
+f32 carp_math_max_f_f(f32 a, f32 b)
+{
+    f32 result;
+    #ifndef __TINYC__
+        result = a > b ? a : b;
+    #else
+        __asm__ volatile  (
+            "maxps %%xmm1, %%xmm0\n\t"
+            "movd %%xmm0, %[res]\n\t"
+            : [res] "+m" (result)
+        );
+
+    #endif
+
+    return result;
+}
 
 
-
-CarpV2 carp_math_neg_v2(const CarpV2* a) {
+CarpV2 carp_math_broadcast_v2(f32 f)
+{
     CarpV2 result;
+    result.x = result.y = f;
+    return result;
+}
+
+
+CarpV2 carp_math_neg_v2(const CarpV2* a)
+{
+    static const CarpV2 negZeroV2 = { -0.0f, -0.0f };
+    CarpV2 result;
+#ifndef __TINYC__
     result.x = -a->x;
     result.y = -a->y;
+#else
+    __asm__ volatile  (
+        "movq %[zerov2], %%xmm1\n\t"
+        "movq (%%rdi), %%xmm0\n\t"
+        "pxor %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, %[c]\n\t"
+        : [c] "+m"(result)
+        : [zerov2]"m"(negZeroV2)
+    );
+#endif
     return result;
 }
 
@@ -32,30 +82,83 @@ CarpV2 carp_math_normalize_v2(const CarpV2* a)
 CarpV2 carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x + (b->x - a->x) * t;
     result.y = a->y + (b->y - a->y) * t;
+#else
+    result.x = result.y = t;
+    __asm__ volatile  (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "movq %[c], %%xmm2\n\t"
+        "subps %%xmm0, %%xmm1\n\t"
+        "mulps %%xmm2, %%xmm1\n\t"
+        "addps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, %[c]\n\t"
+        : [c] "=m"(result)
+    );
+#endif
     return result;
 }
 
 CarpV2 carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x + b->x;
     result.y = a->y + b->y;
+#else
+    __asm__ volatile  (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "addps %%xmm1, %%xmm0\n\t"
+        "movups %%xmm0, %[c]\n\t"
+        : [c] "+m"(result)
+    );
+#endif
     return result;
 }
+
 CarpV2 carp_math_add_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x + f;
     result.y = a->y + f;
+#else
+    __asm__ volatile  (
+        "lea %[c], %%rax\n\t"
+        "movd %%xmm0, (%%rax)\n\t"
+        "movd %%xmm0, +4(%%rax)\n\t"
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rax), %%xmm1\n\t"
+        "addps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, (%%rax)\n\t"
+        : [c] "+m"(result)
+    );
+#endif
+
     return result;
 }
 CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b)
 {
     CarpV2 result;
-    result.x = f + b->x;
-    result.y = f + b->y;
+#ifndef __TINYC__
+    result.x = b->x + f;
+    result.y = b->y + f;
+#else
+    __asm__ volatile  (
+        "lea %[c], %%rax\n\t"
+        "movd %%xmm0, (%%rax)\n\t"
+        "movd %%xmm0, +4(%%rax)\n\t"
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rax), %%xmm1\n\t"
+        "addps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, (%%rax)\n\t"
+        : [c] "+m"(result)
+    );
+#endif
+
     return result;
 }
 
@@ -64,15 +167,39 @@ CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b)
 CarpV2 carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x - b->x;
     result.y = a->y - b->y;
+#else
+    __asm__ volatile  (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "subps %%xmm1, %%xmm0\n\t"
+        "movups %%xmm0, %[c]\n\t"
+        : [c] "+m"(result)
+    );
+#endif
     return result;
 }
 CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x - f;
     result.y = a->y - f;
+#else
+    __asm__ volatile  (
+        "lea %[c], %%rax\n\t"
+        "movd %%xmm0, (%%rax)\n\t"
+        "movd %%xmm0, +4(%%rax)\n\t"
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rax), %%xmm1\n\t"
+        "subps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, (%%rax)\n\t"
+        : [c] "+m"(result)
+    );
+#endif
+
     return result;
 }
 
@@ -81,22 +208,60 @@ CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f)
 CarpV2 carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x * b->x;
     result.y = a->y * b->y;
+#else
+    __asm__ volatile  (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "mulps %%xmm1, %%xmm0\n\t"
+        "movups %%xmm0, %[c]\n\t"
+        : [c] "+m"(result)
+    );
+#endif
     return result;
 }
 CarpV2 carp_math_mul_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x * f;
     result.y = a->y * f;
+#else
+    __asm__ volatile  (
+        "lea %[c], %%rax\n\t"
+        "movd %%xmm0, (%%rax)\n\t"
+        "movd %%xmm0, +4(%%rax)\n\t"
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rax), %%xmm1\n\t"
+        "mulps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, (%%rax)\n\t"
+        : [c] "+m"(result)
+    );
+#endif
+
     return result;
 }
 CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b)
 {
     CarpV2 result;
-    result.x = f * b->x;
-    result.y = f * b->y;
+#ifndef __TINYC__
+    result.x = b->x - f;
+    result.y = b->y - f;
+#else
+    __asm__ volatile  (
+        "lea %[c], %%rax\n\t"
+        "movd %%xmm0, (%%rax)\n\t"
+        "movd %%xmm0, +4(%%rax)\n\t"
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rax), %%xmm1\n\t"
+        "mulps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, (%%rax)\n\t"
+        : [c] "+m"(result)
+    );
+#endif
+
     return result;
 }
 
@@ -105,37 +270,134 @@ CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b)
 CarpV2 carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
+#ifndef __TINYC__
     result.x = a->x / b->x;
     result.y = a->y / b->y;
+#else
+    __asm__ volatile  (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "divps %%xmm1, %%xmm0\n\t"
+        "movups %%xmm0, %[c]\n\t"
+        : [c] "+m"(result)
+    );
+#endif
     return result;
 }
 CarpV2 carp_math_div_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
-    result.x = a->x / f;
-    result.y = a->y / f;
+#ifndef __TINYC__
+    result.x = a->x * f;
+    result.y = a->y * f;
+#else
+    __asm__ volatile  (
+        "lea %[c], %%rax\n\t"
+        "movd %%xmm0, (%%rax)\n\t"
+        "movd %%xmm0, +4(%%rax)\n\t"
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rax), %%xmm1\n\t"
+        "divps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, (%%rax)\n\t"
+        : [c] "+m"(result)
+    );
+#endif
     return result;
 }
 
 CarpV2 carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
-    result.x = carp_math_min_f(a->x, b->x);
-    result.y = carp_math_min_f(a->y, b->y);
+#ifndef __TINYC__
+    result.x = carp_math_min_f_f(a->x, b->x);
+    result.y = carp_math_min_f_f(a->y, b->y);
+#else
+    __asm__ volatile  (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "minps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, %[c]\n\t"
+        : [c] "+m" (result)
+    );
+#endif
     return result;
 }
 CarpV2 carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
-    result.x = carp_math_max_f(a->x, b->x);
-    result.y = carp_math_max_f(a->y, b->y);
+#ifndef __TINYC__
+    result.x = carp_math_max_f_f(a->x, b->x);
+    result.y = carp_math_max_f_f(a->y, b->y);
+#else
+    __asm__ volatile  (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "maxps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, %[c]\n\t"
+        : [c] "+m" (result)
+    );
+#endif
     return result;
 }
-f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b) { return a->x * b->x + a->y * b->y; }
-f32 carp_math_min_v2_f(const CarpV2* a) { return carp_math_min_f(a->x, a->y); }
-f32 carp_math_max_v2_f(const CarpV2* a) { return carp_math_max_f(a->x, a->y); }
-f32 carp_math_sqrLen_v2(const CarpV2* a) { return a->x * a->x + a->y * a->y; }
-f32 carp_math_len_v2(const CarpV2* a) { return sqrtf(carp_math_sqrLen_v2(a)); }
+f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
+{
+    f32 result;
+#ifndef __TINYC__
+    result = a->x * b->x + a->y * b->y;
+#else
+    CarpV3A tmpstack;
+    __asm__ volatile (
+        "movq (%%rdi), %%xmm0\n\t"
+        "movq (%%rsi), %%xmm1\n\t"
+        "mulps %%xmm1, %%xmm0\n\t"
+        "movq %%xmm0, %[tmp]\n\t"
+        : [tmp] "+m" (tmpstack)
+    );
+
+    result = tmpstack.x + tmpstack.y;
+#endif
+    return result;
+}
+f32 carp_math_min_v2(const CarpV2* a)
+{
+    f32 result;
+#ifndef __TINYC__
+    result = carp_math_min_f_f(a->x, a->y);
+#else
+    __asm__ volatile  (
+        "movd (%%rdi), %%xmm0\n\t"
+        "movd +4(%%rdi), %%xmm1\n\t"
+        "minps %%xmm1, %%xmm0\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        : [c] "+m" (result)
+    );
+#endif
+    return result;
+}
+f32 carp_math_max_v2(const CarpV2* a)
+{
+     f32 result;
+#ifndef __TINYC__
+    result = carp_math_max_f_f(a->x, a->y);
+#else
+    __asm__ volatile  (
+        "movd (%%rdi), %%xmm0\n\t"
+        "movd +4(%%rdi), %%xmm1\n\t"
+        "maxps %%xmm1, %%xmm0\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        : [c] "+m" (result)
+    );
+#endif
+    return result;
+}
+f32 carp_math_sqrLen_v2(const CarpV2* a)
+{
+    return a->x * a->x + a->y * a->y;
+}
+f32 carp_math_len_v2(const CarpV2* a)
+{
+    return sqrtf(carp_math_sqrLen_v2(a));
+}
 
 
 
@@ -144,22 +406,14 @@ f32 carp_math_len_v2(const CarpV2* a) { return sqrtf(carp_math_sqrLen_v2(a)); }
 
 
 
-CarpV3A carp_math_broadcast_f32_v3(f32 f)
+CarpV3A carp_math_broadcast_v3(f32 f)
 {
     CarpV3A result;
-
     #ifndef __TINYC__
         result.simdv3a = _mm_set_ps(0.0f, f, f, f);
     #else
-        __asm__ volatile  (
-            "lea %[res], %%rax\n\t"
-            "movd %%xmm0, (%%rax)\n\t"
-            "movd %%xmm0, +0x4(%%rax)\n\t"
-            "movd %%xmm0, +0x8(%%rax)\n\t"
-            "movl $0, +0xc(%%rax)\n\t"
-            : [res] "+m" (result)
-        );
-
+        result.x = result.y = result.z = f;
+        result.w = 0.0f;
     #endif
 
     return result;
@@ -203,9 +457,26 @@ CarpV3A carp_math_normalize_v3(const CarpV3A* a)
 
 CarpV3A carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t)
 {
+    CarpV3A result;
+#ifndef __TINYC__
     CarpV3A sub = carp_math_sub_v3_v3(b, a);
     CarpV3A subt = carp_math_mul_v3_f(&sub, t);
-    CarpV3A result = carp_math_mul_v3_v3(a, &subt);
+    result = carp_math_mul_v3_v3(a, &subt);
+#else
+    result.x = result.y = result.z = result.w = t;
+
+    __asm__ volatile  (
+        "movups (%%rdi), %%xmm0\n\t"
+        "movups (%%rsi), %%xmm1\n\t"
+        "movups %[c], %%xmm2\n\t"
+        "subps %%xmm0, %%xmm1\n\t"
+        "mulps %%xmm2, %%xmm1\n\t"
+        "addps %%xmm1, %%xmm0\n\t"
+        "movups %%xmm0, %[c]\n\t"
+        : [c] "=m"(result)
+    );
+    result.w = 0.0f;
+#endif
     return result;
 }
 
@@ -234,7 +505,6 @@ CarpV3A carp_math_add_v3_f(const CarpV3A* a, f32 f)
 #else
     __asm__ volatile  (
         "lea %[res], %%rax\n\t"
-        //"lea %[f], %%rcx\n\t"
         "movd %%xmm0, (%%rax)\n\t"
         "movd %%xmm0, +0x4(%%rax)\n\t"
         "movd %%xmm0, +0x8(%%rax)\n\t"
@@ -243,9 +513,7 @@ CarpV3A carp_math_add_v3_f(const CarpV3A* a, f32 f)
         "movups (%%rax), %%xmm1\n\t"
         "addps %%xmm1, %%xmm0\n\t"
         "movups %%xmm0, (%%rax)\n\t"
-        //"movups (%%rcx), %%xmm0\n\t"
         : [res] "+m" (result)
-        //: [f] "m" (f)
     );
 #endif
 
@@ -259,7 +527,6 @@ CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b)
 #else
     __asm__ volatile  (
         "lea %[res], %%rax\n\t"
-        //"lea %[f], %%rcx\n\t"
         "movd %%xmm0, (%%rax)\n\t"
         "movd %%xmm0, +0x4(%%rax)\n\t"
         "movd %%xmm0, +0x8(%%rax)\n\t"
@@ -268,9 +535,7 @@ CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b)
         "movups (%%rax), %%xmm1\n\t"
         "addps %%xmm1, %%xmm0\n\t"
         "movups %%xmm0, (%%rax)\n\t"
-        //"movups (%%rcx), %%xmm0\n\t"
         : [res] "+m" (result)
-        //: [f] "m" (f)
     );
 #endif
 
@@ -412,13 +677,10 @@ CarpV3A carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b)
     result.simdv3a = _mm_min_ps(a->simdv3a, b->simdv3a);
 #else
     __asm__ volatile  (
-        //"lea %[c], %%rax\n\t"
         "movups (%%rdi), %%xmm0\n\t"
         "movups (%%rsi), %%xmm1\n\t"
         "minps %%xmm1, %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
-        "movups (%%rdi), %%xmm0\n\t"
-        //"movl $0, +0xc(%%rax)\n\t"
         : [c] "+m" (result)
     );
 #endif
@@ -488,14 +750,44 @@ f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
     return result;
 }
 
-f32 carp_math_min_v3_f(const CarpV3A* a)
+f32 carp_math_min_v3(const CarpV3A* a)
 {
-    return carp_math_min_f(a->x, carp_math_min_f(a->y, a->z));
+    float result;
+#ifndef __TINYC__
+    result = carp_math_min_f_f(a->x, carp_math_min_f_f(a->y, a->z));
+#else
+    __asm__ volatile (
+        "movd (%%rdi), %%xmm0\n\t"
+        "movd +4(%%rdi), %%xmm1\n\t"
+        "movd +8(%%rdi), %%xmm2\n\t"
+        "minps %%xmm1, %%xmm0\n\t"
+        "minps %%xmm2, %%xmm0\n\t"
+        "movd %%xmm0, %[result]\n\t"
+        : [result] "+m" (result)
+    );
+#endif
+    return result;
 }
-f32 carp_math_max_v3_f(const CarpV3A* a)
+
+f32 carp_math_max_v3(const CarpV3A* a)
 {
-    return carp_math_max_f(a->x, carp_math_max_f(a->y, a->z));
+    float result;
+#ifndef __TINYC__
+    result = carp_math_max_f_f(a->x, carp_math_max_f_f(a->y, a->z));
+#else
+    __asm__ volatile (
+        "movd (%%rdi), %%xmm0\n\t"
+        "movd +4(%%rdi), %%xmm1\n\t"
+        "movd +8(%%rdi), %%xmm2\n\t"
+        "maxps %%xmm1, %%xmm0\n\t"
+        "maxps %%xmm2, %%xmm0\n\t"
+        "movd %%xmm0, %[result]\n\t"
+        : [result] "+m" (result)
+    );
+#endif
+    return result;
 }
+
 f32 carp_math_sqrLen_v3(const CarpV3A* a)
 {
     f32 result;
@@ -514,7 +806,7 @@ f32 carp_math_sqrLen_v3(const CarpV3A* a)
 #endif
     return result;
 }
-f32 carp_math_len_v3(const CarpV3A* a) { return sqrt(carp_math_sqrLen_v3(a)); }
+f32 carp_math_len_v3(const CarpV3A* a) { return sqrtf(carp_math_sqrLen_v3(a)); }
 
 
 
