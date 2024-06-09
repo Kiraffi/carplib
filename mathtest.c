@@ -21,9 +21,9 @@ void testv2()
     CarpV2 v2a = {-7.0f, 2.0f };
     CarpV2 v2b = {-4.0f, 1.0f };
 
-    CarpV2 sum_v2_v2 = carp_math_add_v2_v2(&v2a, &v2b);
-    CarpV2 sum_v2_f = carp_math_add_v2_f(&v2a, 3.7f);
-    CarpV2 sum_f_v2 = carp_math_add_f_v2(-1.8f, &v2b);
+    CarpV2 add_v2_v2 = carp_math_add_v2_v2(&v2a, &v2b);
+    CarpV2 add_v2_f = carp_math_add_v2_f(&v2a, 3.7f);
+    CarpV2 add_f_v2 = carp_math_add_f_v2(-1.8f, &v2b);
 
     CarpV2 sub_v2_v2 = carp_math_sub_v2_v2(&v2a, &v2b);
     CarpV2 sub_v2_f = carp_math_sub_v2_f(&v2a, 3.7f);
@@ -57,9 +57,9 @@ void testv2()
     carp_math_print_v2(&neg_v2, "neg v2a");
     carp_math_print_v2(&normalized, "normalized v2a");
 
-    carp_math_print_v2(&sum_v2_v2, "sum_v2_v2");
-    carp_math_print_v2(&sum_v2_f, "sum_v2_f");
-    carp_math_print_v2(&sum_f_v2, "sum_f_v2");
+    carp_math_print_v2(&add_v2_v2, "add_v2_v2");
+    carp_math_print_v2(&add_v2_f, "add_v2_f");
+    carp_math_print_v2(&add_f_v2, "add_f_v2");
 
     carp_math_print_v2(&sub_v2_v2, "sub_v2_v2");
     carp_math_print_v2(&sub_v2_f, "sub_v2_f");
@@ -104,12 +104,12 @@ void testv2()
 void testv3a()
 {
     printf("V3A begin\n");
-    CarpV3A v3a = {-7.0f, 2.0f, 3.0f, 0.0f};
-    CarpV3A v3b = {-4.0f, 1.0f, 3.0f, 0.0f};
+    CarpV3A v3a = {-7.0f, 2.0f, 3.0f, 10.0f};
+    CarpV3A v3b = {-4.0f, 1.0f, 3.0f, 20.0f};
 
-    CarpV3A sum_v3_v3 = carp_math_add_v3_v3(&v3a, &v3b);
-    CarpV3A sum_v3_f = carp_math_add_v3_f(&v3a, 3.7f);
-    CarpV3A sum_f_v3 = carp_math_add_f_v3(-1.8f, &v3b);
+    CarpV3A add_v3_v3 = carp_math_add_v3_v3(&v3a, &v3b);
+    CarpV3A add_v3_f = carp_math_add_v3_f(&v3a, 3.7f);
+    CarpV3A add_f_v3 = carp_math_add_f_v3(-1.8f, &v3b);
 
     CarpV3A sub_v3_v3 = carp_math_sub_v3_v3(&v3a, &v3b);
     CarpV3A sub_v3_f = carp_math_sub_v3_f(&v3a, 3.7f);
@@ -142,9 +142,9 @@ void testv3a()
     carp_math_print_v3a(&neg_v3, "neg v3a");
     carp_math_print_v3a(&normalized, "normalized v3a");
 
-    carp_math_print_v3a(&sum_v3_v3, "sum_v3_v3");
-    carp_math_print_v3a(&sum_v3_f, "sum_v3_f");
-    carp_math_print_v3a(&sum_f_v3, "sum_f_v3");
+    carp_math_print_v3a(&add_v3_v3, "add_v3_v3");
+    carp_math_print_v3a(&add_v3_f, "add_v3_f");
+    carp_math_print_v3a(&add_f_v3, "add_f_v3");
 
     carp_math_print_v3a(&sub_v3_v3, "sub_v3_v3");
     carp_math_print_v3a(&sub_v3_f, "sub_v3_f");
@@ -183,8 +183,8 @@ void testv3a()
 
 int main()
 {
-    //testf32();
+    testf32();
     testv2();
-    //testv3a();
+    testv3a();
     return 0;
 }
