@@ -12,6 +12,12 @@
 
 #endif
 
+#if __TINYC__
+    #define ASM_LABEL(name) #name
+#else
+    #define ASM_LABEL(name) #name"%="
+#endif
+
 #define CARP_EPSILON (1.0e-5f)
 
 
@@ -57,7 +63,6 @@ CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b);
 
 CarpV2 carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b);
 CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f);
-CarpV2 carp_math_sub_f_v2(f32 f, const CarpV2* b);
 
 CarpV2 carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b);
 CarpV2 carp_math_mul_v2_f(const CarpV2* a, f32 f);
@@ -65,7 +70,6 @@ CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b);
 
 CarpV2 carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b);
 CarpV2 carp_math_div_v2_f(const CarpV2* a, f32 f);
-CarpV2 carp_math_div_f_v2(f32 f, const CarpV2* b);
 
 CarpV2 carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b);
 CarpV2 carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b);
@@ -89,7 +93,6 @@ CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b);
 
 CarpV3A carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b);
 CarpV3A carp_math_sub_v3_f(const CarpV3A* a, f32 f);
-CarpV3A carp_math_sub_f_v3(f32 f, const CarpV3A* b);
 
 CarpV3A carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b);
 CarpV3A carp_math_mul_v3_f(const CarpV3A* a, f32 f);
@@ -97,7 +100,6 @@ CarpV3A carp_math_mul_f_v3(f32 f, const CarpV3A* b);
 
 CarpV3A carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b);
 CarpV3A carp_math_div_v3_f(const CarpV3A* a, f32 f);
-CarpV3A carp_math_div_f_v3(f32 f, const CarpV3A* b);
 
 CarpV3A carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b);
 CarpV3A carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b);
