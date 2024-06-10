@@ -47,7 +47,17 @@ f32 carp_math_max_f_f(f32 a, f32 b)
 CarpV2 carp_math_broadcast_v2(f32 f)
 {
     CarpV2 result;
+#if !USE_ASM
     result.x = result.y = f;
+#else
+    __asm__ volatile  (
+        "movd %%xmm0, +0x0%[res]\n\t"
+        "movd %%xmm0, +0x4%[res]\n\t"
+        : [res] "+m" (result)
+    );
+
+#endif
+
     return result;
 }
 
@@ -93,8 +103,9 @@ CarpV2 carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t)
     result.x = a->x + (b->x - a->x) * t;
     result.y = a->y + (b->y - a->y) * t;
 #else
-    result.x = result.y = t;
     __asm__ volatile  (
+        "movq %%xmm0, %[c]\n\t"
+        "movq %%xmm0, +4%[c]\n\t"
         "movq (%%rdi), %%xmm0\n\t"
         "movq (%%rsi), %%xmm1\n\t"
         "movq %[c], %%xmm2\n\t"
@@ -134,13 +145,12 @@ CarpV2 carp_math_add_v2_f(const CarpV2* a, f32 f)
     result.y = a->y + f;
 #else
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
-        "movd %%xmm0, (%%rax)\n\t"
-        "movd %%xmm0, +4(%%rax)\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        "movd %%xmm0, +4%[c]\n\t"
         "movq (%%rdi), %%xmm0\n\t"
-        "movq (%%rax), %%xmm1\n\t"
+        "movq %[c], %%xmm1\n\t"
         "addps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rax)\n\t"
+        "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
     );
 #endif
@@ -155,13 +165,12 @@ CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b)
     result.y = b->y + f;
 #else
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
-        "movd %%xmm0, (%%rax)\n\t"
-        "movd %%xmm0, +4(%%rax)\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        "movd %%xmm0, +4%[c]\n\t"
         "movq (%%rdi), %%xmm0\n\t"
-        "movq (%%rax), %%xmm1\n\t"
+        "movq %[c], %%xmm1\n\t"
         "addps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rax)\n\t"
+        "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
     );
 #endif
@@ -196,13 +205,12 @@ CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f)
     result.y = a->y - f;
 #else
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
-        "movd %%xmm0, (%%rax)\n\t"
-        "movd %%xmm0, +4(%%rax)\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        "movd %%xmm0, +4%[c]\n\t"
         "movq (%%rdi), %%xmm0\n\t"
-        "movq (%%rax), %%xmm1\n\t"
+        "movq %[c], %%xmm1\n\t"
         "subps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rax)\n\t"
+        "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
     );
 #endif
@@ -237,13 +245,12 @@ CarpV2 carp_math_mul_v2_f(const CarpV2* a, f32 f)
     result.y = a->y * f;
 #else
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
-        "movd %%xmm0, (%%rax)\n\t"
-        "movd %%xmm0, +4(%%rax)\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        "movd %%xmm0, +4%[c]\n\t"
         "movq (%%rdi), %%xmm0\n\t"
-        "movq (%%rax), %%xmm1\n\t"
+        "movq %[c], %%xmm1\n\t"
         "mulps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rax)\n\t"
+        "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
     );
 #endif
@@ -258,13 +265,12 @@ CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b)
     result.y = b->y * f;
 #else
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
-        "movd %%xmm0, (%%rax)\n\t"
-        "movd %%xmm0, +4(%%rax)\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        "movd %%xmm0, +4%[c]\n\t"
         "movq (%%rdi), %%xmm0\n\t"
-        "movq (%%rax), %%xmm1\n\t"
+        "movq %[c], %%xmm1\n\t"
         "mulps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rax)\n\t"
+        "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
     );
 #endif
@@ -299,13 +305,12 @@ CarpV2 carp_math_div_v2_f(const CarpV2* a, f32 f)
     result.y = a->y / f;
 #else
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
-        "movd %%xmm0, (%%rax)\n\t"
-        "movd %%xmm0, +4(%%rax)\n\t"
+        "movd %%xmm0, %[c]\n\t"
+        "movd %%xmm0, +4%[c]\n\t"
         "movq (%%rdi), %%xmm0\n\t"
-        "movq (%%rax), %%xmm1\n\t"
+        "movq %[c], %%xmm1\n\t"
         "divps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rax)\n\t"
+        "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
     );
 #endif
@@ -433,8 +438,13 @@ CarpV3A carp_math_broadcast_v3(f32 f)
     #if !USE_ASM
         result.simdv3a = _mm_set_ps(0.0f, f, f, f);
     #else
-        result.x = result.y = result.z = f;
-        result.w = 0.0f;
+        __asm__ volatile  (
+            "movd %%xmm0, +0x0%[c]\n\t"
+            "movd %%xmm0, +0x4%[c]\n\t"
+            "movd %%xmm0, +0x8%[c]\n\t"
+            "movl $0, +0xc%[c]\n\t"
+            : [c] "=m"(result)
+        );
     #endif
 
     return result;
@@ -484,9 +494,11 @@ CarpV3A carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t)
     CarpV3A subt = carp_math_mul_v3_f(&sub, t);
     result = carp_math_add_v3_v3(a, &subt);
 #else
-    result.x = result.y = result.z = result.w = t;
-
     __asm__ volatile  (
+        "movd %%xmm0, +0x0%[c]\n\t"
+        "movd %%xmm0, +0x4%[c]\n\t"
+        "movd %%xmm0, +0x8%[c]\n\t"
+        "movd %%xmm0, +0xc%[c]\n\t"
         "movups (%%rsi), %%xmm0\n\t"
         "subps (%%rdi), %%xmm0\n\t"
         "mulps %[c], %%xmm0\n\t"
@@ -521,8 +533,11 @@ CarpV3A carp_math_add_v3_f(const CarpV3A* a, f32 f)
 #if !USE_ASM
     result.simdv3a = _mm_add_ps(a->simdv3a, _mm_set_ps1(f));
 #else
-    result.x = result.y = result.z = result.w = f;
     __asm__ volatile  (
+        "movd %%xmm0, +0x0%[res]\n\t"
+        "movd %%xmm0, +0x4%[res]\n\t"
+        "movd %%xmm0, +0x8%[res]\n\t"
+        "movd %%xmm0, +0xc%[res]\n\t"
         "movups (%%rdi), %%xmm0\n\t"
         "addps %[res], %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
@@ -538,8 +553,11 @@ CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b)
 #if !USE_ASM
     result.simdv3a = _mm_add_ps(b->simdv3a, _mm_set_ps1(f));
 #else
-    result.x = result.y = result.z = result.w = f;
     __asm__ volatile  (
+        "movd %%xmm0, +0x0%[res]\n\t"
+        "movd %%xmm0, +0x4%[res]\n\t"
+        "movd %%xmm0, +0x8%[res]\n\t"
+        "movd %%xmm0, +0xc%[res]\n\t"
         "movups (%%rdi), %%xmm0\n\t"
         "addps %[res], %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
@@ -574,8 +592,11 @@ CarpV3A carp_math_sub_v3_f(const CarpV3A* a, f32 f)
 #if !USE_ASM
     result.simdv3a = _mm_sub_ps(a->simdv3a, _mm_set1_ps(f));
 #else
-    result.x = result.y = result.z = result.w = f;
     __asm__ volatile  (
+        "movd %%xmm0, +0x0%[res]\n\t"
+        "movd %%xmm0, +0x4%[res]\n\t"
+        "movd %%xmm0, +0x8%[res]\n\t"
+        "movd %%xmm0, +0xc%[res]\n\t"
         "movups (%%rdi), %%xmm0\n\t"
         "subps %[res], %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
@@ -607,8 +628,11 @@ CarpV3A carp_math_mul_v3_f(const CarpV3A* a, f32 f)
 #if !USE_ASM
     result.simdv3a = _mm_mul_ps(a->simdv3a, _mm_set1_ps(f));
 #else
-    result.x = result.y = result.z = result.w = f;
     __asm__ volatile  (
+        "movd %%xmm0, +0x0%[res]\n\t"
+        "movd %%xmm0, +0x4%[res]\n\t"
+        "movd %%xmm0, +0x8%[res]\n\t"
+        "movd %%xmm0, +0xc%[res]\n\t"
         "movups (%%rdi), %%xmm0\n\t"
         "mulps %[res], %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
@@ -624,8 +648,11 @@ CarpV3A carp_math_mul_f_v3(f32 f, const CarpV3A* b)
 #if !USE_ASM
     result.simdv3a = _mm_mul_ps(b->simdv3a, _mm_set1_ps(f));
 #else
-    result.x = result.y = result.z = result.w = f;
     __asm__ volatile  (
+        "movd %%xmm0, +0x0%[res]\n\t"
+        "movd %%xmm0, +0x4%[res]\n\t"
+        "movd %%xmm0, +0x8%[res]\n\t"
+        "movd %%xmm0, +0xc%[res]\n\t"
         "movups (%%rdi), %%xmm0\n\t"
         "mulps %[res], %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
@@ -645,12 +672,10 @@ CarpV3A carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b)
     result.w = 0.0f;
 #else
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
         "movups (%%rdi), %%xmm0\n\t"
-        "movups %%xmm1, (%%rax)\n\t"
         "divps (%%rsi), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
-        "movl $0, 0xc(%%rax)\n\t" // set w to 0.0f
+        "movl $0, 0xc%[c]\n\t" // set w to 0.0f
         : [c] "+m"(result)
     );
 #endif
@@ -666,14 +691,16 @@ CarpV3A carp_math_div_v3_f(const CarpV3A* a, f32 f)
     result.z = a->z / f;
     result.w = 0.0f;
 #else
-    result.x = result.y = result.z = f;
     __asm__ volatile  (
-        "lea %[c], %%rax\n\t"
+        "movd %%xmm0, +0x0%[c]\n\t"
+        "movd %%xmm0, +0x4%[c]\n\t"
+        "movd %%xmm0, +0x8%[c]\n\t"
         "movups (%%rdi), %%xmm0\n\t"
-        "divps (%%rax), %%xmm0\n\t"
+        "divps %[c], %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
-        "movl $0, 0xc(%%rax)\n\t"
+        "movl $0, +0xc%[c]\n\t"
         : [c] "+m"(result)
+        //: [f] "r" (f)
     );
 #endif
     return result;

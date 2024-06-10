@@ -20,6 +20,8 @@ void testv2()
     printf("V2 begin\n");
     CarpV2 v2a = {-7.0f, 2.0f };
     CarpV2 v2b = {-4.0f, 1.0f };
+    carp_math_print_v2(&v2a, "v2a at begin");
+    carp_math_print_v2(&v2b, "v2b at begin");
 
     CarpV2 add_v2_v2 = carp_math_add_v2_v2(&v2a, &v2b);
     CarpV2 add_v2_f = carp_math_add_v2_f(&v2a, 3.7f);
@@ -106,6 +108,8 @@ void testv3a()
     printf("V3A begin\n");
     CarpV3A v3a = {-7.0f, 2.0f, 3.0f, 10.0f};
     CarpV3A v3b = {-4.0f, 1.0f, 3.0f, 20.0f};
+    carp_math_print_v3a(&v3a, "v3a at begin");
+    carp_math_print_v3a(&v3b, "v3b at begin");
 
     CarpV3A add_v3_v3 = carp_math_add_v3_v3(&v3a, &v3b);
     CarpV3A add_v3_f = carp_math_add_v3_f(&v3a, 3.7f);
