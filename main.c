@@ -111,7 +111,7 @@ static s32 sMainAfterWindow(void)
 
 
 
-    carp_window_setWindowSizeChangedFn(&memory->carp_window, sWindowSizeChanged);
+    carp_window_setWindowSizeChangedCallbackFn(&memory->carp_window, sWindowSizeChanged);
     carp_window_enableVSync(&memory->carp_window, true);
 
     printf("Window start running\n");

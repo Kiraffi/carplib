@@ -3,7 +3,7 @@
 
 #include "carptype.h"
 
-typedef void (*WindowSizeChangedFn)(int,int);
+typedef void (*WindowSizeChangedCallbackFn)(int,int);
 
 
 typedef struct CarpWindow
@@ -29,6 +29,6 @@ void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title);
 void carp_window_swapBuffers(CarpWindow* carp_window);
 void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled);
 
-void carp_window_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn);
+void carp_window_setWindowSizeChangedCallbackFn(CarpWindow* carp_window, WindowSizeChangedCallbackFn windowSizeChangedCallBackFn);
 
 #endif //CARPWINDOW_HH

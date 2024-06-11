@@ -490,14 +490,16 @@ void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 }
 
 
-void carp_window_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
+void carp_window_setWindowSizeChangedCallbackFn(
+    CarpWindow* carp_window,
+    WindowSizeChangedCallbackFn windowSizeChangedCallbackFn)
 {
     if(carp_window == NULL)
     {
         return;
     }
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
-    wnd->carpWindowSizeChangedFn = windowSizeChangedFn;
+    wnd->carpWindowSizeChangedCallbackFn = windowSizeChangedCallbackFn;
 }
 
 

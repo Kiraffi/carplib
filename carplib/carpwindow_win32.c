@@ -46,7 +46,7 @@ typedef struct CarpWindowWin32
     HWND hwnd;
     HDC dc;
     HGLRC hglrc;
-    WindowSizeChangedFn carpWindowSizeChangedFn;
+    WindowSizeChangedCallbackFn carpWindowSizeChangedCallbackFn;
 
 } CarpWindowWin32;
 
@@ -547,9 +547,9 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
                 carp_window->width = width;
                 carp_window->height = height;
 
-                if(wnd->carpWindowSizeChangedFn)
+                if(wnd->carpWindowSizeChangedCallbackFn)
                 {
-                    wnd->carpWindowSizeChangedFn(width, height);
+                    wnd->carpWindowSizeChangedCallbackFn(width, height);
                 }
             }
 
@@ -610,14 +610,16 @@ void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 }
 
 
-void carp_window_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn)
+void carp_window_setWindowSizeChangedCallbackFn(
+    CarpWindow* carp_window,
+    WindowSizeChangedCallbackFn windowSizeChangedCallbackFn)
 {
     if(carp_window == NULL)
     {
         return;
     }
     CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
-    wnd->carpWindowSizeChangedFn = windowSizeChangedFn;
+    wnd->carpWindowSizeChangedCallbackFn = windowSizeChangedCallbackFn;
 }
 
 
