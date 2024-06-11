@@ -17,7 +17,7 @@ echo 'gcc'
 gcc mathtest.c -O2 -obuildout/mathtestgcc.out  $compileoptions && buildout/mathtestgcc.out
 echo ''
 echo 'tcc'
-tcc mathtest.c -O2 -obuildout/mathtestgcc.out  $compileoptions $tcccompileoptionsextra && buildout/mathtestgcc.out
+tcc mathtest.c -O2 -obuildout/mathtesttcc.out  $compileoptions $tcccompileoptionsextra && buildout/mathtesttcc.out
 
 
 if [[ "$compiler" != "tcc" ]]; then

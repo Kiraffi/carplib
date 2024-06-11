@@ -53,7 +53,6 @@ void testv2()
     f32 dotResult = carp_math_dot_v2(&v2a, &v2b);
     f32 dotNormalizedResult = carp_math_dot_v2(&normalized, &normalized);
 
-
     carp_math_print_v2(&v2a, "v2a");
     carp_math_print_v2(&v2b, "v2b");
     carp_math_print_v2(&neg_v2, "neg v2a");
@@ -73,11 +72,8 @@ void testv2()
     carp_math_print_v2(&div_v2_v2, "div_v2_v2");
     carp_math_print_v2(&div_v2_f, "div_v2_f");
 
-
-
     carp_math_print_v2(&broadcast, "broadcast 7.5f");
     carp_math_print_v2(&lerp_v2, "lerp v2a, v2b, 0.25f");
-
 
     carp_math_print_v2(&min_v2_v2, "min_v2_v2");
     carp_math_print_v2(&max_v2_v2, "max_v2_v2");
@@ -87,15 +83,14 @@ void testv2()
     printf("dot: %f\n", dotResult);
     printf("dot normalized: %f\n", dotNormalizedResult);
 
-
     printf("\nSizeof v2a: %i\n", (int)sizeof(CarpV2));
     printf("offset of x: %i, y: %i\n",
         (int)offsetof(CarpV2, x),
         (int)offsetof(CarpV2, y)
     );
 
-
-
+    carp_math_print_v2(&v2a, "v2a at end");
+    carp_math_print_v2(&v2b, "v2b at end");
 
     printf("V2 end\n\n");
 
@@ -112,7 +107,7 @@ void testv3a()
     carp_math_print_v3a(&v3b, "v3b at begin");
 
     CarpV3A add_v3_v3 = carp_math_add_v3_v3(&v3a, &v3b);
-    CarpV3A add_v3_f = carp_math_add_v3_f(&v3a, 3.7f);
+    CarpV3A add_v3_f = carp_math_add_v3_f(&v3a, 3.9f);
     CarpV3A add_f_v3 = carp_math_add_f_v3(-1.8f, &v3b);
 
     CarpV3A sub_v3_v3 = carp_math_sub_v3_v3(&v3a, &v3b);
@@ -163,7 +158,6 @@ void testv3a()
     carp_math_print_v3a(&broadcast, "broadcast 7.5f");
     carp_math_print_v3a(&lerp_v3, "lerp v3a, v3b, 0.25f");
 
-
     carp_math_print_v3a(&min_v3_v3, "min_v3_v3");
     carp_math_print_v3a(&max_v3_v3, "max_v3_v3");
     printf("min_v3: %f\n", min_v3);
@@ -172,7 +166,6 @@ void testv3a()
     printf("dot: %f\n", dotResult);
     printf("dot normalized: %f\n", dotNormalizedResult);
 
-
     printf("\nSizeof v3a: %i\n", (int)sizeof(CarpV3A));
     printf("offset of x: %i, y: %i, z: %i, w: %i\n",
         (int)offsetof(CarpV3A, x),
@@ -180,6 +173,8 @@ void testv3a()
         (int)offsetof(CarpV3A, z),
         (int)offsetof(CarpV3A, w)
     );
+    carp_math_print_v3a(&v3a, "v3a at end");
+    carp_math_print_v3a(&v3b, "v3b at end");
 
     printf("V3A end\n\n");
 }
