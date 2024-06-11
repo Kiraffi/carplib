@@ -369,7 +369,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             if( translated != CarpKeyboardKey_Invalid && translated < 1024)
             {
                 printf("key: %i\n", translated);
-                carp_keyboard_setKeyState(translated, down);
+                carp_keyboard_setKeyState((CarpKeyboardKey)translated, down);
             }
 
             break;
@@ -388,8 +388,8 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_EXITSIZEMOVE:
         {
-            int width = LOWORD(lParam);
-            int height = HIWORD(lParam);
+            //int width = LOWORD(lParam);
+            //int height = HIWORD(lParam);
             /*
             let width = LOWORD(lParam as u32);
             let height = HIWORD(lParam as u32);
@@ -449,8 +449,6 @@ void carp_window_destroy(CarpWindow* carp_window)
         return;
     }
 
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
-
     gladLoaderUnloadGL();
 }
 
@@ -470,10 +468,10 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     while(PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE) != 0
         && carp_window->running)
     {
-        LONG t = GetMessageTime();
+        //LONG t = GetMessageTime();
         PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE);
         //printf("Message time: %u\n", (u32)t);
-        b8 dispatch = false;
+        //b8 dispatch = false;
         switch(msg.message)
         {
             case WM_QUIT:
@@ -511,20 +509,20 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
                 }
                 if( translated != CarpKeyboardKey_Invalid && translated < 1024)
                 {
-                    carp_keyboard_setKeyState(translated, down);
+                    carp_keyboard_setKeyState((CarpKeyboardKey)translated, down);
                 }
                 else
                 {
-                    dispatch = true;
+                    //dispatch = true;
                 }
 
                 break;
                 //println!("button down: {}, b2: {}, transl: {}",  button, msg.wParam, transusize);
             };
-            deafult:
-            {
-                dispatch = true;
-            }
+            //deafult:
+            //{
+            //    dispatch = true;
+            //}
 
         }
 
@@ -608,7 +606,6 @@ void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
     {
         return;
     }
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
     winSwapIntervalEXTFn(vSyncEnabled ? 1 : 0);
 }
 

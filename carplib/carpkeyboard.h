@@ -1,5 +1,5 @@
-#ifndef MYKEYS_HH
-#define MYKEYS_HH
+#ifndef CARPKEYBOARD_HH
+#define CARPKEYBOARD_HH
 
 #include "carptype.h"
 
@@ -164,11 +164,11 @@ typedef enum CarpKeyboardKey
 
 } CarpKeyboardKey;
 
-void carp_keyboard_resetState();
+void carp_keyboard_resetState(void);
 void carp_keyboard_setKeyState(CarpKeyboardKey key, bool down);
 
 bool carp_keyboard_wasKeyPressed(CarpKeyboardKey key);
 bool carp_keyboard_wasKeyReleased(CarpKeyboardKey key);
 bool carp_keyboard_isKeyDown(CarpKeyboardKey key);
 
-#endif // MYKEYS_HH
+#endif // CARPKEYBOARD_HH

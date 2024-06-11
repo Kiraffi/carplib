@@ -31,4 +31,4 @@ void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled);
 
 void carp_window_setWindowSizeChangedFn(CarpWindow* carp_window, WindowSizeChangedFn windowSizeChangedFn);
 
-#endif
+#endif //CARPWINDOW_HH

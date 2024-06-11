@@ -1,5 +1,5 @@
-#ifndef MYMEMORY_HH
-#define MYMEMORY_HH
+#ifndef CARPMEMORY_HH
+#define CARPMEMORY_HH
 
 #include "carpwindow.h"
 
@@ -38,8 +38,8 @@ typedef struct CarpMemory
 
 } CarpMemory;
 
-b8 carp_memory_init();
-void carp_memory_destroy();
-CarpMemory* carp_memory_get();
+b8 carp_memory_init(void);
+void carp_memory_destroy(void);
+CarpMemory* carp_memory_get(void);
 
-#endif
+#endif //CARPMEMORY_HH

@@ -2,7 +2,7 @@
 
 #include <stdio.h>
 
-void testf32()
+void testf32(void)
 {
     printf("f32 begin\n");
     f32 minv = carp_math_min_f_f(-4.0f, 23.0f);
@@ -15,7 +15,7 @@ void testf32()
 
 }
 
-void testv2()
+void testv2(void)
 {
     printf("V2 begin\n");
     CarpV2 v2a = {-7.0f, 2.0f };
@@ -98,7 +98,7 @@ void testv2()
 
 
 
-void testv3a()
+void testv3a(void)
 {
     printf("V3A begin\n");
     CarpV3A v3a = {-7.0f, 2.0f, 3.0f, 10.0f};
@@ -180,7 +180,7 @@ void testv3a()
 }
 
 
-int main()
+int main(void)
 {
     testf32();
     testv2();

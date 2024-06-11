@@ -66,9 +66,9 @@ CarpV2 carp_math_broadcast_v2(f32 f)
 
 CarpV2 carp_math_neg_v2(const CarpV2* a)
 {
-    static const CarpV2 negZeroV2 = { -0.0f, -0.0f };
     CarpV2 result;
 #if USE_ASM_WINDOWS
+    static const CarpV2 negZeroV2 = { -0.0f, -0.0f };
     __asm__ volatile  (
         "movq %[zerov2], %%xmm1\n\t"
         "movq (%%rcx), %%xmm0\n\t"
@@ -78,6 +78,7 @@ CarpV2 carp_math_neg_v2(const CarpV2* a)
         : [zerov2]"m"(negZeroV2)
     );
 #elif USE_ASM_LINUX
+    static const CarpV2 negZeroV2 = { -0.0f, -0.0f };
     __asm__ volatile  (
         "movq %[zerov2], %%xmm1\n\t"
         "movq (%%rdi), %%xmm0\n\t"
@@ -99,7 +100,7 @@ CarpV2 carp_math_normalize_v2(const CarpV2* a)
     f32 d2 = carp_math_sqrLen_v2(a);
     if(d2 < CARP_EPSILON)
     {
-        CarpV2 result = {};
+        CarpV2 result = {0};
         return result;
     }
     d2 = sqrtf(d2);
@@ -635,7 +636,7 @@ CarpV3A carp_math_normalize_v3(const CarpV3A* a)
     f32 d2 = carp_math_sqrLen_v3(a);
     if(d2 < CARP_EPSILON)
     {
-        CarpV3A result = {};
+        CarpV3A result = {0};
         return result;
     }
     d2 = sqrtf(d2);

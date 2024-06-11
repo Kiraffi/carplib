@@ -9,16 +9,16 @@
 CarpMemory* s_carpMemory = NULL;
 
 
-b8 carp_memory_init()
+b8 carp_memory_init(void)
 {
     if(s_carpMemory != NULL)
         return false;
 
-    s_carpMemory = calloc(1, sizeof(CarpMemory));
+    s_carpMemory = (CarpMemory*) calloc(1, sizeof(CarpMemory));
     return s_carpMemory != NULL;
 }
 
-void carp_memory_destroy()
+void carp_memory_destroy(void)
 {
     if(s_carpMemory != NULL)
     {
@@ -27,7 +27,7 @@ void carp_memory_destroy()
     s_carpMemory = NULL;
 }
 
-CarpMemory* carp_memory_get()
+CarpMemory* carp_memory_get(void)
 {
     return s_carpMemory;
 }

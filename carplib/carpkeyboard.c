@@ -25,7 +25,7 @@ static b8 sGetKeyboardKeyHalfPressCount(CarpMemory* mem, CarpKeyboardKey key)
 }
 
 
-void carp_keyboard_resetState()
+void carp_keyboard_resetState(void)
 {
     CarpMemory* mem = carp_memory_get();
     if(mem == NULL)

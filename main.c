@@ -61,7 +61,7 @@ static void sWindowSizeChanged(int width, int height)
 
 
 
-static s32 sMainAfterWindow()
+static s32 sMainAfterWindow(void)
 {
     CarpMemory* memory = carp_memory_get();
 
@@ -154,7 +154,7 @@ static s32 sMainAfterWindow()
     return 0;
 }
 
-static s32 sMain()
+static s32 sMain(void)
 {
     CarpMemory* memory = carp_memory_get();
 
