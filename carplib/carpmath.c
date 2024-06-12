@@ -11,6 +11,13 @@
 #define USE_ASM_LINUX 1
 #endif
 
+#if USE_ASM_LINUX || USE_ASM_WINDOWS
+#define NO_INLINE_FN __attribute__ ((noinline))
+#else
+#define NO_INLINE_FN
+#endif
+
+NO_INLINE_FN
 f32 carp_math_min_f_f(f32 a, f32 b)
 {
     f32 result;
@@ -20,13 +27,16 @@ f32 carp_math_min_f_f(f32 a, f32 b)
         "minps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result = a < b ? a : b;
 #endif
     return result;
 }
-
+NO_INLINE_FN
 f32 carp_math_max_f_f(f32 a, f32 b)
 {
     f32 result;
@@ -36,6 +46,9 @@ f32 carp_math_max_f_f(f32 a, f32 b)
         "maxps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result = a > b ? a : b;
@@ -44,7 +57,7 @@ f32 carp_math_max_f_f(f32 a, f32 b)
     return result;
 }
 
-
+NO_INLINE_FN
 CarpV2 carp_math_broadcast_v2(f32 f)
 {
     CarpV2 result;
@@ -54,6 +67,9 @@ CarpV2 carp_math_broadcast_v2(f32 f)
         "punpckldq %%xmm0, %%xmm0\n\t"
         "movq %%xmm0, +0x0%[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "x"(f)
+        #endif
     );
 #else
     result.x = result.y = f;
@@ -63,7 +79,7 @@ CarpV2 carp_math_broadcast_v2(f32 f)
     return result;
 }
 
-
+NO_INLINE_FN
 CarpV2 carp_math_neg_v2(const CarpV2* a)
 {
     CarpV2 result;
@@ -75,7 +91,7 @@ CarpV2 carp_math_neg_v2(const CarpV2* a)
         "pxor %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
-        : [zerov2]"m"(negZeroV2)
+        : [zerov2]"m"(negZeroV2), "m"(a)
     );
 #elif USE_ASM_LINUX
     static const CarpV2 negZeroV2 = { -0.0f, -0.0f };
@@ -85,7 +101,7 @@ CarpV2 carp_math_neg_v2(const CarpV2* a)
         "pxor %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
-        : [zerov2]"m"(negZeroV2)
+        : [zerov2]"m"(negZeroV2), "m"(a)
     );
 #else
     result.x = -a->x;
@@ -94,7 +110,7 @@ CarpV2 carp_math_neg_v2(const CarpV2* a)
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV2 carp_math_normalize_v2(const CarpV2* a)
 {
     f32 d2 = carp_math_sqrLen_v2(a);
@@ -109,6 +125,8 @@ CarpV2 carp_math_normalize_v2(const CarpV2* a)
     result.y = a->y / d2;
     return result;
 }
+
+NO_INLINE_FN
 CarpV2 carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t)
 {
     CarpV2 result;
@@ -122,6 +140,10 @@ CarpV2 carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t)
         "addps %%xmm2, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "=m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b), "m"(t)
+        #endif
+
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -133,6 +155,10 @@ CarpV2 carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t)
         "addps %%xmm2, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "=m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b), "m"(t)
+        #endif
+
     );
 #else
     result.x = a->x + (b->x - a->x) * t;
@@ -140,7 +166,7 @@ CarpV2 carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t)
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV2 carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     //printf("got here\n");
@@ -152,7 +178,9 @@ CarpV2 carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b)
         "addps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
-        : [a] "m" (a), [b] "m" (b)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 
 #elif USE_ASM_LINUX
@@ -162,7 +190,9 @@ CarpV2 carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b)
         "addps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
-        : [a] "m" (a), [b] "m" (b)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.x = a->x + b->x;
@@ -170,7 +200,7 @@ CarpV2 carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b)
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV2 carp_math_add_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
@@ -181,6 +211,9 @@ CarpV2 carp_math_add_v2_f(const CarpV2* a, f32 f)
         "addps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -189,6 +222,9 @@ CarpV2 carp_math_add_v2_f(const CarpV2* a, f32 f)
         "addps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #else
     result.x = a->x + f;
@@ -198,6 +234,8 @@ CarpV2 carp_math_add_v2_f(const CarpV2* a, f32 f)
 
     return result;
 }
+
+NO_INLINE_FN
 CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b)
 {
     CarpV2 result;
@@ -208,6 +246,9 @@ CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b)
         "addps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -216,6 +257,9 @@ CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b)
         "addps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 #else
     result.x = b->x + f;
@@ -226,7 +270,7 @@ CarpV2 carp_math_add_f_v2(f32 f, const CarpV2* b)
 }
 
 
-
+NO_INLINE_FN
 CarpV2 carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
@@ -237,6 +281,9 @@ CarpV2 carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b)
         "subps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -245,6 +292,9 @@ CarpV2 carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b)
         "subps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.x = a->x - b->x;
@@ -252,6 +302,7 @@ CarpV2 carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b)
 #endif
     return result;
 }
+NO_INLINE_FN
 CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
@@ -262,6 +313,9 @@ CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f)
         "subps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -270,6 +324,10 @@ CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f)
         "subps %%xmm0, %%xmm1\n\t"
         "movq %%xmm1, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
+
     );
 #else
     result.x = a->x - f;
@@ -280,7 +338,7 @@ CarpV2 carp_math_sub_v2_f(const CarpV2* a, f32 f)
 }
 
 
-
+NO_INLINE_FN
 CarpV2 carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
@@ -291,6 +349,9 @@ CarpV2 carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -299,6 +360,9 @@ CarpV2 carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.x = a->x * b->x;
@@ -306,6 +370,7 @@ CarpV2 carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b)
 #endif
     return result;
 }
+NO_INLINE_FN
 CarpV2 carp_math_mul_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
@@ -316,6 +381,9 @@ CarpV2 carp_math_mul_v2_f(const CarpV2* a, f32 f)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -324,6 +392,9 @@ CarpV2 carp_math_mul_v2_f(const CarpV2* a, f32 f)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #else
     result.x = a->x * f;
@@ -332,6 +403,7 @@ CarpV2 carp_math_mul_v2_f(const CarpV2* a, f32 f)
 
     return result;
 }
+NO_INLINE_FN
 CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b)
 {
     CarpV2 result;
@@ -342,6 +414,9 @@ CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -350,6 +425,9 @@ CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 #else
     result.x = b->x * f;
@@ -360,7 +438,7 @@ CarpV2 carp_math_mul_f_v2(f32 f, const CarpV2* b)
 }
 
 
-
+NO_INLINE_FN
 CarpV2 carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
@@ -371,6 +449,9 @@ CarpV2 carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b)
         "divps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -379,6 +460,9 @@ CarpV2 carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b)
         "divps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.x = a->x / b->x;
@@ -386,6 +470,7 @@ CarpV2 carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b)
 #endif
     return result;
 }
+NO_INLINE_FN
 CarpV2 carp_math_div_v2_f(const CarpV2* a, f32 f)
 {
     CarpV2 result;
@@ -396,6 +481,9 @@ CarpV2 carp_math_div_v2_f(const CarpV2* a, f32 f)
         "divps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -404,6 +492,9 @@ CarpV2 carp_math_div_v2_f(const CarpV2* a, f32 f)
         "divps %%xmm0, %%xmm1\n\t"
         "movq %%xmm1, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #else
     result.x = a->x / f;
@@ -411,7 +502,7 @@ CarpV2 carp_math_div_v2_f(const CarpV2* a, f32 f)
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV2 carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
@@ -422,6 +513,9 @@ CarpV2 carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b)
         "minps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -430,6 +524,9 @@ CarpV2 carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b)
         "minps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.x = carp_math_min_f_f(a->x, b->x);
@@ -437,6 +534,7 @@ CarpV2 carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b)
 #endif
     return result;
 }
+NO_INLINE_FN
 CarpV2 carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b)
 {
     CarpV2 result;
@@ -447,6 +545,9 @@ CarpV2 carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b)
         "maxps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -455,6 +556,9 @@ CarpV2 carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b)
         "maxps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.x = carp_math_max_f_f(a->x, b->x);
@@ -462,6 +566,7 @@ CarpV2 carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b)
 #endif
     return result;
 }
+NO_INLINE_FN
 f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
 {
     f32 result;
@@ -473,6 +578,9 @@ f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 
     result = tmpstack.x + tmpstack.y;
@@ -484,6 +592,9 @@ f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
         "mulps %%xmm1, %%xmm0\n\t"
         "movq %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 
     result = tmpstack.x + tmpstack.y;
@@ -492,6 +603,7 @@ f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
 #endif
     return result;
 }
+NO_INLINE_FN
 f32 carp_math_min_v2(const CarpV2* a)
 {
     f32 result;
@@ -502,6 +614,9 @@ f32 carp_math_min_v2(const CarpV2* a)
         "minps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -510,12 +625,16 @@ f32 carp_math_min_v2(const CarpV2* a)
         "minps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #else
     result = carp_math_min_f_f(a->x, a->y);
 #endif
     return result;
 }
+NO_INLINE_FN
 f32 carp_math_max_v2(const CarpV2* a)
 {
      f32 result;
@@ -526,6 +645,9 @@ f32 carp_math_max_v2(const CarpV2* a)
         "maxps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -534,12 +656,16 @@ f32 carp_math_max_v2(const CarpV2* a)
         "maxps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #else
     result = carp_math_max_f_f(a->x, a->y);
 #endif
     return result;
 }
+NO_INLINE_FN
 f32 carp_math_sqrLen_v2(const CarpV2* a)
 {
     f32 result;
@@ -550,6 +676,9 @@ f32 carp_math_sqrLen_v2(const CarpV2* a)
         "mulps %%xmm0, %%xmm0\n\t"
         "movq %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
     result = tmpstack.x + tmpstack.y;
 
@@ -560,6 +689,9 @@ f32 carp_math_sqrLen_v2(const CarpV2* a)
         "mulps %%xmm0, %%xmm0\n\t"
         "movq %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
     result = tmpstack.x + tmpstack.y;
 
@@ -568,6 +700,7 @@ f32 carp_math_sqrLen_v2(const CarpV2* a)
 #endif
     return result;
 }
+NO_INLINE_FN
 f32 carp_math_len_v2(const CarpV2* a)
 {
     return sqrtf(carp_math_sqrLen_v2(a));
@@ -579,21 +712,38 @@ f32 carp_math_len_v2(const CarpV2* a)
 
 
 
-
+NO_INLINE_FN
 CarpV3A carp_math_broadcast_v3(f32 f)
 {
     CarpV3A result;
-#if USE_ASM_WINDOWS || USE_ASM_LINUX
+#if USE_ASM_WINDOWS
     __asm__ volatile  (
         "punpckldq %%xmm1, %%xmm1\n\t"
         "punpckldq %%xmm1, %%xmm1\n\t"
         "movups %%xmm1, %[c]\n\t"
         "movl $0, +0xc%[c]\n\t"
         : [c] "=m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "x"(f)
+        #endif
+    );
+#elif USE_ASM_LINUX
+    __asm__ volatile  (
+        "punpckldq %%xmm0, %%xmm0\n\t"
+        "punpckldq %%xmm0, %%xmm0\n\t"
+        "movups %%xmm0, %[c]\n\t"
+        "movl $0, +0xc%[c]\n\t"
+        : [c] "=m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "x"(f)
+        #endif
     );
 
 #else
     result.simdv3a = _mm_set_ps(0.0f, f, f, f);
+#endif
+#if defined(__GNUC__)
+    result.w = 0.0f;
 #endif
 
     return result;
@@ -602,7 +752,7 @@ CarpV3A carp_math_broadcast_v3(f32 f)
 
 
 
-
+NO_INLINE_FN
 CarpV3A carp_math_neg_v3(const CarpV3A* a)
 {
     static const CarpV3A neg = { -0.0f, -0.0f, -0.0f, -0.0f };
@@ -613,7 +763,7 @@ CarpV3A carp_math_neg_v3(const CarpV3A* a)
         "pxor (%%rdx), %%xmm0\n\t" // why rdx???? rcx = neg?
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
-        : [negin]"m"(neg)
+        : [negin]"m"(neg), "m"(a)
     );
 
 #elif USE_ASM_LINUX
@@ -623,14 +773,14 @@ CarpV3A carp_math_neg_v3(const CarpV3A* a)
         "pxor %%xmm1, %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
-        : [negin]"m"(neg)
+        : [negin]"m"(neg), "m"(a)
     );
 #else
     result.simdv3a = _mm_xor_ps(a->simdv3a, neg.simdv3a);
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_normalize_v3(const CarpV3A* a)
 {
     f32 d2 = carp_math_sqrLen_v3(a);
@@ -643,7 +793,7 @@ CarpV3A carp_math_normalize_v3(const CarpV3A* a)
     CarpV3A result = carp_math_div_v3_f(a, d2);
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t)
 {
     CarpV3A result;
@@ -657,6 +807,9 @@ CarpV3A carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t)
         "addps (%%rdx), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "=m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b), "m"(t)
+        #endif
     );
 
 #elif USE_ASM_LINUX
@@ -669,6 +822,9 @@ CarpV3A carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t)
         "addps (%%rdi), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "=m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b), "m"(t)
+        #endif
     );
 #else
     CarpV3A sub = carp_math_sub_v3_v3(b, a);
@@ -679,7 +835,7 @@ CarpV3A carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t)
 }
 
 
-
+NO_INLINE_FN
 CarpV3A carp_math_add_v3_v3(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A result;
@@ -690,6 +846,9 @@ CarpV3A carp_math_add_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "addps (%%r8), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -697,12 +856,16 @@ CarpV3A carp_math_add_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "addps (%%rsi), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.simdv3a = _mm_add_ps(a->simdv3a, b->simdv3a);
 #endif
     return result;
 }
+NO_INLINE_FN
 CarpV3A carp_math_add_v3_f(const CarpV3A* a, f32 f)
 {
     CarpV3A result;
@@ -710,11 +873,12 @@ CarpV3A carp_math_add_v3_f(const CarpV3A* a, f32 f)
     __asm__ volatile  (
         "punpckldq %%xmm2, %%xmm2\n\t"
         "punpckldq %%xmm2, %%xmm2\n\t"
-        //"addps (%%rcx), %%xmm1\n\t" rcx is for return?
         "addps (%%rdx), %%xmm2\n\t"
         "movups %%xmm2, %[res]\n\t"
         : [res] "+m" (result)
-        : [f] "r" (f)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -723,6 +887,9 @@ CarpV3A carp_math_add_v3_f(const CarpV3A* a, f32 f)
         "addps (%%rdi), %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #else
     result.simdv3a = _mm_add_ps(a->simdv3a, _mm_set_ps1(f));
@@ -730,6 +897,7 @@ CarpV3A carp_math_add_v3_f(const CarpV3A* a, f32 f)
 
     return result;
 }
+NO_INLINE_FN
 CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b)
 {
     CarpV3A result;
@@ -740,6 +908,9 @@ CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b)
         "addps (%%r8), %%xmm1\n\t"
         "movups %%xmm1, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 
 #elif USE_ASM_LINUX
@@ -749,6 +920,9 @@ CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b)
         "addps (%%rdi), %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 #else
     result.simdv3a = _mm_add_ps(b->simdv3a, _mm_set_ps1(f));
@@ -759,7 +933,7 @@ CarpV3A carp_math_add_f_v3(f32 f, const CarpV3A* b)
 
 
 
-
+NO_INLINE_FN
 CarpV3A carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A result;
@@ -769,6 +943,9 @@ CarpV3A carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "subps (%%r8), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -776,12 +953,16 @@ CarpV3A carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "subps (%%rsi), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.simdv3a = _mm_sub_ps(a->simdv3a, b->simdv3a);
 #endif
     return result;
 }
+NO_INLINE_FN
 CarpV3A carp_math_sub_v3_f(const CarpV3A* a, f32 f)
 {
     CarpV3A result;
@@ -793,6 +974,9 @@ CarpV3A carp_math_sub_v3_f(const CarpV3A* a, f32 f)
         "subps %%xmm2, %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -802,6 +986,9 @@ CarpV3A carp_math_sub_v3_f(const CarpV3A* a, f32 f)
         "subps %%xmm0, %%xmm1\n\t"
         "movups %%xmm1, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #else
     result.simdv3a = _mm_sub_ps(a->simdv3a, _mm_set1_ps(f));
@@ -809,7 +996,7 @@ CarpV3A carp_math_sub_v3_f(const CarpV3A* a, f32 f)
 
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A result;
@@ -819,6 +1006,9 @@ CarpV3A carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "mulps (%%r8), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -826,12 +1016,16 @@ CarpV3A carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "mulps (%%rsi), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.simdv3a = _mm_mul_ps(a->simdv3a, b->simdv3a);
 #endif
     return result;
 }
+NO_INLINE_FN
 CarpV3A carp_math_mul_v3_f(const CarpV3A* a, f32 f)
 {
     CarpV3A result;
@@ -842,6 +1036,9 @@ CarpV3A carp_math_mul_v3_f(const CarpV3A* a, f32 f)
         "mulps (%%rdx), %%xmm2\n\t"
         "movups %%xmm2, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -850,13 +1047,16 @@ CarpV3A carp_math_mul_v3_f(const CarpV3A* a, f32 f)
         "mulps (%%rdi), %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #else
     result.simdv3a = _mm_mul_ps(a->simdv3a, _mm_set1_ps(f));
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_mul_f_v3(f32 f, const CarpV3A* b)
 {
     CarpV3A result;
@@ -867,6 +1067,9 @@ CarpV3A carp_math_mul_f_v3(f32 f, const CarpV3A* b)
         "mulps (%%r8), %%xmm1\n\t"
         "movups %%xmm1, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -875,13 +1078,16 @@ CarpV3A carp_math_mul_f_v3(f32 f, const CarpV3A* b)
         "mulps (%%rdi), %%xmm0\n\t"
         "movups %%xmm0, %[res]\n\t"
         : [res] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(b), "x"(f)
+        #endif
     );
 #else
     result.simdv3a = _mm_mul_ps(b->simdv3a, _mm_set1_ps(f));
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A result;
@@ -892,6 +1098,9 @@ CarpV3A carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "movups %%xmm0, %[c]\n\t"
         "movl $0, 0xc%[c]\n\t" // set w to 0.0f
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -900,6 +1109,9 @@ CarpV3A carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "movups %%xmm0, %[c]\n\t"
         "movl $0, 0xc%[c]\n\t" // set w to 0.0f
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.x = a->x / b->x;
@@ -907,9 +1119,12 @@ CarpV3A carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b)
     result.z = a->z / b->z;
     result.w = 0.0f;
 #endif
+#if defined(__GNUC__)
+    result.w = 0.0f;
+#endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_div_v3_f(const CarpV3A* a, f32 f)
 {
     CarpV3A result;
@@ -922,6 +1137,9 @@ CarpV3A carp_math_div_v3_f(const CarpV3A* a, f32 f)
         "movups %%xmm0, %[c]\n\t"
         "movl $0, +0xc%[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -932,6 +1150,9 @@ CarpV3A carp_math_div_v3_f(const CarpV3A* a, f32 f)
         "movups %%xmm1, %[c]\n\t"
         "movl $0, +0xc%[c]\n\t"
         : [c] "+m"(result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "x"(f)
+        #endif
     );
 #else
     result.x = a->x / f;
@@ -939,9 +1160,13 @@ CarpV3A carp_math_div_v3_f(const CarpV3A* a, f32 f)
     result.z = a->z / f;
     result.w = 0.0f;
 #endif
+#if defined(__GNUC__)
+    result.w = 0.0f;
+#endif
+
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A result;
@@ -951,6 +1176,9 @@ CarpV3A carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "minps (%%r8), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -958,13 +1186,16 @@ CarpV3A carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "minps (%%rsi), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.simdv3a = _mm_min_ps(a->simdv3a, b->simdv3a);
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A result;
@@ -974,6 +1205,9 @@ CarpV3A carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "maxps (%%r8), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile  (
@@ -981,13 +1215,16 @@ CarpV3A carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b)
         "maxps (%%rsi), %%xmm0\n\t"
         "movups %%xmm0, %[c]\n\t"
         : [c] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 #else
     result.simdv3a = _mm_max_ps(a->simdv3a, b->simdv3a);
 #endif
     return result;
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_cross(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A result;
@@ -1000,18 +1237,18 @@ CarpV3A carp_math_cross(const CarpV3A* a, const CarpV3A* b)
     return result;
 
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_project(const CarpV3A* a, const CarpV3A* b)
 {
     return carp_math_mul_v3_f(b, (carp_math_dot_v3(a, b) / carp_math_dot_v3(b, b)));
 }
-
+NO_INLINE_FN
 CarpV3A carp_math_reject(const CarpV3A* a, const CarpV3A* b)
 {
     CarpV3A proj = carp_math_project(a, b);
     return carp_math_sub_v3_v3(a, &proj);
 }
-
+NO_INLINE_FN
 f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
 {
     f32 result;
@@ -1022,6 +1259,9 @@ f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
         "mulps (%%rdx), %%xmm0\n\t"
         "movaps %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a), "m"(b)
+        #endif
     );
 
     result = tmpstack.x + tmpstack.y + tmpstack.z;
@@ -1032,6 +1272,7 @@ f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
         "mulps (%%rsi), %%xmm0\n\t"
         "movaps %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        : "m"(a), "m"(b)
     );
 
     result = tmpstack.x + tmpstack.y + tmpstack.z;
@@ -1040,7 +1281,7 @@ f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
 #endif
     return result;
 }
-
+NO_INLINE_FN
 f32 carp_math_min_v3(const CarpV3A* a)
 {
     float result;
@@ -1053,6 +1294,9 @@ f32 carp_math_min_v3(const CarpV3A* a)
         "minps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[result]\n\t"
         : [result] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile (
@@ -1063,13 +1307,16 @@ f32 carp_math_min_v3(const CarpV3A* a)
         "minps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[result]\n\t"
         : [result] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #else
     result = carp_math_min_f_f(a->x, carp_math_min_f_f(a->y, a->z));
 #endif
     return result;
 }
-
+NO_INLINE_FN
 f32 carp_math_max_v3(const CarpV3A* a)
 {
     float result;
@@ -1082,6 +1329,9 @@ f32 carp_math_max_v3(const CarpV3A* a)
         "maxps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[result]\n\t"
         : [result] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #elif USE_ASM_LINUX
     __asm__ volatile (
@@ -1092,13 +1342,16 @@ f32 carp_math_max_v3(const CarpV3A* a)
         "maxps %%xmm1, %%xmm0\n\t"
         "movd %%xmm0, %[result]\n\t"
         : [result] "+m" (result)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
 #else
     result = carp_math_max_f_f(a->x, carp_math_max_f_f(a->y, a->z));
 #endif
     return result;
 }
-
+NO_INLINE_FN
 f32 carp_math_sqrLen_v3(const CarpV3A* a)
 {
     f32 result;
@@ -1109,6 +1362,9 @@ f32 carp_math_sqrLen_v3(const CarpV3A* a)
         "mulps %%xmm0, %%xmm0\n\t"
         "movaps %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
     result = tmpstack.x + tmpstack.y + tmpstack.z;
 
@@ -1119,6 +1375,9 @@ f32 carp_math_sqrLen_v3(const CarpV3A* a)
         "mulps %%xmm0, %%xmm0\n\t"
         "movaps %%xmm0, %[tmp]\n\t"
         : [tmp] "+m" (tmpstack)
+        #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
+        #endif
     );
     result = tmpstack.x + tmpstack.y + tmpstack.z;
 #else
@@ -1126,8 +1385,11 @@ f32 carp_math_sqrLen_v3(const CarpV3A* a)
 #endif
     return result;
 }
-f32 carp_math_len_v3(const CarpV3A* a) { return sqrtf(carp_math_sqrLen_v3(a)); }
-
+NO_INLINE_FN
+f32 carp_math_len_v3(const CarpV3A* a)
+{
+    return sqrtf(carp_math_sqrLen_v3(a));
+}
 
 
 

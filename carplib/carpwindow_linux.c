@@ -34,7 +34,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 typedef struct CarpWindowInternal
 {
     Display* carpDisplay;
-    WindowSizeChangedFn carpWindowSizeChangedFn;
+    WindowSizeChangedCallbackFn carpWindowSizeChangedCallbackFn;
     Window carpWindowRoot;
     Window carpWindow;
     Colormap carpColormap;
@@ -417,9 +417,9 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
                 {
                     carp_window->width = event.xconfigure.width;
                     carp_window->height = event.xconfigure.height;
-                    if(wnd->carpWindowSizeChangedFn)
+                    if(wnd->carpWindowSizeChangedCallbackFn)
                     {
-                        wnd->carpWindowSizeChangedFn(carp_window->width, carp_window->height);
+                        wnd->carpWindowSizeChangedCallbackFn(carp_window->width, carp_window->height);
                     }
                 }
                 break;
