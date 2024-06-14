@@ -44,6 +44,7 @@ typedef struct CarpWindowInternal
 
 } CarpWindowInternal;
 
+_Static_assert(sizeof(CarpWindowInternal) <= sizeof(((CarpWindow*)0)->data), "CarpWindowInternal size is should be less than CarpWindow::data bytes!");
 
 
 

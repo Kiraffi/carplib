@@ -1,5 +1,6 @@
 #include "carplib/carpmath.c"
 
+#include <stdalign.h>
 #include <stdio.h>
 
 void testf32(void)
@@ -84,6 +85,8 @@ void testv2(void)
     printf("dot normalized: %f\n", dotNormalizedResult);
 
     printf("\nSizeof v2a: %i\n", (int)sizeof(CarpV2));
+    printf("Align of v2: %i\n", (int)alignof(CarpV2));
+
     printf("offset of x: %i, y: %i\n",
         (int)offsetof(CarpV2, x),
         (int)offsetof(CarpV2, y)
@@ -167,6 +170,7 @@ void testv3a(void)
     printf("dot normalized: %f\n", dotNormalizedResult);
 
     printf("\nSizeof v3a: %i\n", (int)sizeof(CarpV3A));
+    printf("Align of v3a: %i\n", (int)alignof(CarpV3A));
     printf("offset of x: %i, y: %i, z: %i, w: %i\n",
         (int)offsetof(CarpV3A, x),
         (int)offsetof(CarpV3A, y),
@@ -185,5 +189,6 @@ int main(void)
     testf32();
     testv2();
     testv3a();
+
     return 0;
 }

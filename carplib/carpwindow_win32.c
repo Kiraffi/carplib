@@ -50,6 +50,9 @@ typedef struct CarpWindowWin32
 
 } CarpWindowWin32;
 
+_Static_assert(sizeof(CarpWindowWin32) <= sizeof(((CarpWindow*)0)->data), "CarpWindowWin32 size is should be less than CarpWindow::data bytes!");
+
+
 static b8 s_initWindow(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);

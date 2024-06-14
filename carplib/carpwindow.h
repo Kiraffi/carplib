@@ -8,18 +8,28 @@ typedef void (*WindowSizeChangedCallbackFn)(int,int);
 
 typedef struct CarpWindow
 {
-    _Alignas(16) struct
-    { 
-        f64 runningTime;
-        s32 width;
-        s32 height;
-        b8 running;
-        b8 resized;
+    struct
+    {
+        union
+        {
+            struct
+            {
+                f64 runningTime;
+                s32 width;
+                s32 height;
+                b8 running;
+                b8 resized;
 
-        char windowName[104];
-        char data[768];
+                char windowName[104];
+                char data[768];
+            };
+            _Alignas(16) uint8_t alignedData[1024];
+        };
+         
     };
 } CarpWindow;
+_Static_assert(sizeof(CarpWindow) == 1024, "Carp window size should be 1024 bytes!");
+
 
 b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y);
 void carp_window_destroy(CarpWindow* carp_window);

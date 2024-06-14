@@ -25,10 +25,14 @@
 
 typedef struct CarpV2
 {
-    _Alignas(8) struct
+    union
     {
-        f32 x;
-        f32 y;
+        struct
+        {
+            f32 x;
+            f32 y;
+        };
+        _Alignas(8) uint64_t v2;
     };
 } CarpV2;
 
@@ -36,7 +40,7 @@ typedef struct CarpV2
 
 typedef struct CarpV3A
 {
-    _Alignas(16) union
+    union
     {
         struct
         {
@@ -46,7 +50,7 @@ typedef struct CarpV3A
             float w;
         };
         float v[4];
-        __m128 simdv3a;
+        _Alignas(16) __m128 simdv3a;
     };
 } CarpV3A;
 

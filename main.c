@@ -1,4 +1,3 @@
-#define WIN32_LEAN_AND_MEAN 1
 
 #include "external/glad/gl.h"
 //#if _MSC_VER > 0
