@@ -1,7 +1,8 @@
 rem @echo off
 @setlocal
 
-set compiler=cl.exe -Zi
+set compiler=cl.exe /Zi /Zo
+rem /Zi debugging info /Zo optimized debugging information?
 
 set links=opengl32.lib gdi32.lib user32.lib winmm.lib
 set linkoptions= 
@@ -12,5 +13,5 @@ rem /arch:AVX
 set final=%linkoptions% %compileroptimize% /link %links%
 md buildout
 
-cl mathtest.c /O2 %final% /OUT:buildout/mathtestcl.exe  && buildout\mathtestcl.exe > buildout/mathtestcl.txt
+%compiler% mathtest.c /O2 %final% /OUT:buildout/mathtestcl.exe  && buildout\mathtestcl.exe > buildout/mathtestcl.txt
 %compiler% compileall.c %final% /OUT:buildout/main.exe && buildout\main.exe
