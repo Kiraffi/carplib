@@ -37,7 +37,7 @@ void testv2(void)
     CarpV2 mul_v2_v2; carp_math_mul_v2_v2(&v2a, &v2b, &mul_v2_v2);
     CarpV2 mul_v2_f; carp_math_mul_v2_f(&v2a, 3.7f, &mul_v2_f);
     CarpV2 mul_f_v2; carp_math_mul_f_v2(-1.8f, &v2b, &mul_f_v2);
-    
+
     CarpV2 div_v2_v2; carp_math_div_v2_v2(&v2a, &v2b, &div_v2_v2);
     CarpV2 div_v2_f; carp_math_div_v2_f(&v2a, 3.7f, &div_v2_f);
 

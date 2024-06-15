@@ -250,7 +250,7 @@ void carp_math_add_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
         "movq (%%rdi), %%xmm1\n\t"
         "punpckldq %%xmm0, %%xmm0\n\t"
         "addps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rdx)\n\t"
+        "movq %%xmm0, (%%rsi)\n\t"
         : [c] "+m"(outV2)
         #if defined(__clang__) || defined(__GNUC__)
         : "m"(a), "x"(f)
@@ -281,7 +281,7 @@ void carp_math_add_f_v2(f32 f, const CarpV2* b, CarpV2* outV2)
         "punpckldq %%xmm0, %%xmm0\n\t"
         "movq (%%rdi), %%xmm1\n\t"
         "addps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rdx)\n\t"
+        "movq %%xmm0, (%%rsi)\n\t"
         : [c] "+m"(outV2)
         #if defined(__clang__) || defined(__GNUC__)
         : "m"(b), "x"(f)
@@ -343,7 +343,7 @@ void carp_math_sub_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
         "punpckldq %%xmm0, %%xmm0\n\t"
         "movq (%%rdi), %%xmm1\n\t"
         "subps %%xmm0, %%xmm1\n\t"
-        "movq %%xmm1, (%%rdi)\n\t"
+        "movq %%xmm1, (%%rsi)\n\t"
         : [c] "+m"(outV2)
         #if defined(__clang__) || defined(__GNUC__)
         : "m"(a), "x"(f)
@@ -406,7 +406,7 @@ void carp_math_mul_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
         "punpckldq %%xmm0, %%xmm0\n\t"
         "movq (%%rdi), %%xmm1\n\t"
         "mulps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rdi)\n\t"
+        "movq %%xmm0, (%%rsi)\n\t"
         : [c] "+m"(outV2)
         #if defined(__clang__) || defined(__GNUC__)
         : "m"(a), "x"(f)
@@ -436,7 +436,7 @@ void carp_math_mul_f_v2(f32 f, const CarpV2* b, CarpV2* outV2)
         "punpckldq %%xmm0, %%xmm0\n\t"
         "movq (%%rdi), %%xmm1\n\t"
         "mulps %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rdi)\n\t"
+        "movq %%xmm0, (%%rsi)\n\t"
         : [c] "+m"(outV2)
         #if defined(__clang__) || defined(__GNUC__)
         : "m"(b), "x"(f)
@@ -498,7 +498,7 @@ void carp_math_div_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
         "punpckldq %%xmm0, %%xmm0\n\t"
         "movq (%%rdi), %%xmm1\n\t"
         "divps %%xmm0, %%xmm1\n\t"
-        "movq %%xmm1, (%%rdi)\n\t"
+        "movq %%xmm1, (%%rsi)\n\t"
         : [c] "+m"(outV2)
         #if defined(__clang__) || defined(__GNUC__)
         : "m"(a), "x"(f)
@@ -773,7 +773,7 @@ void carp_math_neg_v3(const CarpV3A* a, CarpV3A* outV3)
     // return value was written into rax and rcx
     __asm__ volatile  (
         "movups %[negin], %%xmm0\n\t"
-        "pxor (%%rcx), %%xmm0\n\t" 
+        "pxor (%%rcx), %%xmm0\n\t"
         "movups %%xmm0, (%%rdx)\n\t"
         : [c] "+m"(outV3)
         : [negin]"m"(neg), "m"(a)
@@ -1422,7 +1422,7 @@ CarpQuat carp_math_quat_mul_q_q(const CarpQuat* a, const CarpQuat* b)
 {
     const CarpV3A av = {a->vx, a->vy, a->vz, 0.0f};
     const CarpV3A bv = {b->vx, b->vy, b->vz, 0.0f};
-    CarpQuat result = { 
+    CarpQuat result = {
         carp_math_add_v3_v3(&carp_math_cross(&av, &bv), &carp_math_mul_f_v3(a->w, &bv)) + &carp_math_mul_f_v3(b->w, &av),
         a->w * b->w - dot(av, bv) };
     return result;
