@@ -29,14 +29,12 @@ void testv2(void)
 
     CarpV2 add_v2_v2; carp_math_add_v2_v2(&v2a, &v2b, &add_v2_v2);
     CarpV2 add_v2_f; carp_math_add_v2_f(&v2a, 3.7f, &add_v2_f);
-    CarpV2 add_f_v2; carp_math_add_f_v2(-1.8f, &v2b, &add_f_v2);
 
     CarpV2 sub_v2_v2; carp_math_sub_v2_v2(&v2a, &v2b, &sub_v2_v2);
     CarpV2 sub_v2_f; carp_math_sub_v2_f(&v2a, 3.7f, &sub_v2_f);
 
     CarpV2 mul_v2_v2; carp_math_mul_v2_v2(&v2a, &v2b, &mul_v2_v2);
     CarpV2 mul_v2_f; carp_math_mul_v2_f(&v2a, 3.7f, &mul_v2_f);
-    CarpV2 mul_f_v2; carp_math_mul_f_v2(-1.8f, &v2b, &mul_f_v2);
 
     CarpV2 div_v2_v2; carp_math_div_v2_v2(&v2a, &v2b, &div_v2_v2);
     CarpV2 div_v2_f; carp_math_div_v2_f(&v2a, 3.7f, &div_v2_f);
@@ -58,14 +56,12 @@ void testv2(void)
 
     carp_math_print_v2(&add_v2_v2, "add_v2_v2");
     carp_math_print_v2(&add_v2_f, "add_v2_f");
-    carp_math_print_v2(&add_f_v2, "add_f_v2");
 
     carp_math_print_v2(&sub_v2_v2, "sub_v2_v2");
     carp_math_print_v2(&sub_v2_f, "sub_v2_f");
 
     carp_math_print_v2(&mul_v2_v2, "mul_v2_v2");
     carp_math_print_v2(&mul_v2_f, "mul_v2_f");
-    carp_math_print_v2(&mul_f_v2, "mul_f_v2");
 
     carp_math_print_v2(&div_v2_v2, "div_v2_v2");
     carp_math_print_v2(&div_v2_f, "div_v2_f");
@@ -111,14 +107,12 @@ void testv3a(void)
 
     CarpV3A add_v3_v3; carp_math_add_v3_v3(&v3a, &v3b, &add_v3_v3);
     CarpV3A add_v3_f; carp_math_add_v3_f(&v3a, 3.9f, &add_v3_f);
-    CarpV3A add_f_v3; carp_math_add_f_v3(-1.8f, &v3b, &add_f_v3);
 
     CarpV3A sub_v3_v3; carp_math_sub_v3_v3(&v3a, &v3b, &sub_v3_v3);
     CarpV3A sub_v3_f; carp_math_sub_v3_f(&v3a, 3.7f, &sub_v3_f );
 
     CarpV3A mul_v3_v3; carp_math_mul_v3_v3(&v3a, &v3b, &mul_v3_v3);
     CarpV3A mul_v3_f; carp_math_mul_v3_f(&v3a, 3.7f, &mul_v3_f);
-    CarpV3A mul_f_v3; carp_math_mul_f_v3(-1.8f, &v3b, &mul_f_v3);
 
     CarpV3A div_v3_v3; carp_math_div_v3_v3(&v3a, &v3b, &div_v3_v3);
     CarpV3A div_v3_f; carp_math_div_v3_f(&v3a, 3.7f, &div_v3_f);
@@ -140,14 +134,12 @@ void testv3a(void)
 
     carp_math_print_v3a(&add_v3_v3, "add_v3_v3");
     carp_math_print_v3a(&add_v3_f, "add_v3_f");
-    carp_math_print_v3a(&add_f_v3, "add_f_v3");
 
     carp_math_print_v3a(&sub_v3_v3, "sub_v3_v3");
     carp_math_print_v3a(&sub_v3_f, "sub_v3_f");
 
     carp_math_print_v3a(&mul_v3_v3, "mul_v3_v3");
     carp_math_print_v3a(&mul_v3_f, "mul_v3_f");
-    carp_math_print_v3a(&mul_f_v3, "mul_f_v3");
 
     carp_math_print_v3a(&div_v3_v3, "div_v3_v3");
     carp_math_print_v3a(&div_v3_f, "div_v3_f");
@@ -177,6 +169,36 @@ void testv3a(void)
     printf("V3A end\n\n");
 }
 
+void testQuat(void)
+{
+    printf("Quat begin\n");
+
+    CarpV3A right = {1.0f, 0.0f, 0.0f, 0.0f};
+    CarpV3A up = {0.0f, 1.0f, 0.0f, 0.0f};
+    CarpQuat a = {0.0f, 0.0f, 0.0f, 1.0f};
+    CarpQuat b; carp_math_getQuatFromAxisAngle(&right, CARP_PI * 0.5f, &b);
+    CarpQuat c; carp_math_mul_q_q(&a, &b, &c);
+
+    carp_math_print_q(&b, "Quat after multiply");
+    printf("Quat end\n\n");
+}
+
+void testMat(void)
+{
+    printf("Mat begin\n");
+
+    CarpM34 m34;
+    carp_math_zero_m34(&m34);
+
+    CarpM44 m44;
+    carp_math_zero_m44(&m44);
+
+    carp_math_print_m34(&m34, "Zeroed m34");
+    printf("\n");
+    carp_math_print_m44(&m44, "Zeroed m44");
+    printf("Mat end\n\n");
+}
+
 
 int main(void)
 {
@@ -184,6 +206,8 @@ int main(void)
     testf32();
     testv2();
     testv3a();
+    testQuat();
+    testMat();
 
     return 0;
 }

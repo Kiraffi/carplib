@@ -21,7 +21,7 @@
 #endif
 
 #define CARP_EPSILON (1.0e-5f)
-
+#define CARP_PI (3.1415926535897932384626433f)
 
 typedef struct CarpV2
 {
@@ -33,7 +33,8 @@ typedef struct CarpV2
             f32 y;
         };
         _Alignas(8) float v[2];
-        _Alignas(8) uint64_t v2;
+        _Alignas(8) int intArr[2];
+        _Alignas(8) uint64_t u64;
     };
 } CarpV2;
 
@@ -51,6 +52,7 @@ typedef struct CarpV3A
             float w;
         };
         _Alignas(16) float v[4];
+        _Alignas(16) int intArr[4];
         _Alignas(16) __m128 simdv3a;
     };
 } CarpV3A;
@@ -79,7 +81,7 @@ typedef struct CarpQuat
 
 
 
-typedef struct CarpMat4x4
+typedef struct CarpM44
 {
     union
     {
@@ -108,15 +110,15 @@ typedef struct CarpMat4x4
         _Alignas(16) float v[16];
         struct
         {
-            _Alignas(16) __m128 simdR0;
-            _Alignas(16) __m128 simdR1;
-            _Alignas(16) __m128 simdR2;
-            _Alignas(16) __m128 simdR3;
+            CarpV3A r0;
+            CarpV3A r1;
+            CarpV3A r2;
+            CarpV3A r3;
         };
     };
-} CarpMat4x4;
+} CarpM44;
 
-typedef struct CarpMat3x4
+typedef struct CarpM34
 {
     union
     {
@@ -140,13 +142,12 @@ typedef struct CarpMat3x4
         _Alignas(16) float v[12];
         struct
         {
-            _Alignas(16) __m128 simdR0;
-            _Alignas(16) __m128 simdR1;
-            _Alignas(16) __m128 simdR2;
-            _Alignas(16) __m128 simdR3;
+            CarpV3A r0;
+            CarpV3A r1;
+            CarpV3A r2;
         };
     };
-} CarpMat3x4;
+} CarpM34;
 
 
 
@@ -156,6 +157,7 @@ extern "C" {
 #endif
 
 // f32
+f32 carp_math_abs_f(f32 a);
 f32 carp_math_min_f_f(f32 a, f32 b);
 f32 carp_math_max_f_f(f32 a, f32 b);
 
@@ -167,14 +169,12 @@ void carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t, CarpV2* outV2);
 
 void carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2);
 void carp_math_add_v2_f(const CarpV2* a, f32 f, CarpV2* outV2);
-void carp_math_add_f_v2(f32 f, const CarpV2* b, CarpV2* outV2);
 
 void carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2);
 void carp_math_sub_v2_f(const CarpV2* a, f32 f, CarpV2* outV2);
 
 void carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2);
 void carp_math_mul_v2_f(const CarpV2* a, f32 f, CarpV2* outV2);
-void carp_math_mul_f_v2(f32 f, const CarpV2* b, CarpV2* outV2);
 
 void carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2);
 void carp_math_div_v2_f(const CarpV2* a, f32 f, CarpV2* outV2);
@@ -190,30 +190,29 @@ f32 carp_math_len_v2(const CarpV2* a);
 
 
 // v3a
+void carp_math_zero_v3(CarpV3A* outV3);
 void carp_math_broadcast_v3(f32 f, CarpV3A* outV3);
 void carp_math_neg_v3(const CarpV3A* a, CarpV3A* outV3);
 void carp_math_normalize_v3(const CarpV3A* a, CarpV3A* outV3);
 void carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t, CarpV3A* outV3);
 
 void carp_math_add_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
-void carp_math_add_v3_3(const CarpV3A* a, f32 f, CarpV3A* outV3);
-void carp_math_add_f_v3(f32 f, const CarpV3A* b, CarpV3A* outV3);
+void carp_math_add_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3);
 
 void carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
 void carp_math_sub_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3);
 
 void carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
 void carp_math_mul_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3);
-void carp_math_mul_f_v3(f32 f, const CarpV3A* b, CarpV3A* outV3);
 
 void carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
 void carp_math_div_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3);
 
 void carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
 void carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
-void carp_math_cross(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
-void carp_math_project(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
-void carp_math_reject(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
+void carp_math_cross_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
+void carp_math_project_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
+void carp_math_reject_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3);
 
 f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b);
 f32 carp_math_min_v3(const CarpV3A* a);
@@ -226,23 +225,23 @@ f32 carp_math_len_v3(const CarpV3A* a);
 
 // quat
 
-CarpQuat carp_math_neg_q(const CarpQuat* v);
-CarpQuat carp_math_add_q_q(const CarpQuat* a, const CarpQuat* b);
-CarpQuat carp_math_sub_q_q(const CarpQuat* a, const CarpQuat* b);
+void carp_math_neg_q(const CarpQuat* q, CarpQuat* outQuat);
+void carp_math_add_q_q(const CarpQuat* q1, const CarpQuat* q2, CarpQuat* outQuat);
+void carp_math_sub_q_q(const CarpQuat* q1, const CarpQuat* q2, CarpQuat* outQuat);
+void carp_math_mul_q_f(const CarpQuat* q, float t, CarpQuat* outQuat);
 
 float carp_math_dot_q(const CarpQuat* q1, const CarpQuat* q2);
-CarpQuat carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b);
-CarpQuat carp_math_normalize_q(const CarpQuat* q);
-CarpQuat carp_math_conjugate_q(const CarpQuat* q);
-CarpV3A carp_math_rotate_V3_q(const CarpV3A* v, const CarpQuat* q);
-CarpQuat carp_math_mul_q_f32(const CarpQuat* q, float t);
-CarpQuat carp_math_mul_f32_q(float t, const CarpQuat* q);
-CarpQuat carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, float t);
-CarpQuat carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, float t);
+void carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b, CarpQuat* outQuat);
+
+bool carp_math_normalize_q(const CarpQuat* q, CarpQuat* outQuat);
+void carp_math_conjugate_q(const CarpQuat* q, CarpQuat* outQuat);
+void carp_math_rotate_v3WithQuat(const CarpV3A* v, const CarpQuat* q, CarpV3A* outVec);
+void carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, float t, CarpQuat* outQuat);
+bool carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, float t, CarpQuat* outQuat);
 
 void carp_math_getAxisFromQuat(const CarpQuat* quat, CarpV3A* right, CarpV3A* up, CarpV3A* forward);
-CarpQuat carp_math_getQuatFromAxisAngle(const CarpV3A* v, float angle);
-CarpQuat carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* toVector);
+void carp_math_getQuatFromAxisAngle(const CarpV3A* v, float angle, CarpQuat* outQuat);
+bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* toVector, CarpQuat* outQuat);
 void carp_math_getDirectionsFromPitchYawRoll(
     float pitch, float yaw, float roll, CarpV3A* rightDir, CarpV3A* upDir, CarpV3A* forwardDir);
 
@@ -251,30 +250,35 @@ void carp_math_getDirectionsFromPitchYawRoll(
 
 
 // mat
-CarpMat3x4 carp_math_m34_getFromQuaternion(const CarpQuat* quat);
-CarpMat3x4 carp_math_m34_getFromScale(const CarpV3A* scale);
-CarpMat3x4 carp_math_m34_getFromTranslation(const CarpV3A* pos);
+void carp_math_zero_m34(CarpM34* outM34);
+void carp_math_zero_m44(CarpM44* outM44);
+void carp_math_getM34Identity(CarpM34* outM34);
+void carp_math_getM44Identity(CarpM44* outM44);
 
-CarpMat4x4 carp_math_m44_createOrtho(float width, float height, float nearPlane, float farPlane);
-CarpMat4x4 carp_math_m44_createPerspective(float fov, float aspectRatio, float nearPlane, float farPlane);
-CarpMat4x4 carp_math_m44_fromLookAt(const CarpV3A* pos, const CarpV3A* target, const CarpV3A* up);
+void carp_math_getM34FromQuat(const CarpQuat* quat, CarpM34* outM34);
+void carp_math_getM34FromScale(const CarpV3A* scale, CarpM34* outM34);
+void carp_math_getM34FromTranslation(const CarpV3A* pos, CarpM34* outM34);
 
-CarpMat4x4 carp_math_m44_transpose(const CarpMat4x4* m);
-CarpMat4x4 carp_math_m44_inverse(const CarpMat4x4* m);
+bool carp_math_createOrthoM44(float width, float height, float nearPlane, float farPlane, CarpM44* outM44);
+void carp_math_createPerspectiveM44(float fov, float aspectRatio, float nearPlane, float farPlane, CarpM44* outM44);
+void carp_math_getM44fromLookAt(const CarpV3A* pos, const CarpV3A* target, const CarpV3A* up, CarpM44* outM44);
 
-bool carp_math_eq_m44(const CarpMat4x4* a, const CarpMat4x4* b);
-bool carp_math_isIdentity_m44(const CarpMat4x4* m);
+void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44);
+void carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44);
 
-CarpV3A carp_math_m44__mul_v3(const CarpMat4x4* m, const CarpV3A* v);
-CarpV3A carp_math_mul_v3_m44(const CarpV3A* v, const CarpMat4x4* m);
+bool carp_math_eq_m44(const CarpM44* a, const CarpM44* b);
+bool carp_math_isIdentity_m44(const CarpM44* m);
 
-CarpV3A carp_math_mul_m34_v3(const CarpMat3x4* m, const CarpV3A* v);
-CarpV3A carp_math_mul_v3_m34(const CarpV3A* v, const CarpMat3x4* m);
+void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* outV3);
+void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* outV3);
 
-CarpMat4x4 carp_math_mul_m44_m44(const CarpMat4x4* a, const CarpMat4x4* b);
-CarpMat4x4 carp_math_mul_m44_m34(const CarpMat4x4* a, const CarpMat3x4* b);
-CarpMat4x4 carp_math_mul_m34_m44(const CarpMat3x4* a, const CarpMat4x4* b);
-CarpMat3x4 carp_math_mul_m34_m34(const CarpMat3x4* a, const CarpMat3x4* b);
+void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* outV3);
+void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* outV3);
+
+void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* outM44);
+void carp_math_mul_m44_m34(const CarpM44* a, const CarpM34* b, CarpM44* outM44);
+void carp_math_mul_m34_m44(const CarpM34* a, const CarpM44* b, CarpM44* outM44);
+void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34);
 
 
 
@@ -291,6 +295,9 @@ CarpMat3x4 carp_math_mul_m34_m34(const CarpMat3x4* a, const CarpMat3x4* b);
 // helpers
 void carp_math_print_v2(const CarpV2* v, const char* name);
 void carp_math_print_v3a(const CarpV3A* v, const char* name);
+void carp_math_print_q(const CarpQuat* v, const char* name);
+void carp_math_print_m34(const CarpM34* v, const char* name);
+void carp_math_print_m44(const CarpM44* v, const char* name);
 
 
 
