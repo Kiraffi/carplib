@@ -5,9 +5,10 @@
 
 #if _MSC_VER
 #define CARP_DEBUG_BREAK() __debugbreak()
+#elif __TINYC__ && (defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__))
+#define CARP_DEBUG_BREAK() do { __asm__ volatile("int $0x03"); } while(0)
 #else
 #include <signal.h>
-//#define CARP_DEBUG_BREAK() __builtin_trap()
 #define CARP_DEBUG_BREAK() raise(SIGTRAP)
 #endif
 
