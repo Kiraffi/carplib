@@ -9,13 +9,13 @@
 
 // for memory
 // "movl $0x3F800000, 0xc(%%rax)\n\t" // set w to 1.0f
-#if (__TINYC__) && _WIN32
+#if _WIN32 && ( __TINYC__ ) //  || __clang__) 
 #define USE_ASM_WINDOWS 1
 #elif (__TINYC__)
 #define USE_ASM_LINUX 1
 #endif
 
-#if USE_ASM_LINUX || USE_ASM_WINDOWS
+#if (USE_ASM_LINUX || USE_ASM_WINDOWS)
 #define NO_INLINE_FN __attribute__ ((noinline))
 #else
 #define NO_INLINE_FN
@@ -28,7 +28,7 @@
 ///////////////////////////////
 
 NO_INLINE_FN
-f32 carp_math_abs_f(f32 f)
+CARP_FN f32 carp_math_abs_f(f32 f)
 {
     f32 result;
 #if USE_ASM_LINUX || USE_ASM_WINDOWS
@@ -50,7 +50,7 @@ f32 carp_math_abs_f(f32 f)
 
 
 NO_INLINE_FN
-f32 carp_math_min_f_f(f32 a, f32 b)
+CARP_FN f32 carp_math_min_f_f(f32 a, f32 b)
 {
     f32 result;
 #if USE_ASM_LINUX || USE_ASM_WINDOWS
@@ -69,7 +69,7 @@ f32 carp_math_min_f_f(f32 a, f32 b)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_max_f_f(f32 a, f32 b)
+CARP_FN f32 carp_math_max_f_f(f32 a, f32 b)
 {
     f32 result;
 #if USE_ASM_LINUX || USE_ASM_WINDOWS
@@ -89,14 +89,14 @@ f32 carp_math_max_f_f(f32 a, f32 b)
     return result;
 }
 
-f32 carp_math_degToRad(f32 degrees)
+CARP_FN f32 carp_math_degToRad(f32 degrees)
 {
     //return (degrees / 180.0f) * CARP_PI;
     return degrees * 0.01745329251994329577f;
 }
 
 
-f32 carp_math_radToDeg(f32 radians)
+CARP_FN f32 carp_math_radToDeg(f32 radians)
 {
     //return (radians * 180.0f) / CARP_PI;
     return radians * 57.2957795130823208768f;
@@ -122,7 +122,7 @@ f32 carp_math_radToDeg(f32 radians)
 
 
 NO_INLINE_FN
-void carp_math_zero_v2(CarpV2* outV2)
+CARP_FN void carp_math_zero_v2(CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -141,7 +141,7 @@ void carp_math_zero_v2(CarpV2* outV2)
 }
 
 NO_INLINE_FN
-void carp_math_set_v2(const CarpV2* a, CarpV2* outV2)
+CARP_FN void carp_math_set_v2(const CarpV2* a, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -162,7 +162,7 @@ void carp_math_set_v2(const CarpV2* a, CarpV2* outV2)
 
 
 NO_INLINE_FN
-void carp_math_broadcast_v2(f32 f, CarpV2* outV2)
+CARP_FN void carp_math_broadcast_v2(f32 f, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -189,39 +189,37 @@ void carp_math_broadcast_v2(f32 f, CarpV2* outV2)
 }
 
 NO_INLINE_FN
-void carp_math_neg_v2(const CarpV2* a, CarpV2* outV2)
+CARP_FN void carp_math_neg_v2(const CarpV2* a, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
-    static const CarpV2 negZeroV2 = { -0.0f, -0.0f };
-    __asm__ volatile  (
-        "movq %[zerov2], %%xmm1\n\t"
-        "movq (%%rcx), %%xmm0\n\t"
-        "pxor %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rdx)\n\t"
+   __asm__ volatile  (
+        "movq $0x8000000080000000, %%rax\n\t"
+        "xor (%%rcx), %%rax\n\t"
+        "movq %%rax, (%%rdx)\n\t"
         : [c] "+m"(outV2)
-        : [zerov2]"m"(negZeroV2), "m"(a)
         #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
         #endif
     );
+
 #elif USE_ASM_LINUX
-    static const CarpV2 negZeroV2 = { -0.0f, -0.0f };
     __asm__ volatile  (
-        "movq %[zerov2], %%xmm1\n\t"
-        "movq (%%rdi), %%xmm0\n\t"
-        "pxor %%xmm1, %%xmm0\n\t"
-        "movq %%xmm0, (%%rsi)\n\t"
+        "movq $0x8000000080000000, %%rax\n\t"
+        "xor (%%rdi), %%rax\n\t"
+        "movq %%rax, (%%rsi)\n\t"
         : [c] "+m"(outV2)
-        : [zerov2]"m"(negZeroV2), "m"(a)
         #if defined(__clang__) || defined(__GNUC__)
+        : "m"(a)
         #endif
     );
 #else
-    outV2->u64 ^= 0x8000000080000000;
+    static const u64 negz2 = 0x8000000080000000;
+    outV2->u64 = a->u64 ^ negz2;
 #endif
 }
 
 NO_INLINE_FN
-void carp_math_normalize_v2(const CarpV2* a, CarpV2* outV2)
+CARP_FN void carp_math_normalize_v2(const CarpV2* a, CarpV2* outV2)
 {
     f32 d2 = carp_math_sqrLen_v2(a);
     if(d2 < CARP_EPSILON)
@@ -236,7 +234,7 @@ void carp_math_normalize_v2(const CarpV2* a, CarpV2* outV2)
 }
 
 NO_INLINE_FN
-void carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t, CarpV2* outV2)
+CARP_FN void carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -275,7 +273,7 @@ void carp_math_lerp_v2(const CarpV2* a, const CarpV2* b, f32 t, CarpV2* outV2)
 }
 
 NO_INLINE_FN
-void carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
+CARP_FN void carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -307,7 +305,7 @@ void carp_math_add_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 }
 
 NO_INLINE_FN
-void carp_math_add_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
+CARP_FN void carp_math_add_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -340,7 +338,7 @@ void carp_math_add_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 
 
 NO_INLINE_FN
-void carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
+CARP_FN void carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -370,7 +368,7 @@ void carp_math_sub_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 #endif
 }
 NO_INLINE_FN
-void carp_math_sub_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
+CARP_FN void carp_math_sub_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -403,7 +401,7 @@ void carp_math_sub_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 
 
 NO_INLINE_FN
-void carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
+CARP_FN void carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -433,7 +431,7 @@ void carp_math_mul_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 #endif
 }
 NO_INLINE_FN
-void carp_math_mul_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
+CARP_FN void carp_math_mul_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -465,7 +463,7 @@ void carp_math_mul_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 
 
 NO_INLINE_FN
-void carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
+CARP_FN void carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -495,7 +493,7 @@ void carp_math_div_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 #endif
 }
 NO_INLINE_FN
-void carp_math_div_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
+CARP_FN void carp_math_div_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -525,7 +523,7 @@ void carp_math_div_v2_f(const CarpV2* a, f32 f, CarpV2* outV2)
 #endif
 }
 NO_INLINE_FN
-void carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
+CARP_FN void carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -555,7 +553,7 @@ void carp_math_min_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 #endif
 }
 NO_INLINE_FN
-void carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
+CARP_FN void carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -585,7 +583,7 @@ void carp_math_max_v2_v2(const CarpV2* a, const CarpV2* b, CarpV2* outV2)
 #endif
 }
 NO_INLINE_FN
-f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
+CARP_FN f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
 {
     f32 result;
 #if USE_ASM_WINDOWS
@@ -622,7 +620,7 @@ f32 carp_math_dot_v2(const CarpV2* a, const CarpV2* b)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_min_v2(const CarpV2* a)
+CARP_FN f32 carp_math_min_v2(const CarpV2* a)
 {
     f32 result;
 #if USE_ASM_WINDOWS
@@ -653,7 +651,7 @@ f32 carp_math_min_v2(const CarpV2* a)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_max_v2(const CarpV2* a)
+CARP_FN f32 carp_math_max_v2(const CarpV2* a)
 {
      f32 result;
 #if USE_ASM_WINDOWS
@@ -684,7 +682,7 @@ f32 carp_math_max_v2(const CarpV2* a)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_sqrLen_v2(const CarpV2* a)
+CARP_FN f32 carp_math_sqrLen_v2(const CarpV2* a)
 {
     f32 result;
 #if USE_ASM_WINDOWS
@@ -719,7 +717,7 @@ f32 carp_math_sqrLen_v2(const CarpV2* a)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_len_v2(const CarpV2* a)
+CARP_FN f32 carp_math_len_v2(const CarpV2* a)
 {
     return sqrtf(carp_math_sqrLen_v2(a));
 }
@@ -746,7 +744,7 @@ f32 carp_math_len_v2(const CarpV2* a)
 
 
 NO_INLINE_FN
-void carp_math_zero_v3(CarpV3A* outV3)
+CARP_FN void carp_math_zero_v3(CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -767,7 +765,7 @@ void carp_math_zero_v3(CarpV3A* outV3)
 
 
 NO_INLINE_FN
-void carp_math_set_v3(const CarpV3A* a, CarpV3A* outV3)
+CARP_FN void carp_math_set_v3(const CarpV3A* a, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -787,7 +785,7 @@ void carp_math_set_v3(const CarpV3A* a, CarpV3A* outV3)
 }
 
 NO_INLINE_FN
-void carp_math_broadcast_v3(f32 f, CarpV3A* outV3)
+CARP_FN void carp_math_broadcast_v3(f32 f, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -821,9 +819,8 @@ void carp_math_broadcast_v3(f32 f, CarpV3A* outV3)
 
 
 NO_INLINE_FN
-void carp_math_neg_v3(const CarpV3A* a, CarpV3A* outV3)
+CARP_FN void carp_math_neg_v3(const CarpV3A* a, CarpV3A* outV3)
 {
-
     static const CarpV3A neg = { -0.0f, -0.0f, -0.0f, -0.0f };
 #if USE_ASM_WINDOWS
     // this was using rdx as a since originally there was return value, and
@@ -840,9 +837,8 @@ void carp_math_neg_v3(const CarpV3A* a, CarpV3A* outV3)
 
 #elif USE_ASM_LINUX
     __asm__ volatile  (
-        "movups %[negin], %%xmm1\n\t"
-        "movups (%%rdi), %%xmm0\n\t"
-        "pxor %%xmm1, %%xmm0\n\t"
+        "movups %[negin], %%xmm0\n\t"
+        "pxor (%%rdi), %%xmm0\n\t"
         "movups %%xmm0, (%%rsi)\n\t"
         : [c] "+m"(outV3)
         : [negin]"m"(neg), "m"(a)
@@ -855,7 +851,7 @@ void carp_math_neg_v3(const CarpV3A* a, CarpV3A* outV3)
 }
 
 NO_INLINE_FN
-void carp_math_normalize_v3(const CarpV3A* a, CarpV3A* outV3)
+CARP_FN void carp_math_normalize_v3(const CarpV3A* a, CarpV3A* outV3)
 {
     f32 d2 = carp_math_sqrLen_v3(a);
     if(d2 < CARP_EPSILON)
@@ -869,7 +865,7 @@ void carp_math_normalize_v3(const CarpV3A* a, CarpV3A* outV3)
     outV3->w = 0.0f;
 }
 NO_INLINE_FN
-void carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t, CarpV3A* outV3)
+CARP_FN void carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -909,7 +905,7 @@ void carp_math_lerp_v3(const CarpV3A* a, const CarpV3A* b, f32 t, CarpV3A* outV3
 
 
 NO_INLINE_FN
-void carp_math_add_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_add_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -937,7 +933,7 @@ void carp_math_add_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 #endif
 }
 NO_INLINE_FN
-void carp_math_add_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
+CARP_FN void carp_math_add_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -969,7 +965,7 @@ void carp_math_add_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 
 
 NO_INLINE_FN
-void carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -996,7 +992,7 @@ void carp_math_sub_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 #endif
 }
 NO_INLINE_FN
-void carp_math_sub_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
+CARP_FN void carp_math_sub_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1027,7 +1023,7 @@ void carp_math_sub_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 #endif
 }
 NO_INLINE_FN
-void carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1054,7 +1050,7 @@ void carp_math_mul_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 #endif
 }
 NO_INLINE_FN
-void carp_math_mul_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
+CARP_FN void carp_math_mul_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1084,7 +1080,7 @@ void carp_math_mul_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 }
 
 NO_INLINE_FN
-void carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1120,7 +1116,7 @@ void carp_math_div_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 #endif
 }
 NO_INLINE_FN
-void carp_math_div_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
+CARP_FN void carp_math_div_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1160,7 +1156,7 @@ void carp_math_div_v3_f(const CarpV3A* a, f32 f, CarpV3A* outV3)
 #endif
 }
 NO_INLINE_FN
-void carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1188,7 +1184,7 @@ void carp_math_min_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 }
 
 NO_INLINE_FN
-void carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1216,7 +1212,7 @@ void carp_math_max_v3_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 }
 
 NO_INLINE_FN
-void carp_math_cross_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_cross_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
     outV3->x = a->y * b->z - a->z * b->y;
     outV3->y = a->z * b->x - a->x * b->z;
@@ -1225,18 +1221,18 @@ void carp_math_cross_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 }
 
 NO_INLINE_FN
-void carp_math_project_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_project_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
     carp_math_mul_v3_f(b, (carp_math_dot_v3(a, b) / carp_math_dot_v3(b, b)), outV3);
 }
 NO_INLINE_FN
-void carp_math_reject_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
+CARP_FN void carp_math_reject_v3(const CarpV3A* a, const CarpV3A* b, CarpV3A* outV3)
 {
     carp_math_project_v3(a, b, outV3);
     carp_math_sub_v3_v3(a, outV3, outV3);
 }
 NO_INLINE_FN
-f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
+CARP_FN f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
 {
     f32 result;
 #if USE_ASM_WINDOWS
@@ -1271,7 +1267,7 @@ f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_min_v3(const CarpV3A* a)
+CARP_FN f32 carp_math_min_v3(const CarpV3A* a)
 {
     f32 result;
 #if USE_ASM_WINDOWS
@@ -1306,7 +1302,7 @@ f32 carp_math_min_v3(const CarpV3A* a)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_max_v3(const CarpV3A* a)
+CARP_FN f32 carp_math_max_v3(const CarpV3A* a)
 {
     f32 result;
 #if USE_ASM_WINDOWS
@@ -1341,7 +1337,7 @@ f32 carp_math_max_v3(const CarpV3A* a)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_sqrLen_v3(const CarpV3A* a)
+CARP_FN f32 carp_math_sqrLen_v3(const CarpV3A* a)
 {
     f32 result;
 #if USE_ASM_WINDOWS
@@ -1375,7 +1371,7 @@ f32 carp_math_sqrLen_v3(const CarpV3A* a)
     return result;
 }
 NO_INLINE_FN
-f32 carp_math_len_v3(const CarpV3A* a)
+CARP_FN f32 carp_math_len_v3(const CarpV3A* a)
 {
     return sqrtf(carp_math_sqrLen_v3(a));
 }
@@ -1390,7 +1386,7 @@ f32 carp_math_len_v3(const CarpV3A* a)
 //
 ///////////////////////////////
 
-void carp_math_getQuatIdentity(CarpQuat* outQuat)
+CARP_FN void carp_math_getQuatIdentity(CarpQuat* outQuat)
 {
     outQuat->vx = 0.0f;
     outQuat->vy = 0.0f;
@@ -1398,7 +1394,7 @@ void carp_math_getQuatIdentity(CarpQuat* outQuat)
     outQuat->w = 1.0f;
 }
 
-void carp_math_set_q(const CarpQuat* a, CarpQuat* outQuat)
+CARP_FN void carp_math_set_q(const CarpQuat* a, CarpQuat* outQuat)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1417,34 +1413,34 @@ void carp_math_set_q(const CarpQuat* a, CarpQuat* outQuat)
 #endif
 }
 
-void carp_math_neg_q(const CarpQuat* q, CarpQuat* outQuat)
+CARP_FN void carp_math_neg_q(const CarpQuat* q, CarpQuat* outQuat)
 {
     carp_math_neg_v3((const CarpV3A*)q, (CarpV3A*) outQuat);
 }
 
-void carp_math_add_q_q(const CarpQuat* q1, const CarpQuat* q2, CarpQuat* outQuat)
+CARP_FN void carp_math_add_q_q(const CarpQuat* q1, const CarpQuat* q2, CarpQuat* outQuat)
 {
     carp_math_add_v3_v3((const CarpV3A*)q1, (const CarpV3A*)q2, (CarpV3A*) outQuat);
 }
 
-void carp_math_sub_q_q(const CarpQuat* q1, const CarpQuat* q2, CarpQuat* outQuat)
+CARP_FN void carp_math_sub_q_q(const CarpQuat* q1, const CarpQuat* q2, CarpQuat* outQuat)
 {
     carp_math_sub_v3_v3((const CarpV3A*)q1, (const CarpV3A*)q2, (CarpV3A*) outQuat);
 }
 
-void carp_math_mul_q_f(const CarpQuat* q, f32 t, CarpQuat* outQuat)
+CARP_FN void carp_math_mul_q_f(const CarpQuat* q, f32 t, CarpQuat* outQuat)
 {
     carp_math_mul_v3_f((const CarpV3A*)q, t, (CarpV3A*) outQuat);
 }
 
 
-f32 carp_math_dot_q(const CarpQuat* q1, const CarpQuat* q2)
+CARP_FN f32 carp_math_dot_q(const CarpQuat* q1, const CarpQuat* q2)
 {
     return q1->vx * q2->vx + q1->vy * q2->vy + q1->vz * q2->vz + q1->w * q2->w;
 }
 
 
-void carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b, CarpQuat* outQuat)
+CARP_FN void carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b, CarpQuat* outQuat)
 {
     const CarpV3A *av = (const CarpV3A *)a; // {a->vx, a->vy, a->vz, 0.0f};
     const CarpV3A *bv = (const CarpV3A *)b; //{b->vx, b->vy, b->vz, 0.0f};
@@ -1460,7 +1456,7 @@ void carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b, CarpQuat* outQuat)
     outQuat->w = a->w * b->w - carp_math_dot_v3(av, bv);
 }
 
-bool carp_math_normalize_q(const CarpQuat* q, CarpQuat* outQuat)
+CARP_FN bool carp_math_normalize_q(const CarpQuat* q, CarpQuat* outQuat)
 {
     f32 sqrLength = carp_math_dot_q(q, q);
     if(sqrLength <CARP_EPSILON)
@@ -1473,13 +1469,13 @@ bool carp_math_normalize_q(const CarpQuat* q, CarpQuat* outQuat)
     return true;
 }
 
-void carp_math_conjugate_q(const CarpQuat* q, CarpQuat* outQuat)
+CARP_FN void carp_math_conjugate_q(const CarpQuat* q, CarpQuat* outQuat)
 {
     carp_math_neg_v3((const CarpV3A*)q, (CarpV3A*) outQuat);
     outQuat->w = q->w;
 }
 
-void carp_math_rotate_v3WithQuat(const CarpV3A* v, const CarpQuat* q, CarpV3A* outV3)
+CARP_FN void carp_math_rotate_v3WithQuat(const CarpV3A* v, const CarpQuat* q, CarpV3A* outV3)
 {
     const CarpV3A* qv = (const CarpV3A*)q;
 
@@ -1504,7 +1500,7 @@ void carp_math_rotate_v3WithQuat(const CarpV3A* v, const CarpQuat* q, CarpV3A* o
     //return (v * (q->w * q->w - d) + 2.0f * (qv * dot(v, qv) + cross(qv, v) * q->w))
 }
 
-void carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* outQuat)
+CARP_FN void carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* outQuat)
 {
     f32 dotAngle = carp_math_dot_q(q1, q2);
     if (dotAngle < 0.0f)
@@ -1524,7 +1520,7 @@ void carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* o
     }
 }
 
-bool carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* outQuat)
+CARP_FN bool carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* outQuat)
 {
     f32 dotAngle = carp_math_dot_q(q1, q2);
 
@@ -1555,7 +1551,7 @@ bool carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* 
 }
 
 
-void carp_math_getAxisFromQuat(const CarpQuat* quat, CarpV3A* right, CarpV3A* up, CarpV3A* forward)
+CARP_FN void carp_math_getAxisFromQuat(const CarpQuat* quat, CarpV3A* right, CarpV3A* up, CarpV3A* forward)
 {
     right->x = 1.0f - 2.0f * quat->vy * quat->vy - 2.0f * quat->vz * quat->vz;
     right->y = 2.0f * quat->vx * quat->vy + 2.0f * quat->w * quat->vz;
@@ -1571,7 +1567,7 @@ void carp_math_getAxisFromQuat(const CarpQuat* quat, CarpV3A* right, CarpV3A* up
 }
 
 
-void carp_math_getQuatFromAxisAngle(const CarpV3A* v, f32 angle, CarpQuat* outQuat)
+CARP_FN void carp_math_getQuatFromAxisAngle(const CarpV3A* v, f32 angle, CarpQuat* outQuat)
 {
     f32 s = sinf(angle * 0.5f);
     carp_math_normalize_v3(v, (CarpV3A*)outQuat);
@@ -1579,7 +1575,7 @@ void carp_math_getQuatFromAxisAngle(const CarpV3A* v, f32 angle, CarpQuat* outQu
     outQuat->w = cosf(angle * 0.5f);
 }
 
-bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* toVector, CarpQuat* outQuat)
+CARP_FN bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* toVector, CarpQuat* outQuat)
 {
     f32 d = carp_math_dot_v3(from, toVector);
     CarpV3A* outV3 = (CarpV3A*)outQuat;
@@ -1613,7 +1609,7 @@ bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* 
 
 
 
-void getDirectionsFromPitchYawRoll(
+CARP_FN void getDirectionsFromPitchYawRoll(
     f32 pitch, f32 yaw, f32 roll, CarpV3A* rightDir, CarpV3A* upDir, CarpV3A* forwardDir)
 {
     static const CarpV3A Right =    {0.0f, 0.0f, 1.0f, 0.0f};
@@ -1654,7 +1650,7 @@ void getDirectionsFromPitchYawRoll(
 ///////////////////////////////
 
 NO_INLINE_FN
-void carp_math_zero_m34(CarpM34* outM34)
+CARP_FN void carp_math_zero_m34(CarpM34* outM34)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1682,7 +1678,7 @@ void carp_math_zero_m34(CarpM34* outM34)
 
 
 NO_INLINE_FN
-void carp_math_zero_m44(CarpM44* outM44)
+CARP_FN void carp_math_zero_m44(CarpM44* outM44)
 {
 #if USE_ASM_WINDOWS
     __asm__ volatile  (
@@ -1711,7 +1707,7 @@ void carp_math_zero_m44(CarpM44* outM44)
 }
 
 
-void carp_math_getM34Identity(CarpM34* outM34)
+CARP_FN void carp_math_getM34Identity(CarpM34* outM34)
 {
     static const CarpM34 M34Identity = {
         1.0f, 0.0f, 0.0f, 0.0f,
@@ -1723,7 +1719,7 @@ void carp_math_getM34Identity(CarpM34* outM34)
     memmove(outM34, &M34Identity, sizeof(CarpM34));
 }
 
-void carp_math_getM44Identity(CarpM44* outM44)
+CARP_FN void carp_math_getM44Identity(CarpM44* outM44)
 {
     static const CarpM44 M44Identity = {
         1.0f, 0.0f, 0.0f, 0.0f,
@@ -1734,14 +1730,14 @@ void carp_math_getM44Identity(CarpM44* outM44)
     memmove(outM44, &M44Identity, sizeof(CarpM44));
 }
 
-void carp_math_set_m34(const CarpM34* a, CarpM34* outM34)
+CARP_FN void carp_math_set_m34(const CarpM34* a, CarpM34* outM34)
 {
     if(a != outM34)
     {
         memmove(outM34, a, sizeof(CarpM34));
     }
 }
-void carp_math_set_m44(const CarpM44* a, CarpM44* outM44)
+CARP_FN void carp_math_set_m44(const CarpM44* a, CarpM44* outM44)
 {
     if(a != outM44)
     {
@@ -1750,7 +1746,7 @@ void carp_math_set_m44(const CarpM44* a, CarpM44* outM44)
 }
 
 
-void carp_math_getM34FromTranslation(const CarpV3A* pos, CarpM34* outM34)
+CARP_FN void carp_math_getM34FromTranslation(const CarpV3A* pos, CarpM34* outM34)
 {
     carp_math_zero_m34(outM34);
     outM34->_03 = pos->x;
@@ -1758,7 +1754,7 @@ void carp_math_getM34FromTranslation(const CarpV3A* pos, CarpM34* outM34)
     outM34->_23 = pos->z;
 }
 
-void carp_math_getM34FromRotation(const CarpQuat* quat, CarpM34* outM34)
+CARP_FN void carp_math_getM34FromRotation(const CarpQuat* quat, CarpM34* outM34)
 {
     f32 xy2 = 2.0f * quat->vx * quat->vy;
     f32 xz2 = 2.0f * quat->vx * quat->vz;
@@ -1789,7 +1785,7 @@ void carp_math_getM34FromRotation(const CarpQuat* quat, CarpM34* outM34)
     outM34->_23 = 0.0f;
 }
 
-void carp_math_getM34FromScale(const CarpV3A* scale, CarpM34* outM34)
+CARP_FN void carp_math_getM34FromScale(const CarpV3A* scale, CarpM34* outM34)
 {
     carp_math_zero_m34(outM34);
     outM34->_00 = scale->x;
@@ -1798,7 +1794,7 @@ void carp_math_getM34FromScale(const CarpV3A* scale, CarpM34* outM34)
 
 }
 
-void carp_math_getM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34)
+CARP_FN void carp_math_getM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34)
 {
     float xy2 = 2.0f * rot->vx * rot->vy;
     float xz2 = 2.0f * rot->vx * rot->vz;
@@ -1829,7 +1825,7 @@ void carp_math_getM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const Carp
     outM34->_23 = pos->z;
 }
 
-void carp_math_getInverseM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34)
+CARP_FN void carp_math_getInverseM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34)
 {
     float xy2 = 2.0f * rot->vx * rot->vy;
     float xz2 = 2.0f * rot->vx * rot->vz;
@@ -1866,7 +1862,7 @@ void carp_math_getInverseM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, con
 }
 
 
-bool carp_math_createOrthoM44(f32 width, f32 height, f32 nearPlane, f32 farPlane, CarpM44* outM44)
+CARP_FN bool carp_math_createOrthoM44(f32 width, f32 height, f32 nearPlane, f32 farPlane, CarpM44* outM44)
 {
     CARP_ASSERT_RETURN(carp_math_abs_f(width) >= 1.0f, false);
     CARP_ASSERT_RETURN(carp_math_abs_f(height) >= 1.0f, false);
@@ -1884,7 +1880,7 @@ bool carp_math_createOrthoM44(f32 width, f32 height, f32 nearPlane, f32 farPlane
     return true;
 }
 
-bool carp_math_createPerspectiveM44(f32 yFovInDegrees, f32 aspectRatio, f32 nearPlane, f32 farPlane, CarpM44* outM44)
+CARP_FN bool carp_math_createPerspectiveM44(f32 yFovInDegrees, f32 aspectRatio, f32 nearPlane, f32 farPlane, CarpM44* outM44)
 {
     CARP_ASSERT_RETURN(carp_math_abs_f(yFovInDegrees) > 0.00001f, false);
     CARP_ASSERT_RETURN(carp_math_abs_f(aspectRatio) > 0.001f, false);
@@ -1907,7 +1903,7 @@ bool carp_math_createPerspectiveM44(f32 yFovInDegrees, f32 aspectRatio, f32 near
     return true;
 }
 
-void carp_math_getM44fromLookAt(const CarpV3A* pos, const CarpV3A* target, const CarpV3A* up, CarpM44* outM44)
+CARP_FN void carp_math_getM44fromLookAt(const CarpV3A* pos, const CarpV3A* target, const CarpV3A* up, CarpM44* outM44)
 {
     CarpV3A* r0 = &outM44->r0;
     CarpV3A* r1 = &outM44->r1;
@@ -1936,7 +1932,7 @@ void carp_math_getM44fromLookAt(const CarpV3A* pos, const CarpV3A* target, const
 
 }
 
-void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44)
+CARP_FN void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44)
 {
     if(m == outM44)
     {
@@ -1965,7 +1961,7 @@ void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44)
     outM44->_33 = m->_33;
 }
 
-bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
+CARP_FN bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
 {
     if(m == outM44)
     {
@@ -2074,7 +2070,7 @@ bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
 
 }
 
-bool carp_math_eq_m44(const CarpM44* a, const CarpM44* b)
+CARP_FN bool carp_math_eq_m44(const CarpM44* a, const CarpM44* b)
 {
     for(int i = 0; i < 16; ++i)
     {
@@ -2086,7 +2082,7 @@ bool carp_math_eq_m44(const CarpM44* a, const CarpM44* b)
 
 }
 
-bool carp_math_isIdentity_m44(const CarpM44* m)
+CARP_FN bool carp_math_isIdentity_m44(const CarpM44* m)
 {
     for(int i = 0; i < 16; ++i)
     {
@@ -2102,7 +2098,7 @@ bool carp_math_isIdentity_m44(const CarpM44* m)
 
 }
 
-void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* outV3)
+CARP_FN void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* outV3)
 {
     if(v == outV3)
     {
@@ -2117,7 +2113,7 @@ void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* outV3)
     outV3->w = carp_math_dot_v3(v, &m->r3) + m->_33 * v->w;
 }
 
-void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* outV3)
+CARP_FN void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* outV3)
 {
     if(v == outV3)
     {
@@ -2131,7 +2127,7 @@ void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* outV3)
     outV3->w = v->x * m->_03 + v->y * m->_13 + v->z * m->_23 + v->w * m->_33;
 }
 
-void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* outV3)
+CARP_FN void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* outV3)
 {
     if(v == outV3)
     {
@@ -2144,7 +2140,7 @@ void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* outV3)
     outV3->z = carp_math_dot_v3(v, &m->r2) + m->_23 * v->w;
     outV3->w = v->w;
 }
-void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* outV3)
+CARP_FN void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* outV3)
 {
     if(v == outV3)
     {
@@ -2159,7 +2155,7 @@ void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* outV3)
 }
 
 // Simdify / asm this later
-void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* outM44)
+CARP_FN void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* outM44)
 {
     if(outM44 == a)
     {
@@ -2206,7 +2202,7 @@ void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* outM44)
 }
 
 
-void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34)
+CARP_FN void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34)
 {
     if(outM34 == a)
     {
@@ -2266,22 +2262,22 @@ void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34)
 ///////////////////////////////
 
 
-void carp_math_print_v2(const CarpV2* v, const char* name)
+CARP_FN void carp_math_print_v2(const CarpV2* v, const char* name)
 {
     CARP_LOGINFO("%s: v2: {%f, %f}\n", name, v->x, v->y);
 }
 
-void carp_math_print_v3a(const CarpV3A* v, const char* name)
+CARP_FN void carp_math_print_v3a(const CarpV3A* v, const char* name)
 {
     CARP_LOGINFO("%s: v3a: {%f, %f, %f, %f}\n", name, v->x, v->y, v->z, v->w);
 }
 
-void carp_math_print_q(const CarpQuat* q, const char* name)
+CARP_FN void carp_math_print_q(const CarpQuat* q, const char* name)
 {
     CARP_LOGINFO("%s: quat: {%f, %f, %f, %f}\n", name, q->vx, q->vy, q->vz, q->w);
 }
 
-void carp_math_print_m34(const CarpM34* m, const char* name)
+CARP_FN void carp_math_print_m34(const CarpM34* m, const char* name)
 {
     CARP_LOGINFO("%s m44 r0: {%f, %f, %f, %f}\n", name, m->v[0], m->v[1], m->v[2], m->v[3]);
     CARP_LOGINFO("%s m44 r1: {%f, %f, %f, %f}\n", name, m->v[4], m->v[5], m->v[6], m->v[7]);
@@ -2289,7 +2285,7 @@ void carp_math_print_m34(const CarpM34* m, const char* name)
 }
 
 
-void carp_math_print_m44(const CarpM44* m, const char* name)
+CARP_FN void carp_math_print_m44(const CarpM44* m, const char* name)
 {
     CARP_LOGINFO("%s m44 r0: {%f, %f, %f, %f}\n", name, m->v[0], m->v[1], m->v[2], m->v[3]);
     CARP_LOGINFO("%s m44 r1: {%f, %f, %f, %f}\n", name, m->v[4], m->v[5], m->v[6], m->v[7]);

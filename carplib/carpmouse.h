@@ -14,19 +14,19 @@ typedef enum CarpMouseButton
 
 } CarpMouseButton;
 
-void carp_mouse_resetState(void);
-void carp_mouse_setButtonState(CarpMouseButton button, bool down);
-void carp_mouse_setPosition(int x, int y);
-void carp_mouse_addWheelMovement(int x, int y);
+CARP_FN void carp_mouse_resetState(void);
+CARP_FN void carp_mouse_setButtonState(CarpMouseButton button, bool down);
+CARP_FN void carp_mouse_setPosition(int x, int y);
+CARP_FN void carp_mouse_addWheelMovement(int x, int y);
 
-int carp_mouse_getPositionX(void);
-int carp_mouse_getPositionY(void);
-int carp_mouse_getWheelX(void);
-int carp_mouse_getWheelY(void);
+CARP_FN int carp_mouse_getPositionX(void);
+CARP_FN int carp_mouse_getPositionY(void);
+CARP_FN int carp_mouse_getWheelX(void);
+CARP_FN int carp_mouse_getWheelY(void);
 
-bool carp_mouse_wasButtonPressed(CarpMouseButton button);
-bool carp_mouse_wasButtonReleased(CarpMouseButton button);
-bool carp_mouse_isButtonDown(CarpMouseButton button);
+CARP_FN bool carp_mouse_wasButtonPressed(CarpMouseButton button);
+CARP_FN bool carp_mouse_wasButtonReleased(CarpMouseButton button);
+CARP_FN bool carp_mouse_isButtonDown(CarpMouseButton button);
 
 
 #endif // CARPMOUSE_HH

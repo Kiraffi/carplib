@@ -46,7 +46,7 @@ static GLuint sCompileShader(int shaderType, const char* code)
         glGetShaderInfoLog(shader, maxLength, &maxLength, buffer);
         buffer[1023] = '\0';
 
-        printf("Failed to compile shader: %s\n", buffer);
+        CARP_LOGERROR("Failed to compile shader: %s\n", buffer);
         return 0;
     }
     return shader;
@@ -54,7 +54,7 @@ static GLuint sCompileShader(int shaderType, const char* code)
 
 
 
-CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const char* fragCode)
+CARP_FN CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const char* fragCode)
 {
     CarpPixelShader result = {0};
 
@@ -93,7 +93,7 @@ CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const cha
         glGetProgramInfoLog(program, maxLength, &maxLength, buffer);
         buffer[1023] = '\0';
 
-        printf("Failed to link shader: %s\n", buffer);
+        CARP_LOGERROR("Failed to link shader: %s\n", buffer);
 
         glDeleteProgram(program);
 
@@ -115,7 +115,7 @@ CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const cha
     return result;
 }
 
-void carp_shader_deletePixelShader(CarpPixelShader* shader)
+CARP_FN void carp_shader_deletePixelShader(CarpPixelShader* shader)
 {
     if(shader)
     {

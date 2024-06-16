@@ -1,24 +1,27 @@
+
 #include "carplib/carpmath.c"
 
+#include "carplib/carplog.h"
+
 #include <stdalign.h>
-#include <stdio.h>
+
 
 void testf32(void)
 {
-    printf("f32 begin\n");
+    CARP_LOG("f32 begin\n");
     f32 minv = carp_math_min_f_f(-4.0f, 23.0f);
     f32 maxv = carp_math_max_f_f(-4.0f, 23.0f);
 
-    printf("min: %f\n", minv);
-    printf("max: %f\n", maxv);
+    CARP_LOG("min: %f\n", minv);
+    CARP_LOG("max: %f\n", maxv);
 
-    printf("f32 end\n\n");
+    CARP_LOG("f32 end\n\n");
 
 }
 
 void testv2(void)
 {
-    printf("V2 begin\n");
+    CARP_LOG("V2 begin\n");
     CarpV2 v2a = {-7.0f, 2.0f };
     CarpV2 v2b = {-4.0f, 1.0f };
     carp_math_print_v2(&v2a, "v2a at begin");
@@ -75,16 +78,16 @@ void testv2(void)
 
     carp_math_print_v2(&min_v2_v2, "min_v2_v2");
     carp_math_print_v2(&max_v2_v2, "max_v2_v2");
-    printf("min_v2: %f\n", min_v2);
-    printf("max_v2: %f\n", max_v2);
+    CARP_LOG("min_v2: %f\n", min_v2);
+    CARP_LOG("max_v2: %f\n", max_v2);
 
-    printf("dot: %f\n", dotResult);
-    printf("dot normalized: %f\n", dotNormalizedResult);
+    CARP_LOG("dot: %f\n", dotResult);
+    CARP_LOG("dot normalized: %f\n", dotNormalizedResult);
 
-    printf("\nSizeof v2a: %i\n", (int)sizeof(CarpV2));
-    printf("Align of v2: %i\n", (int)alignof(CarpV2));
+    CARP_LOG("\nSizeof v2a: %i\n", (int)sizeof(CarpV2));
+    CARP_LOG("Align of v2: %i\n", (int)alignof(CarpV2));
 
-    printf("offset of x: %i, y: %i\n",
+    CARP_LOG("offset of x: %i, y: %i\n",
         (int)offsetof(CarpV2, x),
         (int)offsetof(CarpV2, y)
     );
@@ -92,7 +95,7 @@ void testv2(void)
     carp_math_print_v2(&v2a, "v2a at end");
     carp_math_print_v2(&v2b, "v2b at end");
 
-    printf("V2 end\n\n");
+    CARP_LOG("V2 end\n\n");
 
 }
 
@@ -100,7 +103,7 @@ void testv2(void)
 
 void testv3a(void)
 {
-    printf("V3A begin\n");
+    CARP_LOG("V3A begin\n");
     CarpV3A v3a = {-7.0f, 2.0f, 3.0f, 10.0f};
     CarpV3A v3b = {-4.0f, 1.0f, 3.0f, 20.0f};
     carp_math_print_v3a(&v3a, "v3a at begin");
@@ -158,15 +161,15 @@ void testv3a(void)
 
     carp_math_print_v3a(&min_v3_v3, "min_v3_v3");
     carp_math_print_v3a(&max_v3_v3, "max_v3_v3");
-    printf("min_v3: %f\n", min_v3);
-    printf("max_v3: %f\n", max_v3);
+    CARP_LOG("min_v3: %f\n", min_v3);
+    CARP_LOG("max_v3: %f\n", max_v3);
 
-    printf("dot: %f\n", dotResult);
-    printf("dot normalized: %f\n", dotNormalizedResult);
+    CARP_LOG("dot: %f\n", dotResult);
+    CARP_LOG("dot normalized: %f\n", dotNormalizedResult);
 
-    printf("\nSizeof v3a: %i\n", (int)sizeof(CarpV3A));
-    printf("Align of v3a: %i\n", (int)alignof(CarpV3A));
-    printf("offset of x: %i, y: %i, z: %i, w: %i\n",
+    CARP_LOG("\nSizeof v3a: %i\n", (int)sizeof(CarpV3A));
+    CARP_LOG("Align of v3a: %i\n", (int)alignof(CarpV3A));
+    CARP_LOG("offset of x: %i, y: %i, z: %i, w: %i\n",
         (int)offsetof(CarpV3A, x),
         (int)offsetof(CarpV3A, y),
         (int)offsetof(CarpV3A, z),
@@ -175,12 +178,12 @@ void testv3a(void)
     carp_math_print_v3a(&v3a, "v3a at end");
     carp_math_print_v3a(&v3b, "v3b at end");
 
-    printf("V3A end\n\n");
+    CARP_LOG("V3A end\n\n");
 }
 
 void testQuat(void)
 {
-    printf("Quat begin\n");
+    CARP_LOG("Quat begin\n");
 
     CarpV3A right = {1.0f, 0.0f, 0.0f, 0.0f};
     CarpV3A up = {0.0f, 1.0f, 0.0f, 0.0f};
@@ -189,12 +192,12 @@ void testQuat(void)
     CarpQuat c; carp_math_mul_q_q(&a, &b, &c);
 
     carp_math_print_q(&b, "Quat after multiply");
-    printf("Quat end\n\n");
+    CARP_LOG("Quat end\n\n");
 }
 
 void testMat(void)
 {
-    printf("Mat begin\n");
+    CARP_LOG("Mat begin\n");
 
     CarpM34 m34;
     carp_math_zero_m34(&m34);
@@ -203,15 +206,15 @@ void testMat(void)
     carp_math_zero_m44(&m44);
 
     carp_math_print_m34(&m34, "Zeroed m34");
-    printf("\n");
+    CARP_LOG("\n");
     carp_math_print_m44(&m44, "Zeroed m44");
-    printf("Mat end\n\n");
+    CARP_LOG("Mat end\n\n");
 }
 
 
 int main(void)
 {
-    printf("Begin test\n");
+    CARP_LOG("Begin test\n");
     testf32();
     testv2();
     testv3a();

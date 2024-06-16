@@ -99,7 +99,7 @@ static b8 s_initWindow(CarpWindow* carp_window, const char* windowName, s32 widt
 
     if (wnd->hwnd == NULL)
     {
-        printf("Window handle is null!\n");
+        CARP_LOGERROR("Window handle is null!\n");
         return false;
     }
 
@@ -108,10 +108,10 @@ static b8 s_initWindow(CarpWindow* carp_window, const char* windowName, s32 widt
     //ASSERT(wnd->dc != NULL);
     if (wnd->dc == NULL)
     {
-        printf("Window dc is null!\n");
+        CARP_LOGERROR("Window dc is null!\n");
         return false;
     }
-    printf("Window created!\n");
+    CARP_LOGINFO("Window created!\n");
 
     return true;
 }
@@ -138,20 +138,20 @@ static b8 s_initGL(CarpWindow* carp_window)
 
     if (descriptorSuccess == 0)
     {
-        printf("Failed to describe pixel format!\n");
+        CARP_LOGERROR("Failed to describe pixel format!\n");
         return false;
     }
 
     if (SetPixelFormat(wnd->dc, suggestedPixelFormatIndex, &suggestedPxFormat) == 0)
     {
-        printf("Failed to set pixel format!\n");
+        CARP_LOGERROR("Failed to set pixel format!\n");
         return false;
     }
 
     HGLRC rc = wglCreateContext(wnd->dc);
     if(rc == 0)
     {
-        printf("Failed to create opengl context.\n");
+        CARP_LOGERROR("Failed to create opengl context.\n");
         return false;
     }
 
@@ -160,7 +160,7 @@ static b8 s_initGL(CarpWindow* carp_window)
     // Check thread?
     if (wglMakeCurrent(wnd->dc, rc) == 0)
     {
-        printf("Failed to make current opengl context.\n");
+        CARP_LOGERROR("Failed to make current opengl context.\n");
         return false;
     }
     // should check extensions support
@@ -168,7 +168,7 @@ static b8 s_initGL(CarpWindow* carp_window)
     winCreateContextAttribs = (PFNCREATECONTEXTATTRIB_CARP)wglGetProcAddress("wglCreateContextAttribsARB\0");
     if (winCreateContextAttribs == NULL)
     {
-        printf("wglCreateContextAttribsARB not found!\n");
+        CARP_LOGINFO("wglCreateContextAttribsARB not found!\n");
         return false;
     }
 
@@ -195,11 +195,11 @@ static b8 s_initGL(CarpWindow* carp_window)
         }
     }
     int version = gladLoaderLoadGL();
-    printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+    CARP_LOGINFO("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
 	//Checking GL version
 	const GLubyte* GLVersionString = glGetString(GL_VERSION);
-    printf("GL version: %s\n", GLVersionString);
+    CARP_LOGINFO("GL version: %s\n", GLVersionString);
 
     carp_window->resized = true;
 
@@ -371,7 +371,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
             }
             if( translated != CarpKeyboardKey_Invalid && translated < 1024)
             {
-                printf("key: %i\n", translated);
+                CARP_LOGDEBUG("key: %i\n", translated);
                 carp_keyboard_setKeyState((CarpKeyboardKey)translated, down);
             }
 
@@ -423,7 +423,7 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
 
 
-b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+CARP_FN b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     if(carp_window == NULL)
     {
@@ -432,20 +432,20 @@ b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, 
 
     if(!s_initWindow(carp_window, windowName, width, height, x, y))
     {
-        printf("Window init failed\n");
+        CARP_LOGERROR("Window init failed\n");
         return false;
     }
 
     if(!s_initGL(carp_window))
     {
-        printf("GL init failed\n");
+        CARP_LOGERROR("GL init failed\n");
         return false;
     }
     return true;
 }
 
 
-void carp_window_destroy(CarpWindow* carp_window)
+CARP_FN void carp_window_destroy(CarpWindow* carp_window)
 {
     if(carp_window == NULL)
     {
@@ -455,7 +455,7 @@ void carp_window_destroy(CarpWindow* carp_window)
     gladLoaderUnloadGL();
 }
 
-b8 carp_window_update(CarpWindow* carp_window, f32 dt)
+CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
 {
     if(carp_window == NULL)
     {
@@ -473,7 +473,7 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     {
         //LONG t = GetMessageTime();
         PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE);
-        //printf("Message time: %u\n", (u32)t);
+        //CARP_LOGINFO("Message time: %u\n", (u32)t);
         //b8 dispatch = false;
         switch(msg.message)
         {
@@ -583,7 +583,7 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     return true;
 }
 
-void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
+CARP_FN void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
 {
     if(carp_window == NULL)
     {
@@ -593,7 +593,7 @@ void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
     SetWindowTextA(wnd->hwnd, title);
 }
 
-void carp_window_swapBuffers(CarpWindow* carp_window)
+CARP_FN void carp_window_swapBuffers(CarpWindow* carp_window)
 {
     if(carp_window == NULL)
     {
@@ -603,7 +603,7 @@ void carp_window_swapBuffers(CarpWindow* carp_window)
     SwapBuffers(wnd->dc);
 }
 
-void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
+CARP_FN void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 {
     if(carp_window == NULL || winSwapIntervalEXTFn == NULL)
     {
@@ -613,7 +613,7 @@ void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 }
 
 
-void carp_window_setWindowSizeChangedCallbackFn(
+CARP_FN void carp_window_setWindowSizeChangedCallbackFn(
     CarpWindow* carp_window,
     WindowSizeChangedCallbackFn windowSizeChangedCallbackFn)
 {

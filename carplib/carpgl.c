@@ -2,7 +2,7 @@
 #include "carptype.h"
 
 
-b8 loadGLFuncs(carpGlLoadProc proc)
+CARP_FN b8 loadGLFuncs(carpGlLoadProc proc)
 {
 
     return true;

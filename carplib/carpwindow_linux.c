@@ -340,18 +340,18 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 
 
 
-void carp_window_destroy(CarpWindow* carp_window)
+CARP_FN void carp_window_destroy(CarpWindow* carp_window)
 {
     s_destroyWindow(carp_window);
     s_destroyDisplay(carp_window);
 }
 
-b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
+CARP_FN b8 carp_window_init(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     return s_initDisplay(carp_window, windowName, width, height, x, y);
 }
 
-b8 carp_window_update(CarpWindow* carp_window, f32 dt)
+CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
 {
 
     if(carp_window == NULL)
@@ -461,7 +461,7 @@ b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     return true;
 }
 
-void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
+CARP_FN void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
 {
     if(carp_window == NULL || title == NULL)
     {
@@ -471,7 +471,7 @@ void carp_window_setWindowTitle(CarpWindow* carp_window, const char* title)
     XStoreName(wnd->carpDisplay, wnd->carpWindow, title);
 }
 
-void carp_window_swapBuffers(CarpWindow* carp_window)
+CARP_FN void carp_window_swapBuffers(CarpWindow* carp_window)
 {
     if(carp_window == NULL)
     {
@@ -480,7 +480,7 @@ void carp_window_swapBuffers(CarpWindow* carp_window)
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
     glXSwapBuffers(wnd->carpDisplay, wnd->carpWindow);
 }
-void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
+CARP_FN void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 {
     if(carp_window == NULL || glxSwapIntervalEXTFn == NULL)
     {
@@ -491,7 +491,7 @@ void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 }
 
 
-void carp_window_setWindowSizeChangedCallbackFn(
+ CARP_FN void carp_window_setWindowSizeChangedCallbackFn(
     CarpWindow* carp_window,
     WindowSizeChangedCallbackFn windowSizeChangedCallbackFn)
 {

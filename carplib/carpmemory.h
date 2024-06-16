@@ -1,6 +1,7 @@
 #ifndef CARPMEMORY_HH
 #define CARPMEMORY_HH
 
+#include "carptype.h"
 #include "carpwindow.h"
 
 #define MAX_AMOUNT_INPUT 1024
@@ -38,8 +39,8 @@ typedef struct CarpMemory
 
 } CarpMemory;
 
-b8 carp_memory_init(void);
-void carp_memory_destroy(void);
-CarpMemory* carp_memory_get(void);
+CARP_FN b8 carp_memory_init(void);
+CARP_FN void carp_memory_destroy(void);
+CARP_FN CarpMemory* carp_memory_get(void);
 
 #endif //CARPMEMORY_HH

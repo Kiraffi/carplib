@@ -164,11 +164,11 @@ typedef enum CarpKeyboardKey
 
 } CarpKeyboardKey;
 
-void carp_keyboard_resetState(void);
-void carp_keyboard_setKeyState(CarpKeyboardKey key, bool down);
+CARP_FN void carp_keyboard_resetState(void);
+CARP_FN void carp_keyboard_setKeyState(CarpKeyboardKey key, bool down);
 
-bool carp_keyboard_wasKeyPressed(CarpKeyboardKey key);
-bool carp_keyboard_wasKeyReleased(CarpKeyboardKey key);
-bool carp_keyboard_isKeyDown(CarpKeyboardKey key);
+CARP_FN bool carp_keyboard_wasKeyPressed(CarpKeyboardKey key);
+CARP_FN bool carp_keyboard_wasKeyReleased(CarpKeyboardKey key);
+CARP_FN bool carp_keyboard_isKeyDown(CarpKeyboardKey key);
 
 #endif // CARPKEYBOARD_HH

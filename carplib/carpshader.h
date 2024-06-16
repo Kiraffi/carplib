@@ -4,7 +4,7 @@
 typedef int GLint;
 typedef unsigned int GLuint;
 
-#include <stdbool.h>
+#include "carptype.h"
 
 typedef struct CarpPixelShader
 {
@@ -15,8 +15,8 @@ typedef struct CarpPixelShader
 } CarpPixelShader;
 
 
-CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const char* fragCode);
-void carp_shader_deletePixelShader(CarpPixelShader* shader);
+CARP_FN CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, const char* fragCode);
+CARP_FN void carp_shader_deletePixelShader(CarpPixelShader* shader);
 
 
 

@@ -1,4 +1,5 @@
 #define WIN32_LEAN_AND_MEAN 1
+#define COMPILE_SINGLE_SOURCE 1
 
 #include "external/glad/gl.c"
 

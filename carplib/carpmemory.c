@@ -1,15 +1,16 @@
 //#define WIN32_LEAN_AND_MEAN 1
 //#include <windows.h>
 
-#include <stdlib.h>
+#include <malloc.h> // malloc, otherwise tcc will coredump
+#include <stdlib.h> //free
 
 #include "carpmemory.h"
 
 
-CarpMemory* s_carpMemory = NULL;
+static CarpMemory* s_carpMemory = NULL;
 
 
-b8 carp_memory_init(void)
+CARP_FN b8 carp_memory_init(void)
 {
     if(s_carpMemory != NULL)
         return false;
@@ -18,7 +19,7 @@ b8 carp_memory_init(void)
     return s_carpMemory != NULL;
 }
 
-void carp_memory_destroy(void)
+CARP_FN void carp_memory_destroy(void)
 {
     if(s_carpMemory != NULL)
     {
@@ -27,7 +28,7 @@ void carp_memory_destroy(void)
     s_carpMemory = NULL;
 }
 
-CarpMemory* carp_memory_get(void)
+CARP_FN CarpMemory* carp_memory_get(void)
 {
     return s_carpMemory;
 }

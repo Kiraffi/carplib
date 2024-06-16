@@ -31,7 +31,7 @@
 //typedef void (APIENTRY *GLDEBUGPROC)(GLenum source,GLenum type,GLuint id,GLenum severity,GLsizei length,const GLchar *message,const void *userParam);
 
 typedef void* (* carpGlLoadProc)(const char *name);
-b8 loadGLFuncs(carpGlLoadProc proc);
+CARP_FN b8 loadGLFuncs(carpGlLoadProc proc);
 
 
 
