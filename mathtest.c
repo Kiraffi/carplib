@@ -24,8 +24,10 @@ void testv2(void)
     carp_math_print_v2(&v2a, "v2a at begin");
     carp_math_print_v2(&v2b, "v2b at begin");
 
+    CarpV2 zero_v2; carp_math_zero_v2(&zero_v2);
     CarpV2 neg_v2; carp_math_neg_v2(&v2a, &neg_v2);
     CarpV2 normalized; carp_math_normalize_v2(&v2a, &normalized);
+    CarpV2 set_v2; carp_math_set_v2(&v2a, &set_v2);
 
     CarpV2 add_v2_v2; carp_math_add_v2_v2(&v2a, &v2b, &add_v2_v2);
     CarpV2 add_v2_f; carp_math_add_v2_f(&v2a, 3.7f, &add_v2_f);
@@ -51,8 +53,10 @@ void testv2(void)
     f32 dotResult = carp_math_dot_v2(&v2a, &v2b);
     f32 dotNormalizedResult = carp_math_dot_v2(&normalized, &normalized);
 
+    carp_math_print_v2(&zero_v2, "zero v2");
     carp_math_print_v2(&neg_v2, "neg v2a");
     carp_math_print_v2(&normalized, "normalized v2a");
+    carp_math_print_v2(&set_v2, "set v2, should be same as v2a");
 
     carp_math_print_v2(&add_v2_v2, "add_v2_v2");
     carp_math_print_v2(&add_v2_f, "add_v2_f");
@@ -102,8 +106,10 @@ void testv3a(void)
     carp_math_print_v3a(&v3a, "v3a at begin");
     carp_math_print_v3a(&v3b, "v3b at begin");
 
+    CarpV3A zero_v3; carp_math_zero_v3(&zero_v3);
     CarpV3A neg_v3; carp_math_neg_v3(&v3a, &neg_v3);
     CarpV3A normalized; carp_math_normalize_v3(&v3a, &normalized);
+    CarpV3A set_v3; carp_math_set_v3(&v3a, &set_v3);
 
     CarpV3A add_v3_v3; carp_math_add_v3_v3(&v3a, &v3b, &add_v3_v3);
     CarpV3A add_v3_f; carp_math_add_v3_f(&v3a, 3.9f, &add_v3_f);
@@ -129,8 +135,11 @@ void testv3a(void)
     f32 dotResult = carp_math_dot_v3(&v3a, &v3b);
     f32 dotNormalizedResult = carp_math_dot_v3(&normalized, &normalized);
 
+
+    carp_math_print_v3a(&zero_v3, "zero v3");
     carp_math_print_v3a(&neg_v3, "neg v3a");
     carp_math_print_v3a(&normalized, "normalized v3a");
+    carp_math_print_v3a(&set_v3, "set v3, should be same as v3a");
 
     carp_math_print_v3a(&add_v3_v3, "add_v3_v3");
     carp_math_print_v3a(&add_v3_f, "add_v3_f");

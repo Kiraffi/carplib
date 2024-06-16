@@ -82,7 +82,7 @@ static s32 sMainAfterWindow(void)
         glBindVertexArray(vertexArrayID);
 
         // An array of 3 vectors which represents 3 vertices
-        float vertexBufferData[] = {
+        f32 vertexBufferData[] = {
             -1.0f, -1.0f, 0.0f,
             1.0f, -1.0f, 0.0f,
             0.0f,  1.0f, 0.0f,

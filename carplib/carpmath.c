@@ -1,5 +1,8 @@
 #include "carpmath.h"
 
+#include "carpassert.h"
+#include "carplog.h"
+
 #include <math.h>
 #include <stdio.h>
 #include <string.h> // memset?
@@ -86,6 +89,19 @@ f32 carp_math_max_f_f(f32 a, f32 b)
     return result;
 }
 
+f32 carp_math_degToRad(f32 degrees)
+{
+    //return (degrees / 180.0f) * CARP_PI;
+    return degrees * 0.01745329251994329577f;
+}
+
+
+f32 carp_math_radToDeg(f32 radians)
+{
+    //return (radians * 180.0f) / CARP_PI;
+    return radians * 57.2957795130823208768f;
+ 
+}
 
 
 
@@ -105,7 +121,44 @@ f32 carp_math_max_f_f(f32 a, f32 b)
 
 
 
+NO_INLINE_FN
+void carp_math_zero_v2(CarpV2* outV2)
+{
+#if USE_ASM_WINDOWS
+    __asm__ volatile  (
+        "movq $0, (%%rcx)\n\t"
+        : "+m" (outV2)
+    );
+#elif USE_ASM_LINUX
+    __asm__ volatile  (
+        "movq $0, (%%rdi)\n\t"
+        : "+m" (outV2)
+    );
+#else
+    outV2->x = outV2->y = 0.0f;
+#endif
 
+}
+
+NO_INLINE_FN
+void carp_math_set_v2(const CarpV2* a, CarpV2* outV2)
+{
+#if USE_ASM_WINDOWS
+    __asm__ volatile  (
+        "movq (%%rcx), %%rax\n\t"
+        "movq %%rax, (%%rdx)\n\t"
+        : "+m" (outV2)
+    );
+#elif USE_ASM_LINUX
+    __asm__ volatile  (
+        "movq (%%rdi), %%rax\n\t"
+        "movq %%rax, (%%rsi)\n\t"
+        : "+m" (outV2)
+    );
+#else
+    outV2->u64 = a->u64;
+#endif
+}
 
 
 NO_INLINE_FN
@@ -163,11 +216,10 @@ void carp_math_neg_v2(const CarpV2* a, CarpV2* outV2)
         #endif
     );
 #else
-    outV2->x = -a->x;
-    outV2->y = -a->y;
-
+    outV2->u64 ^= 0x8000000080000000;
 #endif
 }
+
 NO_INLINE_FN
 void carp_math_normalize_v2(const CarpV2* a, CarpV2* outV2)
 {
@@ -715,6 +767,26 @@ void carp_math_zero_v3(CarpV3A* outV3)
 
 
 NO_INLINE_FN
+void carp_math_set_v3(const CarpV3A* a, CarpV3A* outV3)
+{
+#if USE_ASM_WINDOWS
+    __asm__ volatile  (
+        "movups (%%rcx), %%xmm0\n\t"
+        "movups %%xmm0, (%%rdx)\n\t"
+        : "+m" (outV3)
+    );
+#elif USE_ASM_LINUX
+    __asm__ volatile  (
+        "movups (%%rdi), %%xmm0\n\t"
+        "movups %%xmm0, (%%rsi)\n\t"
+        : "+m" (outV3)
+    );
+#else
+    outV3->simdv3a = a->simdv3a;
+#endif
+}
+
+NO_INLINE_FN
 void carp_math_broadcast_v3(f32 f, CarpV3A* outV3)
 {
 #if USE_ASM_WINDOWS
@@ -1201,7 +1273,7 @@ f32 carp_math_dot_v3(const CarpV3A* a, const CarpV3A* b)
 NO_INLINE_FN
 f32 carp_math_min_v3(const CarpV3A* a)
 {
-    float result;
+    f32 result;
 #if USE_ASM_WINDOWS
     __asm__ volatile (
         "movd (%%rcx), %%xmm0\n\t"
@@ -1236,7 +1308,7 @@ f32 carp_math_min_v3(const CarpV3A* a)
 NO_INLINE_FN
 f32 carp_math_max_v3(const CarpV3A* a)
 {
-    float result;
+    f32 result;
 #if USE_ASM_WINDOWS
     __asm__ volatile (
         "movd (%%rcx), %%xmm0\n\t"
@@ -1318,6 +1390,32 @@ f32 carp_math_len_v3(const CarpV3A* a)
 //
 ///////////////////////////////
 
+void carp_math_getQuatIdentity(CarpQuat* outQuat)
+{
+    outQuat->vx = 0.0f;
+    outQuat->vy = 0.0f;
+    outQuat->vz = 0.0f;
+    outQuat->w = 1.0f;
+}
+
+void carp_math_set_q(const CarpQuat* a, CarpQuat* outQuat)
+{
+#if USE_ASM_WINDOWS
+    __asm__ volatile  (
+        "movups (%%rcx), %%xmm0\n\t"
+        "movups %%xmm0, (%%rdx)\n\t"
+        : "+m" (outQuat)
+    );
+#elif USE_ASM_LINUX
+    __asm__ volatile  (
+        "movups (%%rdi), %%xmm0\n\t"
+        "movups %%xmm0, (%%rsi)\n\t"
+        : "+m" (outQuat)
+    );
+#else
+    outQuat->simdQuat = a->simdQuat;
+#endif
+}
 
 void carp_math_neg_q(const CarpQuat* q, CarpQuat* outQuat)
 {
@@ -1334,13 +1432,13 @@ void carp_math_sub_q_q(const CarpQuat* q1, const CarpQuat* q2, CarpQuat* outQuat
     carp_math_sub_v3_v3((const CarpV3A*)q1, (const CarpV3A*)q2, (CarpV3A*) outQuat);
 }
 
-void carp_math_mul_q_f(const CarpQuat* q, float t, CarpQuat* outQuat)
+void carp_math_mul_q_f(const CarpQuat* q, f32 t, CarpQuat* outQuat)
 {
     carp_math_mul_v3_f((const CarpV3A*)q, t, (CarpV3A*) outQuat);
 }
 
 
-float carp_math_dot_q(const CarpQuat* q1, const CarpQuat* q2)
+f32 carp_math_dot_q(const CarpQuat* q1, const CarpQuat* q2)
 {
     return q1->vx * q2->vx + q1->vy * q2->vy + q1->vz * q2->vz + q1->w * q2->w;
 }
@@ -1364,14 +1462,13 @@ void carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b, CarpQuat* outQuat)
 
 bool carp_math_normalize_q(const CarpQuat* q, CarpQuat* outQuat)
 {
-    float sqrLength = carp_math_dot_q(q, q);
+    f32 sqrLength = carp_math_dot_q(q, q);
     if(sqrLength <CARP_EPSILON)
     {
         carp_math_zero_v3((CarpV3A*) outQuat);
-        //DEBUG_BREAK_MACRO_MATH();
-        return false;
+        CARP_ASSERT_RETURN(0, false);
     }
-    float length = 1.0f / sqrtf(sqrLength);
+    f32 length = 1.0f / sqrtf(sqrLength);
     carp_math_mul_q_f(q, length, outQuat);
     return true;
 }
@@ -1389,7 +1486,7 @@ void carp_math_rotate_v3WithQuat(const CarpV3A* v, const CarpQuat* q, CarpV3A* o
     CarpV3A tmp1;
     CarpV3A tmp2;
 
-    float d = carp_math_sqrLen_v3((const CarpV3A*)q);
+    f32 d = carp_math_sqrLen_v3((const CarpV3A*)q);
 
     //2.0f * (qv * dot(v, qv) + cross(qv, v) * q->w)
     carp_math_mul_v3_f(qv, carp_math_dot_v3(v, qv), &tmp1);
@@ -1407,9 +1504,9 @@ void carp_math_rotate_v3WithQuat(const CarpV3A* v, const CarpQuat* q, CarpV3A* o
     //return (v * (q->w * q->w - d) + 2.0f * (qv * dot(v, qv) + cross(qv, v) * q->w))
 }
 
-void carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, float t, CarpQuat* outQuat)
+void carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* outQuat)
 {
-    float dotAngle = carp_math_dot_q(q1, q2);
+    f32 dotAngle = carp_math_dot_q(q1, q2);
     if (dotAngle < 0.0f)
     {
         outQuat->vx = q1->vx - t * (q1->vx + q2->vx);
@@ -1427,9 +1524,9 @@ void carp_math_lerp_q(CarpQuat const* q1, CarpQuat const* q2, float t, CarpQuat*
     }
 }
 
-bool carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, float t, CarpQuat* outQuat)
+bool carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, f32 t, CarpQuat* outQuat)
 {
-    float dotAngle = carp_math_dot_q(q1, q2);
+    f32 dotAngle = carp_math_dot_q(q1, q2);
 
     if (dotAngle < 0.0f)
     {
@@ -1441,14 +1538,14 @@ bool carp_math_slerp_q(CarpQuat const* q1, CarpQuat const* q2, float t, CarpQuat
         return carp_math_normalize_q(outQuat, outQuat);
     }
 
-    float theta0 = cosf(dotAngle);
-    float theta = theta0 * t;
+    f32 theta0 = cosf(dotAngle);
+    f32 theta = theta0 * t;
 
-    float sinTheta = sinf(theta);
-    float sinTheta0 = sinf(theta0);
+    f32 sinTheta = sinf(theta);
+    f32 sinTheta0 = sinf(theta0);
 
-    float s2 = sinTheta / sinTheta0;
-    float s1 = sinf(theta) - dotAngle * s2;
+    f32 s2 = sinTheta / sinTheta0;
+    f32 s1 = sinf(theta) - dotAngle * s2;
 
     CarpQuat tmp;
     carp_math_mul_q_f(q1, s1, &tmp);
@@ -1474,9 +1571,9 @@ void carp_math_getAxisFromQuat(const CarpQuat* quat, CarpV3A* right, CarpV3A* up
 }
 
 
-void carp_math_getQuatFromAxisAngle(const CarpV3A* v, float angle, CarpQuat* outQuat)
+void carp_math_getQuatFromAxisAngle(const CarpV3A* v, f32 angle, CarpQuat* outQuat)
 {
-    float s = sinf(angle * 0.5f);
+    f32 s = sinf(angle * 0.5f);
     carp_math_normalize_v3(v, (CarpV3A*)outQuat);
     carp_math_mul_q_f(outQuat, s, outQuat);
     outQuat->w = cosf(angle * 0.5f);
@@ -1484,11 +1581,10 @@ void carp_math_getQuatFromAxisAngle(const CarpV3A* v, float angle, CarpQuat* out
 
 bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* toVector, CarpQuat* outQuat)
 {
-    float d = carp_math_dot_v3(from, toVector);
+    f32 d = carp_math_dot_v3(from, toVector);
     CarpV3A* outV3 = (CarpV3A*)outQuat;
 
-    if(d >= 1.0f - CARP_EPSILON)
-        return false;
+    CARP_ASSERT_RETURN(d < 1.0f - CARP_EPSILON, false);
 
     if(d <= -1.0f + CARP_EPSILON)
     {
@@ -1507,7 +1603,7 @@ bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* 
     }
     else
     {
-        float s = sqrtf((1.0f + d) * 2.0f);
+        f32 s = sqrtf((1.0f + d) * 2.0f);
         carp_math_cross_v3(from, toVector, outV3);
         outV3->w = 0.5f * s;
         carp_math_normalize_q(outQuat, outQuat);
@@ -1518,7 +1614,7 @@ bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const CarpV3A* 
 
 
 void getDirectionsFromPitchYawRoll(
-    float pitch, float yaw, float roll, CarpV3A* rightDir, CarpV3A* upDir, CarpV3A* forwardDir)
+    f32 pitch, f32 yaw, f32 roll, CarpV3A* rightDir, CarpV3A* upDir, CarpV3A* forwardDir)
 {
     static const CarpV3A Right =    {0.0f, 0.0f, 1.0f, 0.0f};
     static const CarpV3A Up =       {0.0f, 1.0f, 0.0f, 0.0f};
@@ -1617,60 +1713,64 @@ void carp_math_zero_m44(CarpM44* outM44)
 
 void carp_math_getM34Identity(CarpM34* outM34)
 {
-    outM34->v[0] = 1.0f;
-    outM34->v[1] = 0.0f;
-    outM34->v[2] = 0.0f;
-    outM34->v[3] = 0.0f;
+    static const CarpM34 M34Identity = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+    };
+    static const CarpM34* ptrM34Identity = &M34Identity;
 
-    outM34->v[4] = 0.0f;
-    outM34->v[5] = 1.0f;
-    outM34->v[6] = 0.0f;
-    outM34->v[7] = 0.0f;
-
-    outM34->v[4] = 0.0f;
-    outM34->v[5] = 0.0f;
-    outM34->v[6] = 1.0f;
-    outM34->v[7] = 0.0f;
+    memmove(outM34, &M34Identity, sizeof(CarpM34));
 }
 
 void carp_math_getM44Identity(CarpM44* outM44)
 {
-    outM44->v[0] = 1.0f;
-    outM44->v[1] = 0.0f;
-    outM44->v[2] = 0.0f;
-    outM44->v[3] = 0.0f;
+    static const CarpM44 M44Identity = {
+        1.0f, 0.0f, 0.0f, 0.0f,
+        0.0f, 1.0f, 0.0f, 0.0f,
+        0.0f, 0.0f, 1.0f, 0.0f,
+        0.0f, 0.0f, 0.0f, 1.0f
+    };
+    memmove(outM44, &M44Identity, sizeof(CarpM44));
+}
 
-    outM44->v[4] = 0.0f;
-    outM44->v[5] = 1.0f;
-    outM44->v[6] = 0.0f;
-    outM44->v[7] = 0.0f;
-
-    outM44->v[4] = 0.0f;
-    outM44->v[5] = 0.0f;
-    outM44->v[6] = 1.0f;
-    outM44->v[7] = 0.0f;
-
-    outM44->v[8] = 0.0f;
-    outM44->v[9] = 0.0f;
-    outM44->v[10] = 0.0f;
-    outM44->v[11] = 1.0f;
+void carp_math_set_m34(const CarpM34* a, CarpM34* outM34)
+{
+    if(a != outM34)
+    {
+        memmove(outM34, a, sizeof(CarpM34));
+    }
+}
+void carp_math_set_m44(const CarpM44* a, CarpM44* outM44)
+{
+    if(a != outM44)
+    {
+        memmove(outM44, a, sizeof(CarpM44));
+    }
 }
 
 
-
-void carp_math_getM34FromQuat(const CarpQuat* quat, CarpM34* outM34)
+void carp_math_getM34FromTranslation(const CarpV3A* pos, CarpM34* outM34)
 {
-    float xy2 = 2.0f * quat->vx * quat->vy;
-    float xz2 = 2.0f * quat->vx * quat->vz;
-    float yz2 = 2.0f * quat->vy * quat->vz;
+    carp_math_zero_m34(outM34);
+    outM34->_03 = pos->x;
+    outM34->_13 = pos->y;
+    outM34->_23 = pos->z;
+}
 
-    float wx2 = 2.0f * quat->w * quat->vx;
-    float wy2 = 2.0f * quat->w * quat->vy;
-    float wz2 = 2.0f * quat->w * quat->vz;
+void carp_math_getM34FromRotation(const CarpQuat* quat, CarpM34* outM34)
+{
+    f32 xy2 = 2.0f * quat->vx * quat->vy;
+    f32 xz2 = 2.0f * quat->vx * quat->vz;
+    f32 yz2 = 2.0f * quat->vy * quat->vz;
 
-    float xx2 = 2.0f * quat->vx * quat->vx;
-    float yy2 = 2.0f * quat->vy * quat->vy;
-    float zz2 = 2.0f * quat->vz * quat->vz;
+    f32 wx2 = 2.0f * quat->w * quat->vx;
+    f32 wy2 = 2.0f * quat->w * quat->vy;
+    f32 wz2 = 2.0f * quat->w * quat->vz;
+
+    f32 xx2 = 2.0f * quat->vx * quat->vx;
+    f32 yy2 = 2.0f * quat->vy * quat->vy;
+    f32 zz2 = 2.0f * quat->vz * quat->vz;
 
     outM34->_00 = 1.0f - yy2 - zz2;
     outM34->_01 = xy2 - wz2;
@@ -1697,23 +1797,84 @@ void carp_math_getM34FromScale(const CarpV3A* scale, CarpM34* outM34)
     outM34->_22 = scale->z;
 
 }
-void carp_math_getM34FromTranslation(const CarpV3A* pos, CarpM34* outM34)
+
+void carp_math_getM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34)
 {
-    carp_math_zero_m34(outM34);
+    float xy2 = 2.0f * rot->vx * rot->vy;
+    float xz2 = 2.0f * rot->vx * rot->vz;
+    float yz2 = 2.0f * rot->vy * rot->vz;
+
+    float wx2 = 2.0f * rot->w * rot->vx;
+    float wy2 = 2.0f * rot->w * rot->vy;
+    float wz2 = 2.0f * rot->w * rot->vz;
+
+    float xx2 = 2.0f * rot->vx * rot->vx;
+    float yy2 = 2.0f * rot->vy * rot->vy;
+    float zz2 = 2.0f * rot->vz * rot->vz;
+
+    outM34->_00 = (1.0f - yy2 - zz2) * scale->x;
+    outM34->_01 = (xy2 - wz2) * scale->x;
+    outM34->_02 = (xz2 + wy2) * scale->x;
+
+    outM34->_10 = (xy2 + wz2) * scale->y;
+    outM34->_11 = (1.0f - xx2 - zz2) * scale->y;
+    outM34->_12 = (yz2 - wx2) * scale->y;
+
+    outM34->_20 = (xz2 - wy2) * scale->z;
+    outM34->_21 = (yz2 + wx2) * scale->z;
+    outM34->_22 = (1.0f - xx2 - yy2) * scale->z;
+
     outM34->_03 = pos->x;
     outM34->_13 = pos->y;
     outM34->_23 = pos->z;
 }
 
-bool carp_math_createOrthoM44(float width, float height, float nearPlane, float farPlane, CarpM44* outM44)
+void carp_math_getInverseM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34)
 {
-    //ASSERT_MATH(sAbsF(width) >= 1.0f);
-    //ASSERT_MATH(sAbsF(height) >= 1.0f);
-    //ASSERT_MATH(sAbsF(farPlane - nearPlane) > 0.00001f);
+    float xy2 = 2.0f * rot->vx * rot->vy;
+    float xz2 = 2.0f * rot->vx * rot->vz;
+    float yz2 = 2.0f * rot->vy * rot->vz;
+
+    float wx2 = -2.0f * rot->w * rot->vx;
+    float wy2 = -2.0f * rot->w * rot->vy;
+    float wz2 = -2.0f * rot->w * rot->vz;
+
+    float xx2 = 2.0f * rot->vx * rot->vx;
+    float yy2 = 2.0f * rot->vy * rot->vy;
+    float zz2 = 2.0f * rot->vz * rot->vz;
+
+    f32 onePerScaleX = 1.0f / scale->x;
+    f32 onePerScaleY = 1.0f / scale->y;
+    f32 onePerScaleZ = 1.0f / scale->z;
+    // TODO: Is scale xyz, xyz, xyz or xxx, yyy, zzz
+    outM34->_00 = (1.0f - yy2 - zz2) * onePerScaleX;
+    outM34->_01 = (xy2 - wz2) * onePerScaleY;
+    outM34->_02 = (xz2 + wy2) * onePerScaleZ;
+
+    outM34->_10 = (xy2 + wz2) * onePerScaleX;
+    outM34->_11 = (1.0f - xx2 - zz2) * onePerScaleY;
+    outM34->_12 = (yz2 - wx2) * onePerScaleZ;
+
+    outM34->_20 = (xz2 - wy2) * onePerScaleX;
+    outM34->_21 = (yz2 + wx2) * onePerScaleY;
+    outM34->_22 = (1.0f - xx2 - yy2) * onePerScaleZ;
+
+    outM34->_03 = -((pos->x * outM34->_00) + (pos->y * outM34->_01) + (pos->z * outM34->_02));
+    outM34->_13 = -((pos->x * outM34->_10) + (pos->y * outM34->_11) + (pos->z * outM34->_12));
+    outM34->_23 = -((pos->x * outM34->_20) + (pos->y * outM34->_21) + (pos->z * outM34->_22));
+
+}
+
+
+bool carp_math_createOrthoM44(f32 width, f32 height, f32 nearPlane, f32 farPlane, CarpM44* outM44)
+{
+    CARP_ASSERT_RETURN(carp_math_abs_f(width) >= 1.0f, false);
+    CARP_ASSERT_RETURN(carp_math_abs_f(height) >= 1.0f, false);
+    CARP_ASSERT_RETURN(carp_math_abs_f(farPlane - nearPlane) > 0.00001f, false);
 
     carp_math_zero_m44(outM44);
 
-    float fRange = 1.0f / (farPlane - nearPlane);
+    f32 fRange = 1.0f / (farPlane - nearPlane);
 
     outM44->_00 = 2.0f / width;
     outM44->_11 = 2.0f / height;
@@ -1723,18 +1884,18 @@ bool carp_math_createOrthoM44(float width, float height, float nearPlane, float 
     return true;
 }
 
-bool carp_math_createPerspectiveM44(float fov, float aspectRatio, float nearPlane, float farPlane, CarpM44* outM44)
+bool carp_math_createPerspectiveM44(f32 yFovInDegrees, f32 aspectRatio, f32 nearPlane, f32 farPlane, CarpM44* outM44)
 {
-    //ASSERT_MATH(carp_math_abs_f(fov) > 0.00001f);
-    //ASSERT_MATH(carp_math_abs_f(aspectRatio) > 0.001f);
-    //ASSERT_MATH(carp_math_abs_f(farPlane - nearPlane) > 0.00001f);
-    //ASSERT_MATH(carp_math_abs_f(nearPlane) > 0.0f);
+    CARP_ASSERT_RETURN(carp_math_abs_f(yFovInDegrees) > 0.00001f, false);
+    CARP_ASSERT_RETURN(carp_math_abs_f(aspectRatio) > 0.001f, false);
+    CARP_ASSERT_RETURN(carp_math_abs_f(farPlane - nearPlane) > 0.00001f, false);
+    CARP_ASSERT_RETURN(carp_math_abs_f(nearPlane) > 0.0f, false);
 
     carp_math_zero_m44(outM44);
 
-    float yScale = 1.0f / sTanF(sToRadians(fov * 0.5f));
-    float xScale = yScale / aspectRatio;
-    float fRange = farPlane / (farPlane - nearPlane);
+    f32 yScale = 1.0f / tanf(carp_math_degToRad(yFovInDegrees * 0.5f));
+    f32 xScale = yScale / aspectRatio;
+    f32 fRange = farPlane / (farPlane - nearPlane);
 
     outM44->_00 = xScale;
     outM44->_11 = yScale;
@@ -1743,6 +1904,7 @@ bool carp_math_createPerspectiveM44(float fov, float aspectRatio, float nearPlan
     outM44->_23 = -nearPlane * fRange;
     outM44->_32 = -1.0f;
     outM44->_33 = 0.0f;
+    return true;
 }
 
 void carp_math_getM44fromLookAt(const CarpV3A* pos, const CarpV3A* target, const CarpV3A* up, CarpM44* outM44)
@@ -1779,9 +1941,8 @@ void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44)
     if(m == outM44)
     {
         CarpM44 tmp;
-        memcpy(&tmp, m, sizeof(CarpM44));
-        carp_math_transpose_m44(&tmp, outM44);
-        return;
+        carp_math_set_m44(m, &tmp);
+        m = &tmp;
     }
     outM44->_00 = m->_00;
     outM44->_01 = m->_10;
@@ -1806,6 +1967,13 @@ void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44)
 
 bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
 {
+    if(m == outM44)
+    {
+        CarpM44 tmp;
+        carp_math_set_m44(m, &tmp);
+        m = &tmp;
+    }
+
     outM44->v[0] = (
         (m->v[5]  * m->v[10] * m->v[15] - m->v[5]  * m->v[11] * m->v[14]) -
         (m->v[9]  * m->v[6]  * m->v[15] - m->v[9]  * m->v[7]  * m->v[14]) +
@@ -1895,12 +2063,9 @@ bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
         (m->v[4] * m->v[1] * m->v[10] - m->v[4] * m->v[2] * m->v[9]) +
         (m->v[8] * m->v[1] * m->v[6]  - m->v[8] * m->v[2] * m->v[5]));
 
-    float det = m->v[0] * outM44->v[0] + m->v[1] * outM44->v[4] + m->v[2] * outM44->v[8] + m->v[3] * outM44->v[12];
+    f32 det = m->v[0] * outM44->v[0] + m->v[1] * outM44->v[4] + m->v[2] * outM44->v[8] + m->v[3] * outM44->v[12];
 
-    if (carp_math_abs_f(det) < CARP_EPSILON)
-    {
-        return false;
-    }
+    CARP_ASSERT_RETURN(carp_math_abs_f(det) >= CARP_EPSILON, false);
     det = 1.0f / det;
     for (int i = 0; i < 16; i++)
         outM44->v[i] *= det;
@@ -1913,7 +2078,7 @@ bool carp_math_eq_m44(const CarpM44* a, const CarpM44* b)
 {
     for(int i = 0; i < 16; ++i)
     {
-        float f = carp_math_abs_f(a->v[i] - b->v[i]);
+        f32 f = carp_math_abs_f(a->v[i] - b->v[i]);
         if(f > CARP_EPSILON)
             return false;
     }
@@ -1925,7 +2090,7 @@ bool carp_math_isIdentity_m44(const CarpM44* m)
 {
     for(int i = 0; i < 16; ++i)
     {
-        float f = m->v[i];
+        f32 f = m->v[i];
 
         if(i == (i / 4) + (i / 4) * 4)
             f = f - 1.0f;
@@ -1937,16 +2102,158 @@ bool carp_math_isIdentity_m44(const CarpM44* m)
 
 }
 
-void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* outV3);
-void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* outV3);
+void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* outV3)
+{
+    if(v == outV3)
+    {
+        CarpV3A tmp;
+        carp_math_set_v3(v, &tmp);
+        v = &tmp;
+    }
 
-void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* outV3);
-void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* outV3);
+    outV3->x = carp_math_dot_v3(v, &m->r0) + m->_03 * v->w;
+    outV3->y = carp_math_dot_v3(v, &m->r1) + m->_13 * v->w;
+    outV3->z = carp_math_dot_v3(v, &m->r2) + m->_23 * v->w;
+    outV3->w = carp_math_dot_v3(v, &m->r3) + m->_33 * v->w;
+}
 
-void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* outM44);
-void carp_math_mul_m44_m34(const CarpM44* a, const CarpM34* b, CarpM44* outM44);
-void carp_math_mul_m34_m44(const CarpM34* a, const CarpM44* b, CarpM44* outM44);
-void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34);
+void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* outV3)
+{
+    if(v == outV3)
+    {
+        CarpV3A tmp;
+        carp_math_set_v3(v, &tmp);
+        v = &tmp;
+    }
+    outV3->x = v->x * m->_00 + v->y * m->_10 + v->z * m->_20 + v->w * m->_03;
+    outV3->y = v->x * m->_01 + v->y * m->_11 + v->z * m->_21 + v->w * m->_13;
+    outV3->z = v->x * m->_02 + v->y * m->_12 + v->z * m->_22 + v->w * m->_23;
+    outV3->w = v->x * m->_03 + v->y * m->_13 + v->z * m->_23 + v->w * m->_33;
+}
+
+void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* outV3)
+{
+    if(v == outV3)
+    {
+        CarpV3A tmp;
+        carp_math_set_v3(v, &tmp);
+        v = &tmp;
+    }
+    outV3->x = carp_math_dot_v3(v, &m->r0) + m->_03 * v->w;
+    outV3->y = carp_math_dot_v3(v, &m->r1) + m->_13 * v->w;
+    outV3->z = carp_math_dot_v3(v, &m->r2) + m->_23 * v->w;
+    outV3->w = v->w;
+}
+void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* outV3)
+{
+    if(v == outV3)
+    {
+        CarpV3A tmp;
+        carp_math_set_v3(v, &tmp);
+        v = &tmp;
+    }
+    outV3->x = v->x * m->_00 + v->y * m->_10 + v->z * m->_20;
+    outV3->y = v->x * m->_01 + v->y * m->_11 + v->z * m->_21;
+    outV3->z = v->x * m->_02 + v->y * m->_12 + v->z * m->_22;
+    outV3->w = v->x * m->_03 + v->y * m->_13 + v->z * m->_23 + v->w;
+}
+
+// Simdify / asm this later
+void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* outM44)
+{
+    if(outM44 == a)
+    {
+        CarpM44 tmp;
+        carp_math_set_m44(a, &tmp);
+        a = &tmp;
+    }
+    else if(outM44 == b)
+    {
+        CarpM44 tmp;
+        carp_math_set_m44(b, &tmp);
+        b = &tmp;
+    }
+
+#define MATRIX_ADD_ROW_MULT(row, col) (\
+        a->_##row##0 * b->_0##col + \
+        a->_##row##1 * b->_1##col + \
+        a->_##row##2 * b->_2##col + \
+        a->_##row##3 * b->_3##col)
+#define MATRIX_SET(row, col) (outM44->_##row##col)  = MATRIX_ADD_ROW_MULT(row, col)
+
+    MATRIX_SET(0, 0);
+    MATRIX_SET(0, 1);
+    MATRIX_SET(0, 2);
+    MATRIX_SET(0, 3);
+
+    MATRIX_SET(1, 0);
+    MATRIX_SET(1, 1);
+    MATRIX_SET(1, 2);
+    MATRIX_SET(1, 3);
+
+    MATRIX_SET(2, 0);
+    MATRIX_SET(2, 1);
+    MATRIX_SET(2, 2);
+    MATRIX_SET(2, 3);
+
+    MATRIX_SET(3, 0);
+    MATRIX_SET(3, 1);
+    MATRIX_SET(3, 2);
+    MATRIX_SET(3, 3);
+
+#undef MATRIX_ADD_ROW_MULT
+#undef MATRIX_SET
+}
+
+
+void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34)
+{
+    if(outM34 == a)
+    {
+        CarpM34 tmp;
+        carp_math_set_m34(a, &tmp);
+        a = &tmp;
+    }
+    else if(outM34 == b)
+    {
+        CarpM34 tmp;
+        carp_math_set_m34(b, &tmp);
+        b = &tmp;
+    }
+
+    #define MATRIX_ADD_ROW_MULT0(row, col) (\
+        a->_##row##0 * b->_0##col + \
+        a->_##row##1 * b->_1##col + \
+        a->_##row##2 * b->_2##col)
+    #define MATRIX_ADD_ROW_MULT1(row, col) (\
+        a->_##row##0 * b->_0##col + \
+        a->_##row##1 * b->_1##col + \
+        a->_##row##2 * b->_2##col + \
+        a->_##row##3)
+
+    #define MATRIX_SET0(row, col) (outM34->_##row##col)  = MATRIX_ADD_ROW_MULT0(row, col)
+    #define MATRIX_SET1(row, col) (outM34->_##row##col)  = MATRIX_ADD_ROW_MULT1(row, col)
+
+    MATRIX_SET0(0, 0);
+    MATRIX_SET0(0, 1);
+    MATRIX_SET0(0, 2);
+    MATRIX_SET1(0, 3);
+
+    MATRIX_SET0(1, 0);
+    MATRIX_SET0(1, 1);
+    MATRIX_SET0(1, 2);
+    MATRIX_SET1(1, 3);
+
+    MATRIX_SET0(2, 0);
+    MATRIX_SET0(2, 1);
+    MATRIX_SET0(2, 2);
+    MATRIX_SET1(2, 3);
+
+    #undef MATRIX_ADD_ROW_MULT0
+    #undef MATRIX_ADD_ROW_MULT1
+    #undef MATRIX_SET0
+    #undef MATRIX_SET1
+}
 
 
 
@@ -1961,31 +2268,31 @@ void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34);
 
 void carp_math_print_v2(const CarpV2* v, const char* name)
 {
-    printf("%s: v2: {%f, %f}\n", name, v->x, v->y);
+    CARP_LOGINFO("%s: v2: {%f, %f}\n", name, v->x, v->y);
 }
 
 void carp_math_print_v3a(const CarpV3A* v, const char* name)
 {
-    printf("%s: v3a: {%f, %f, %f, %f}\n", name, v->x, v->y, v->z, v->w);
+    CARP_LOGINFO("%s: v3a: {%f, %f, %f, %f}\n", name, v->x, v->y, v->z, v->w);
 }
 
 void carp_math_print_q(const CarpQuat* q, const char* name)
 {
-    printf("%s: quat: {%f, %f, %f, %f}\n", name, q->vx, q->vy, q->vz, q->w);
+    CARP_LOGINFO("%s: quat: {%f, %f, %f, %f}\n", name, q->vx, q->vy, q->vz, q->w);
 }
 
 void carp_math_print_m34(const CarpM34* m, const char* name)
 {
-    printf("%s m44 r0: {%f, %f, %f, %f}\n", name, m->v[0], m->v[1], m->v[2], m->v[3]);
-    printf("%s m44 r1: {%f, %f, %f, %f}\n", name, m->v[4], m->v[5], m->v[6], m->v[7]);
-    printf("%s m44 r2: {%f, %f, %f, %f}\n", name, m->v[8], m->v[9], m->v[10], m->v[11]);
+    CARP_LOGINFO("%s m44 r0: {%f, %f, %f, %f}\n", name, m->v[0], m->v[1], m->v[2], m->v[3]);
+    CARP_LOGINFO("%s m44 r1: {%f, %f, %f, %f}\n", name, m->v[4], m->v[5], m->v[6], m->v[7]);
+    CARP_LOGINFO("%s m44 r2: {%f, %f, %f, %f}\n", name, m->v[8], m->v[9], m->v[10], m->v[11]);
 }
 
 
 void carp_math_print_m44(const CarpM44* m, const char* name)
 {
-    printf("%s m44 r0: {%f, %f, %f, %f}\n", name, m->v[0], m->v[1], m->v[2], m->v[3]);
-    printf("%s m44 r1: {%f, %f, %f, %f}\n", name, m->v[4], m->v[5], m->v[6], m->v[7]);
-    printf("%s m44 r2: {%f, %f, %f, %f}\n", name, m->v[8], m->v[9], m->v[10], m->v[11]);
-    printf("%s m44 r3: {%f, %f, %f, %f}\n", name, m->v[12], m->v[13], m->v[14], m->v[15]);
+    CARP_LOGINFO("%s m44 r0: {%f, %f, %f, %f}\n", name, m->v[0], m->v[1], m->v[2], m->v[3]);
+    CARP_LOGINFO("%s m44 r1: {%f, %f, %f, %f}\n", name, m->v[4], m->v[5], m->v[6], m->v[7]);
+    CARP_LOGINFO("%s m44 r2: {%f, %f, %f, %f}\n", name, m->v[8], m->v[9], m->v[10], m->v[11]);
+    CARP_LOGINFO("%s m44 r3: {%f, %f, %f, %f}\n", name, m->v[12], m->v[13], m->v[14], m->v[15]);
 }
