@@ -153,7 +153,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     wnd->carpDisplay = XOpenDisplay(NULL);
     if(wnd->carpDisplay == NULL)
     {
-        printf("Failed to create display\n");
+        CARP_LOGERROR("Failed to create display\n");
         s_destroyDisplay(carp_window);
         return false;
     }
@@ -165,10 +165,10 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     int minorGlxVersion = 0;
 
     int queryGlx  = glXQueryVersion(wnd->carpDisplay, &majorGlxVersion, &minorGlxVersion);
-    printf("Query glx result: %i, major: %i, minor: %i\n", queryGlx, majorGlxVersion, minorGlxVersion);
+    CARP_LOGINFO("Query glx result: %i, major: %i, minor: %i\n", queryGlx, majorGlxVersion, minorGlxVersion);
     if(queryGlx == 0 || majorGlxVersion < 1 || (majorGlxVersion == 1 && minorGlxVersion < 4))
     {
-        printf("Need to have glx 1.4 at least.\n");
+        CARP_LOGERROR("Need to have glx 1.4 at least.\n");
         return false;
     }
 
@@ -192,11 +192,11 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     GLXFBConfig* fbConfigs = glXChooseFBConfig(wnd->carpDisplay, wnd->carpWindowScreen, attribs, &fbCount);
     if(fbConfigs == NULL)
     {
-        printf("Failed to retrieve framebuffer.\n");
+        CARP_LOGERROR("Failed to retrieve framebuffer.\n");
         return false;
     }
 
-    printf("Found %i matching framebuffers.\n", fbCount);
+    CARP_LOGINFO("Found %i matching framebuffers.\n", fbCount);
 
     int bestFBConfigIndex =  -1;
     int bestNumSamp = -1;
@@ -229,27 +229,27 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
         }
         XFree(visualInfoTmp);
     }
-    printf("Best visual info index: %i\n", bestFBConfigIndex);
+    CARP_LOGINFO("Best visual info index: %i\n", bestFBConfigIndex);
     GLXFBConfig bestFBConfig = fbConfigs[bestFBConfigIndex];
     XFree(fbConfigs); // Make sure to free this!
 
     XVisualInfo* visualInfo = glXGetVisualFromFBConfig(wnd->carpDisplay, bestFBConfig);
     if(visualInfo == NULL)
     {
-        printf("Could not create correct visualInfo carp_window.\n");
+        CARP_LOGERROR("Could not create correct visualInfo carp_window.\n");
         return false;
     }
 
     if(visualInfo->visual == NULL)
     {
-        printf("Could not create correct visualInfo->visual.\n");
+        CARP_LOGERROR("Could not create correct visualInfo->visual.\n");
         XFree(visualInfo);
         return false;
     }
 
     if(wnd->carpWindowScreen != visualInfo->screen)
     {
-        printf("screenId(%i) does not match visualInfo->screen(%i)", wnd->carpWindowScreen, visualInfo->screen);
+        CARP_LOGERROR("screenId(%i) does not match visualInfo->screen(%i)", wnd->carpWindowScreen, visualInfo->screen);
         XFree(visualInfo);
         return false;
     }
@@ -294,26 +294,26 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     glxCreateContextAttribsFn = (GLXCreateContextAttribs)glXGetProcAddress((const GLubyte*)("glXCreateContextAttribsARB"));
     if(glxCreateContextAttribsFn == NULL)
     {
-        printf("Couldnt find glXCreateContextAttribsARB function\n");
+        CARP_LOGERROR("Couldnt find glXCreateContextAttribsARB function\n");
         return false;
     }
     glxSwapIntervalEXTFn = (GLXSwapIntervalEXT)glXGetProcAddress((const GLubyte*)("glXSwapIntervalEXT"));
     if(glxSwapIntervalEXTFn == NULL)
     {
-        printf("Could not find glXSwapIntervalEXT function\n");
+        CARP_LOGERROR("Could not find glXSwapIntervalEXT function\n");
     }
 
     wnd->carpGLContext = glxCreateContextAttribsFn(wnd->carpDisplay, bestFBConfig, NULL, true, contextAttribs);
     if(wnd->carpGLContext == NULL)
     {
-        printf("Failed to create opengl context. Might need some cleaning up?\n");
+        CARP_LOGERROR("Failed to create opengl context. Might need some cleaning up?\n");
         return false;
     }
 
     // sync
     XSync(wnd->carpDisplay, false);
 
-    printf("make current: %i\n", glXMakeCurrent(wnd->carpDisplay, wnd->carpWindow, wnd->carpGLContext));
+    CARP_LOGINFO("make current: %i\n", glXMakeCurrent(wnd->carpDisplay, wnd->carpWindow, wnd->carpGLContext));
 
 
     // Handle pressing X-button on carp_window
@@ -321,17 +321,17 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     XSetWMProtocols(wnd->carpDisplay, wnd->carpWindow, &wnd->wmDeleteWindow, 1);
 
 
-    printf("Clear: %i\n", XClearWindow(wnd->carpDisplay, wnd->carpWindow));
-    printf("xmap raised: %i\n", XMapRaised(wnd->carpDisplay, wnd->carpWindow));
+    CARP_LOGINFO("Clear: %i\n", XClearWindow(wnd->carpDisplay, wnd->carpWindow));
+    CARP_LOGINFO("xmap raised: %i\n", XMapRaised(wnd->carpDisplay, wnd->carpWindow));
 
     carp_window_setWindowTitle(carp_window, windowName);
 
     int version = gladLoaderLoadGL();
-    printf("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
+    CARP_LOGINFO("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
 	//Checking GL version
 	const GLubyte* GLVersionString = glGetString(GL_VERSION);
-    printf("GL version: %s\n", GLVersionString);
+    CARP_LOGINFO("GL version: %s\n", GLVersionString);
 
 
     return true;
