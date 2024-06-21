@@ -13,6 +13,7 @@
         "mmintrin.h": "c",
         "stdalign.h": "c",
         "carpwindow.h": "c",
-        "carpgl.h": "c"
+        "carpgl.h": "c",
+        "carpmouse.h": "c"
     }
 }

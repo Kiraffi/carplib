@@ -25,4 +25,25 @@ typedef double f64;
 #define CARP_FN 
 #endif
 
+#if _WIN32
+#define CARP_WIN32 1
+#elif defined(__linux__) || defined(__unix__)
+#define CARP_LINUX 1
+#else
+#error "Not supported system"
+#endif // _WIN32
+
+#if CARP_WIN32
+#ifndef CARP_LIBEXPORT
+#define CARP_LIBEXPORT __declspec(dllexport)
+#endif //CARP_LIBEXPORT
+#elif CARP_LINUX
+#ifndef CARP_LIBEXPORT
+#define CARP_LIBEXPORT /* */
+#endif //CARP_LIBEXPORT
+#else
+#error "Unsupported operating system!"
+#endif // CARP_WIN32
+
+
 #endif // CARP_TYPE_HH

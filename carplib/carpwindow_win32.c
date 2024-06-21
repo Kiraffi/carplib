@@ -1,15 +1,18 @@
-#if _WIN32
+#include "carptype.h"
+#if CARP_WIN32
 
 #include "carpwindow.h"
 
+#ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN 1
+#endif // WIN32_LEAN_AND_MEAN
 #include <windows.h>
 
 #include "carpgl.h"
 #include "carpkeyboard.h"
+#include "carplog.h"
 #include "carpmemory.h"
 #include "carpmouse.h"
-
 #include <stdio.h>
 
 #ifndef MAPVK_VSC_TO_VK
@@ -628,4 +631,4 @@ CARP_FN void carp_window_setWindowSizeChangedCallbackFn(
 
 
 
-#endif // _WIN32
+#endif // CARP_WIN32

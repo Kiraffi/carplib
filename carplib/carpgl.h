@@ -8,7 +8,7 @@
 #include "carptype.h"
 
 
-#if defined(_WIN32) && !defined(APIENTRY)
+#if defined(CARP_WIN32) && !defined(APIENTRY)
 #define APIENTRY __stdcall
 #endif
 

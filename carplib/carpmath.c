@@ -2,6 +2,7 @@
 
 #include "carpassert.h"
 #include "carplog.h"
+#include "carptype.h"
 
 #include <math.h>
 #include <stdio.h>
@@ -9,10 +10,13 @@
 
 // for memory
 // "movl $0x3F800000, 0xc(%%rax)\n\t" // set w to 1.0f
-#if _WIN32 && ( __TINYC__ ) //  || __clang__) 
+#if CARP_WIN32 && ( __TINYC__ ) //  || __clang__) 
 #define USE_ASM_WINDOWS 1
-#elif (__TINYC__)
+#elif CARP_LINUX && (__TINYC__)
 #define USE_ASM_LINUX 1
+#elif CARP_WIN32 || CARP_LINUX
+#else
+#error "Unsupported operating system"
 #endif
 
 #if (USE_ASM_LINUX || USE_ASM_WINDOWS)
