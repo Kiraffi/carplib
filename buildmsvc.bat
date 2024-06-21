@@ -13,12 +13,12 @@ set compilesource=examples\hotreload.c
 
 rem Oi = intrinsics, Ot = fast, Gv use vectorcall, MT multithreading /Gv 
 rem /arch:AVX 
-
-set final=%linkoptions% %compileroptimize% /link %links%
+rem /link OUT:outfile.exe if passing to linker
+set final=%linkoptions% %compileroptimize% %links%
 md buildout
 
 rem /Fo. sets the obj file output folder
 rem /Fd. sets pdb file output folder
 
-%compiler% mathtest.c /Fo.\buildout\ /Fd.\buildout\ /O2 %final% /OUT:buildout/mathtestcl.exe  && buildout\mathtestcl.exe > buildout/mathtestcl.txt
-%compiler% %compilesource% /Fo.\buildout\ /Fd.\buildout\ %final% /OUT:buildout/main.exe && buildout\main.exe
+%compiler% mathtest.c /Fo.\buildout\ /Fd.\buildout\ /O2 /Fe:buildout/mathtestcl.exe %final% && buildout\mathtestcl.exe > buildout/mathtestcl.txt
+%compiler% %compilesource% /Fo.\buildout\ /Fd.\buildout\ /Fe:buildout/main.exe %final% && buildout\main.exe
