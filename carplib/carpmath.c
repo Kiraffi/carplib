@@ -1,12 +1,10 @@
+#include <math.h>
+
 #include "carpmath.h"
 
 #include "carpassert.h"
 #include "carplog.h"
 #include "carptype.h"
-
-#include <math.h>
-#include <stdio.h>
-#include <string.h> // memset?
 
 // for memory
 // "movl $0x3F800000, 0xc(%%rax)\n\t" // set w to 1.0f

@@ -13,7 +13,6 @@
 #include "carplog.h"
 #include "carpmemory.h"
 #include "carpmouse.h"
-#include <stdio.h>
 
 #ifndef MAPVK_VSC_TO_VK
     #define MAPVK_VSC_TO_VK     (1)

@@ -47,7 +47,12 @@ static const char sHotReloadFn[] = "hotReloadTestFn";
 static CarpDynLib sLoadedLibrary;
 static hotReloadTestFnPtr sHotreloadedFn = NULL;
 
-
+//static int sFunctionFromMain(int value)
+int functionFromMain(int value)
+{
+    CARP_LOGINFO("main function called with value: %i\n", value);
+    return value * 2;
+}
 
 static bool sUnloadLib(void)
 {
@@ -72,6 +77,11 @@ static bool sHotReload(void)
         CARP_LOGERROR("Failed to hot reload\n");
         return false;
     }
+    //MainLoad newLoad = { &functionFromMain };
+    //CARP_LOGINFO("Outcome from hot reloaded fn directly:%i\n", hotReloadTestFn(newLoad, 1, 2));
+
+    
+
     CARP_LOGINFO("Library: %s load success\n", sHotReloadLibraryFileName);
     CarpDynLibFn tmp;
     if(!carp_dynLib_loadFn(&sLoadedLibrary, sHotReloadFn, &tmp))
@@ -160,7 +170,8 @@ static s32 sMainAfterWindow(void)
             CARP_LOGINFO("Hot reloading\n");
             if(sHotReload() && sHotreloadedFn)
             {
-                CARP_LOGINFO("Outcome from hot reloaded fn:%i\n", sHotreloadedFn(1, 2));
+                MainLoad newLoad = { &functionFromMain };
+                CARP_LOGINFO("Outcome from hot reloaded fn:%i\n", sHotreloadedFn(newLoad, 1, 2));
             }
             // Unloading the lib after calling the function to release file handle on windows.
             sUnloadLib();
@@ -234,3 +245,5 @@ int main(int argc, char** argv)
 
     return result;
 }
+
+
