@@ -14,7 +14,8 @@ compilealloptions="$compileoptions $compileincludes"
 tcccompileoptionsextra="-L../tinycc -I../tinycc/include"
 
 #compilesource="examples/triangle.c"
-compilesource="examples/hotreload.c"
+#compilesource="examples/hotreload.c"
+compilesource="examples/cubes.c"
 
 
 # echo ''

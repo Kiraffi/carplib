@@ -5,6 +5,7 @@
 
 #include "external/glad/gl.c"
 
+
 #if CARP_WIN32
     #include "carplib/carpwindow_win32.c"
 #elif CARP_LINUX
@@ -20,3 +21,4 @@
 #include "carplib/carpmemory.c"
 #include "carplib/carpmouse.c"
 #include "carplib/carpshader.c"
+#include "carplib/carptime.c"

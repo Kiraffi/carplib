@@ -25,7 +25,7 @@ typedef struct CarpWindow
             };
             _Alignas(16) uint8_t alignedData[1024];
         };
-         
+
     };
 } CarpWindow;
 _Static_assert(sizeof(CarpWindow) == 1024, "Carp window size should be 1024 bytes!");

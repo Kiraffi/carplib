@@ -9,7 +9,7 @@
         "command": "clang",
         "args": [
           "-g",
-          "compileall.c",
+          "examples/cubes.c",
           "-obuildout/main.exe",
           "-std=c11",
           "-m64",
@@ -17,7 +17,8 @@
           "-lgdi32",
           "-luser32",
           "-lwinmm",
-          "-Lc:/windows/SysWOW64"
+          "-Lc:/windows/SysWOW64",
+          "-I./"
         ],
         "presentation": {
           "reveal": "always",
@@ -53,13 +54,14 @@
         "command": "clang",
         "args": [
           "-g",
-          "compileall.c",
+          "examples/cubes.c",
           "-obuildout/main.out",
           "-std=c11",
           "-lX11",
           "-m64",
           "-lGL",
-          "-lm"
+          "-lm",
+          "-I./"
         ],
         "presentation": {
           "reveal": "always",

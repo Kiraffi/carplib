@@ -275,6 +275,8 @@ CARP_FN void carp_math_getM34FromScale(const CarpV3A* scale, CarpM34* outM34);
 
 CARP_FN void carp_math_getM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34);
 CARP_FN void carp_math_getInverseM34FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM34* outM34);
+CARP_FN void carp_math_getM44FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM44* outM44);
+CARP_FN void carp_math_getInverseM44FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM44* outM44);
 
 CARP_FN bool carp_math_createOrthoM44(f32 width, f32 height, f32 nearPlane, f32 farPlane, CarpM44* outM44);
 CARP_FN bool carp_math_createPerspectiveM44(f32 yFovInDegrees, f32 aspectRatio, f32 nearPlane, f32 farPlane, CarpM44* outM44);

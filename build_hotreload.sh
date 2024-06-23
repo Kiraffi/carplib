@@ -2,6 +2,8 @@
 #tcc main.c -std=c11 -lX11 -lGL -run
 #./clean.sh
 
+# there needs to be space after if and [[ and before ]]
+# otherwise its not valid
 if [[ ! -e "buildout/" ]]; then
 echo "Creating folder: buildout"
 mkdir buildout

@@ -333,6 +333,10 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     CARP_LOGINFO("GL version: %s\n", GLVersionString);
 
 
+    carp_window->width = width;
+    carp_window->height = height;
+
+
     return true;
 }
 

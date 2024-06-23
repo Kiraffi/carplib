@@ -8,7 +8,7 @@
 
 // for memory
 // "movl $0x3F800000, 0xc(%%rax)\n\t" // set w to 1.0f
-#if CARP_WIN32 && ( __TINYC__ ) //  || __clang__) 
+#if CARP_WIN32 && ( __TINYC__ ) //  || __clang__)
 #define USE_ASM_WINDOWS 1
 #elif CARP_LINUX && (__TINYC__)
 #define USE_ASM_LINUX 1
@@ -102,7 +102,7 @@ CARP_FN f32 carp_math_radToDeg(f32 radians)
 {
     //return (radians * 180.0f) / CARP_PI;
     return radians * 57.2957795130823208768f;
- 
+
 }
 
 
@@ -1446,6 +1446,8 @@ CARP_FN void carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b, CarpQuat* o
 {
     const CarpV3A *av = (const CarpV3A *)a; // {a->vx, a->vy, a->vz, 0.0f};
     const CarpV3A *bv = (const CarpV3A *)b; //{b->vx, b->vy, b->vz, 0.0f};
+    f32 outW = a->w * b->w - carp_math_dot_v3(av, bv);
+
     CarpV3A tmp;
     CarpV3A tmp2;
     carp_math_cross_v3(av, bv, &tmp);
@@ -1453,9 +1455,8 @@ CARP_FN void carp_math_mul_q_q(const CarpQuat* a, const CarpQuat* b, CarpQuat* o
     carp_math_add_v3_v3(&tmp, &tmp2, &tmp2);
 
     carp_math_mul_v3_f(av, b->w, &tmp);
-
     carp_math_add_v3_v3(&tmp, &tmp2, (CarpV3A*)outQuat);
-    outQuat->w = a->w * b->w - carp_math_dot_v3(av, bv);
+    outQuat->w = outW;
 }
 
 CARP_FN bool carp_math_normalize_q(const CarpQuat* q, CarpQuat* outQuat)
@@ -1611,19 +1612,20 @@ CARP_FN bool carp_math_getQuatFromNormalizedVectors(const CarpV3A* from, const C
 
 
 
-CARP_FN void getDirectionsFromPitchYawRoll(
+CARP_FN void carp_math_getDirectionsFromPitchYawRoll(
     f32 pitch, f32 yaw, f32 roll, CarpV3A* rightDir, CarpV3A* upDir, CarpV3A* forwardDir)
 {
-    static const CarpV3A Right =    {0.0f, 0.0f, 1.0f, 0.0f};
+    static const CarpV3A Right =    {1.0f, 0.0f, 0.0f, 0.0f};
     static const CarpV3A Up =       {0.0f, 1.0f, 0.0f, 0.0f};
-    static const CarpV3A Forward =  {1.0f, 0.0f, 0.0f, 0.0f};
+    static const CarpV3A Forward =  {0.0f, 0.0f, 1.0f, 0.0f};
 
     CarpQuat rotation;
     carp_math_getQuatFromAxisAngle(&Forward, roll, &rotation);
-
     CarpQuat tmpRotation;
+
     carp_math_getQuatFromAxisAngle(&Right, pitch, &tmpRotation);
     carp_math_mul_q_q(&tmpRotation, &rotation, &rotation);
+
     carp_math_getQuatFromAxisAngle(&Up, yaw, &tmpRotation);
     carp_math_mul_q_q(&tmpRotation, &rotation, &rotation);
 
@@ -1863,6 +1865,19 @@ CARP_FN void carp_math_getInverseM34FromTRS(const CarpV3A* pos, const CarpQuat* 
 
 }
 
+
+CARP_FN void carp_math_getM44FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM44* outM44)
+{
+    carp_math_getM34FromTRS(pos, rot, scale, (CarpM34*) outM44);
+    outM44->r3.x = outM44->r3.y = outM44->r3.z = 0.0f;
+    outM44->r3.w = 1.0f;
+}
+CARP_FN void carp_math_getInverseM44FromTRS(const CarpV3A* pos, const CarpQuat* rot, const CarpV3A* scale, CarpM44* outM44)
+{
+    carp_math_getInverseM34FromTRS(pos, rot, scale, (CarpM34*) outM44);
+    outM44->r3.x = outM44->r3.y = outM44->r3.z = 0.0f;
+    outM44->r3.w = 1.0f;
+}
 
 CARP_FN bool carp_math_createOrthoM44(f32 width, f32 height, f32 nearPlane, f32 farPlane, CarpM44* outM44)
 {
