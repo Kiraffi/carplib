@@ -10,7 +10,8 @@
 #else
 
     typedef double __m128d;
-    typedef f32 __m128;
+    //typedef f32 __m128;
+    typedef float __m128 __attribute__((__vector_size__(16), __aligned__(16)));
 
 #endif
 

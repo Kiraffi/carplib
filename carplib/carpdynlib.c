@@ -52,7 +52,7 @@ bool carp_dynLib_unload(CarpDynLib* loadedLib)
     #if _WIN32
         success = FreeLibrary((HMODULE)loadedLib->loadedLib);
     #else
-        success = dlclose(loadedLib->loadedLib) == 0;
+        success = dlclose((void*)loadedLib->loadedLib) == 0;
     #endif //_WIN32
     loadedLib->loadedLib = NULL;
 
@@ -88,7 +88,7 @@ bool carp_dynLib_loadFn(const CarpDynLib* loadedLib, const char* functionName, C
     #if _WIN32
         outFn->loadedFn = (void*)GetProcAddress((HMODULE)loadedLib->loadedLib, functionName);
     #else
-        outFn->loadedFn = dlsym(loadedLib->loadedLib, functionName);
+        outFn->loadedFn = (void*)dlsym((void*)loadedLib->loadedLib, functionName);
     #endif
 
     return outFn->loadedFn != NULL;

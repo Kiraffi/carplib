@@ -11,9 +11,8 @@
 #include <GL/glext.h>
 #include "../external/glad/gl.h"
 
-#include <stdio.h>
-
 #include "carpkeyboard.h"
+#include "carplog.h"
 #include "carpmouse.h"
 #include "carptype.h"
 #include "carpwindow.h"

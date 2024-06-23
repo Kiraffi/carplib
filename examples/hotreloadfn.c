@@ -11,6 +11,6 @@ int CARP_LIBEXPORT hotReloadTestFn(MainLoad mainLoad, int a, int b)
     if(mainLoad.mainFn)
         CARP_LOG("Called main: %i\n", mainLoad.mainFn(result * 3));
     CARP_LOG("Called main imported: %i\n", mainLoad.mainFn(result * 5));
-    
+
     return result;
 }
