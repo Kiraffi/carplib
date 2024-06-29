@@ -6,7 +6,7 @@
 typedef struct CarpTime
 {
     // u64 should be enough, but just in case
-    u64 storage[4];
+    u64 carp_time_storage[4];
 } CarpTime;
 
 f64 carp_time_getDifference(const CarpTime* start, const CarpTime* end);

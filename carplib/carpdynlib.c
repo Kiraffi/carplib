@@ -10,7 +10,7 @@
     #include <dlfcn.h>
 #endif // _WIN32
 
-bool carp_dynLib_load(const char* fileName, CarpDynLib* outLib)
+CARP_FN bool carp_dynLib_load(const char* fileName, CarpDynLib* outLib)
 {
     if(fileName == NULL)
     {
@@ -35,7 +35,7 @@ bool carp_dynLib_load(const char* fileName, CarpDynLib* outLib)
     return outLib->loadedLib != NULL;
 }
 
-bool carp_dynLib_unload(CarpDynLib* loadedLib)
+CARP_FN bool carp_dynLib_unload(CarpDynLib* loadedLib)
 {
     if(loadedLib == NULL)
     {
@@ -59,7 +59,7 @@ bool carp_dynLib_unload(CarpDynLib* loadedLib)
     return true;
 }
 
-bool carp_dynLib_loadFn(const CarpDynLib* loadedLib, const char* functionName, CarpDynLibFn* outFn)
+CARP_FN bool carp_dynLib_loadFn(const CarpDynLib* loadedLib, const char* functionName, CarpDynLibFn* outFn)
 {
     if(loadedLib == NULL)
     {

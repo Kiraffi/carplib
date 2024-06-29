@@ -5,6 +5,7 @@
 #include "carplib/carplog.h"
 #include "carplib/carpmemory.h"
 #include "carplib/carpmouse.h"
+#include "carplib/carpogl.h"
 #include "carplib/carpshader.h"
 #include "carplib/carptime.h"
 #include "carplib/carpwindow.h"
@@ -81,7 +82,7 @@ static s32 sMainAfterWindow(void)
     CarpMemory* memory = carp_memory_get();
 
     CarpPixelShader shader = carp_shader_compilePixelShader(vertexShaderCode, fragmentShaderCode);
-    if(!shader.isValid)
+    if(!shader.carp_pixelshader_isValid)
     {
         CARP_LOGERROR("Failed to compile shader\n");
         carp_shader_deletePixelShader(&shader);
@@ -147,68 +148,58 @@ static s32 sMainAfterWindow(void)
 
     };
 
+    CarpOGLBuffer vertexBuffer = {};
 
-    GLuint vertexbuffer = 0;
-
-    GLuint uniformBuffer = 0;
-    GLuint matBuffer = 0;
-    GLuint colorBuffer = 0;
-
+    CarpOGLBuffer uniformBuffer = {};
+    CarpOGLBuffer matBuffer = {};
+    CarpOGLBuffer colorBuffer = {};
     {
-        glCreateBuffers(1, &uniformBuffer);
-        glNamedBufferStorage(uniformBuffer,
-            16*1024,
+        carp_ogl_createBuffer(
+            16 * 1024,
             NULL,
-            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
+            &uniformBuffer);
 
-
-        glCreateBuffers(1, &matBuffer);
-        glNamedBufferStorage(matBuffer,
-            16*1024*1024,
+        carp_ogl_createBuffer(
+            16 * 1024 * 1024,
             NULL,
-            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
+            &matBuffer);
 
-        glCreateBuffers(1, &colorBuffer);
-        glNamedBufferStorage(colorBuffer,
-            4*1024*1024,
+        carp_ogl_createBuffer(
+            4 * 1024 * 1024,
             NULL,
-            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT);
+            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
+            &colorBuffer);
 
-        glUseProgram(shader.program);
-
+        glUseProgram(shader.carp_pixelshader_program);
 
         GLuint vertexArrayID = 0;
         glGenVertexArrays(1, &vertexArrayID);
         glBindVertexArray(vertexArrayID);
 
-        glGenBuffers(1, &vertexbuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        carp_ogl_createBuffer(
+            4 * 1024 * 1024,
+            NULL,
+            GL_STATIC_DRAW,
+            &vertexBuffer);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
         glBufferData(GL_ARRAY_BUFFER, sizeof(VertexBufferData),
             VertexBufferData, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
 
     }
-
-
-
-
-
-
-
-
-
-
-
 
     carp_window_setWindowSizeChangedCallbackFn(&memory->carp_window, sWindowSizeChanged);
     carp_window_enableVSync(&memory->carp_window, true);
 
     CARP_LOGINFO("Window start running\n");
-    memory->carp_window.running = true;
-
+    memory->carp_window.carp_window_running = true;
 
     CarpV3A positions[4] = {};
     positions[1].y = 2.0f;
@@ -246,7 +237,7 @@ static s32 sMainAfterWindow(void)
 
     CarpTime carpTime; carp_time_getCurrentTime(&carpTime);
 
-    while(memory->carp_window.running)
+    while(memory->carp_window.carp_window_running)
     {
         CarpTime newTime; carp_time_getCurrentTime(&newTime);
         f64 dt = carp_time_getDifference(&carpTime, &newTime);
@@ -257,7 +248,7 @@ static s32 sMainAfterWindow(void)
         static f32 RotationSpeed = 1.0f;
         carp_window_update(&memory->carp_window, 0.0f);
         if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
-            memory->carp_window.running = false;
+            memory->carp_window.carp_window_running = false;
 
 
         if(carp_keyboard_isKeyDown(CarpKeyboardKey_I))
@@ -305,7 +296,7 @@ static s32 sMainAfterWindow(void)
         }
 
         carp_math_createPerspectiveM44(90.0f,
-            (f32)memory->carp_window.width / (f32)memory->carp_window.height,
+            (f32)memory->carp_window.carp_window_width / (f32)memory->carp_window.carp_window_height,
             0.01f,
             1000.0f,
             &cameraPerspectiveMat);
@@ -330,21 +321,21 @@ static s32 sMainAfterWindow(void)
 
         carp_math_transpose_m44(&cameraPerspectiveMat, &cameraPerspectiveMat);
 
-        glNamedBufferSubData(uniformBuffer,
+        carp_ogl_updateBuffer(&uniformBuffer,
             0,
-            sizeof(cameraPerspectiveMat),
-            &cameraPerspectiveMat);
+            &cameraPerspectiveMat,
+            sizeof(cameraPerspectiveMat));
 
-        glNamedBufferSubData(matBuffer,
+
+        carp_ogl_updateBuffer(&matBuffer,
             0,
-            sizeof(mats),
-            mats);
+            mats,
+            sizeof(mats));
 
-        glNamedBufferSubData(colorBuffer,
+        carp_ogl_updateBuffer(&colorBuffer,
             0,
-            sizeof(colors),
-            colors);
-
+            colors,
+            sizeof(colors));
 
         glClearColor(0.2f, 0.3f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -357,15 +348,12 @@ static s32 sMainAfterWindow(void)
         glCullFace(GL_BACK);
         glFrontFace(GL_CW);
 
+        carp_ogl_bindBuffer(&uniformBuffer, 0, GL_UNIFORM_BUFFER);
+        carp_ogl_bindBuffer(&matBuffer, 1, GL_SHADER_STORAGE_BUFFER);
+        carp_ogl_bindBuffer(&colorBuffer, 2, GL_SHADER_STORAGE_BUFFER);
 
-
-        glBindBufferBase(GL_UNIFORM_BUFFER, 0, uniformBuffer);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, matBuffer);
-        glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 2, colorBuffer);
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-
-
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
 
         glDrawArraysInstanced(
             GL_TRIANGLES,

@@ -14,6 +14,11 @@
         "stdalign.h": "c",
         "carpwindow.h": "c",
         "carpgl.h": "c",
-        "carpmouse.h": "c"
+        "carpmouse.h": "c",
+        "array": "c",
+        "string": "c",
+        "string_view": "c",
+        "ranges": "c",
+        "span": "c"
     }
 }

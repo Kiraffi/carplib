@@ -9,8 +9,8 @@
 #include <GL/gl.h>
 #include <GL/glx.h>
 #include <GL/glext.h>
-#include "../external/glad/gl.h"
 
+#include "carpgl.h"
 #include "carpkeyboard.h"
 #include "carplog.h"
 #include "carpmouse.h"
@@ -43,7 +43,7 @@ typedef struct CarpWindowInternal
 
 } CarpWindowInternal;
 
-_Static_assert(sizeof(CarpWindowInternal) <= sizeof(((CarpWindow*)0)->data), "CarpWindowInternal size is should be less than CarpWindow::data bytes!");
+_Static_assert(sizeof(CarpWindowInternal) <= sizeof(((CarpWindow*)0)->carp_window_data), "CarpWindowInternal size is should be less than CarpWindow::data bytes!");
 
 
 
@@ -110,7 +110,7 @@ static void s_destroyDisplay(CarpWindow* carp_window)
 
     if(carp_window == NULL)
         return;
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
 
 
     if(wnd->carpColormap != 0)
@@ -135,7 +135,7 @@ static void s_destroyWindow(CarpWindow* carp_window)
 {
     if(carp_window == NULL)
         return;
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
     XUnmapWindow(wnd->carpDisplay, wnd->carpWindow);
     XDestroyWindow(wnd->carpDisplay, wnd->carpWindow);
 }
@@ -148,7 +148,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 
     if(carp_window == NULL)
         return false;
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
     wnd->carpDisplay = XOpenDisplay(NULL);
     if(wnd->carpDisplay == NULL)
     {
@@ -333,8 +333,8 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     CARP_LOGINFO("GL version: %s\n", GLVersionString);
 
 
-    carp_window->width = width;
-    carp_window->height = height;
+    carp_window->carp_window_width = width;
+    carp_window->carp_window_height = height;
 
 
     return true;
@@ -362,7 +362,7 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     carp_keyboard_resetState();
     carp_mouse_resetState();
 
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
     int minKeyCodes = 0;
     int maxKeyCodes = 0;
     XDisplayKeycodes(wnd->carpDisplay, &minKeyCodes, &maxKeyCodes);
@@ -411,26 +411,28 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
             case ClientMessage:
             {
                 if ((Atom)event.xclient.data.l[0] == wnd->wmDeleteWindow)
-                    carp_window->running = false;
+                    carp_window->carp_window_running = false;
                 break;
             }
             case ConfigureNotify:
             {
-                if(carp_window->width != event.xconfigure.width
-                    || carp_window->height != event.xconfigure.height)
+                if(carp_window->carp_window_width != event.xconfigure.width
+                    || carp_window->carp_window_height != event.xconfigure.height)
                 {
-                    carp_window->width = event.xconfigure.width;
-                    carp_window->height = event.xconfigure.height;
+                    carp_window->carp_window_width = event.xconfigure.width;
+                    carp_window->carp_window_height = event.xconfigure.height;
                     if(wnd->carpWindowSizeChangedCallbackFn)
                     {
-                        wnd->carpWindowSizeChangedCallbackFn(carp_window->width, carp_window->height);
+                        wnd->carpWindowSizeChangedCallbackFn(
+                            carp_window->carp_window_width,
+                            carp_window->carp_window_height);
                     }
                 }
                 break;
             }
             case DestroyNotify:
             {
-                carp_window->running = false;
+                carp_window->carp_window_running = false;
                 break;
             }
         }
@@ -454,8 +456,8 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     {
         if(mouseWindowPosX >= 0
             && mouseWindowPosY >= 0
-            && mouseWindowPosX < carp_window->width
-            && mouseWindowPosY < carp_window->height
+            && mouseWindowPosX < carp_window->carp_window_width
+            && mouseWindowPosY < carp_window->carp_window_height
         )
         {
             carp_mouse_setPosition(mouseWindowPosX, mouseWindowPosY);
@@ -470,7 +472,7 @@ CARP_FN void carp_window_setWindowTitle(CarpWindow* carp_window, const char* tit
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
     XStoreName(wnd->carpDisplay, wnd->carpWindow, title);
 }
 
@@ -480,7 +482,7 @@ CARP_FN void carp_window_swapBuffers(CarpWindow* carp_window)
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
     glXSwapBuffers(wnd->carpDisplay, wnd->carpWindow);
 }
 CARP_FN void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
@@ -489,7 +491,7 @@ CARP_FN void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
     glxSwapIntervalEXTFn(wnd->carpDisplay, wnd->carpWindow, vSyncEnabled ? 1 : 0);
 }
 
@@ -502,7 +504,7 @@ CARP_FN void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
     {
         return;
     }
-    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->data);
+    CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
     wnd->carpWindowSizeChangedCallbackFn = windowSizeChangedCallbackFn;
 }
 

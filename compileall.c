@@ -20,5 +20,6 @@
 #include "carplib/carpmath.c"
 #include "carplib/carpmemory.c"
 #include "carplib/carpmouse.c"
+#include "carplib/carpogl.c"
 #include "carplib/carpshader.c"
 #include "carplib/carptime.c"

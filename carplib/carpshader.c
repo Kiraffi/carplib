@@ -107,10 +107,10 @@ CARP_FN CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, c
     glDetachShader(program, vertexShader);
     glDetachShader(program, fragmentShader);
 
-    result.vertexShader = vertexShader;
-    result.fragmentShader = fragmentShader;
-    result.program = program;
-    result.isValid = true;
+    result.carp_pixelshader_vertexShader = vertexShader;
+    result.carp_pixelshader_fragmentShader = fragmentShader;
+    result.carp_pixelshader_program = program;
+    result.carp_pixelshader_isValid = true;
 
     return result;
 }
@@ -119,13 +119,13 @@ CARP_FN void carp_shader_deletePixelShader(CarpPixelShader* shader)
 {
     if(shader)
     {
-        if(shader->program)
-            glDeleteProgram(shader->program);
+        if(shader->carp_pixelshader_program)
+            glDeleteProgram(shader->carp_pixelshader_program);
 
-        if(shader->vertexShader)
-            glDeleteShader(shader->vertexShader);
-        if(shader->fragmentShader)
-            glDeleteShader(shader->fragmentShader);
+        if(shader->carp_pixelshader_vertexShader)
+            glDeleteShader(shader->carp_pixelshader_vertexShader);
+        if(shader->carp_pixelshader_fragmentShader)
+            glDeleteShader(shader->carp_pixelshader_fragmentShader);
 
     }
     CarpPixelShader tmp = {0};

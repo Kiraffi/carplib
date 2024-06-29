@@ -14,16 +14,16 @@ typedef struct CarpWindow
         {
             struct
             {
-                f64 runningTime;
-                s32 width;
-                s32 height;
-                b8 running;
-                b8 resized;
+                f64 carp_window_runningTime;
+                s32 carp_window_width;
+                s32 carp_window_height;
+                b8 carp_window_running;
+                b8 carp_window_resized;
 
-                char windowName[104];
-                char data[768];
+                char carp_window_windowName[104];
+                char carp_window_data[768];
             };
-            _Alignas(16) uint8_t alignedData[1024];
+            _Alignas(16) uint8_t carp_window_alignedData[1024];
         };
 
     };

@@ -2,7 +2,7 @@
 #define CARPGL_HH
 
 
-#include "../external/glad/gl.h"
+#include <external/glad/gl.h>
 //#include <gl/GL.h>
 
 #include "carptype.h"

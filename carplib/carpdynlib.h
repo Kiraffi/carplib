@@ -19,8 +19,8 @@ typedef struct CarpDynLibFn
 
 
 
-bool carp_dynLib_load(const char* fileName, CarpDynLib* outLib);
-bool carp_dynLib_unload(CarpDynLib* loadedLib);
-bool carp_dynLib_loadFn(const  CarpDynLib* loadedLib, const char* functionName, CarpDynLibFn* outFn);
+CARP_FN bool carp_dynLib_load(const char* fileName, CarpDynLib* outLib);
+CARP_FN bool carp_dynLib_unload(CarpDynLib* loadedLib);
+CARP_FN bool carp_dynLib_loadFn(const  CarpDynLib* loadedLib, const char* functionName, CarpDynLibFn* outFn);
 
 #endif // CARP_DYNLIB_HH

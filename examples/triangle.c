@@ -46,7 +46,7 @@ static s32 sMainAfterWindow(void)
     CarpMemory* memory = carp_memory_get();
 
     CarpPixelShader shader = carp_shader_compilePixelShader(vertexShaderCode, fragmentShaderCode);
-    if(!shader.isValid)
+    if(!shader.carp_pixelshader_isValid)
     {
         CARP_LOGERROR("Failed to compile shader\n");
         carp_shader_deletePixelShader(&shader);
@@ -55,7 +55,7 @@ static s32 sMainAfterWindow(void)
 
     GLuint vertexbuffer = 0;
     {
-        glUseProgram(shader.program);
+        glUseProgram(shader.carp_pixelshader_program);
 
 
         GLuint vertexArrayID = 0;
@@ -95,13 +95,13 @@ static s32 sMainAfterWindow(void)
     carp_window_enableVSync(&memory->carp_window, true);
 
     CARP_LOGINFO("Window start running\n");
-    memory->carp_window.running = true;
+    memory->carp_window.carp_window_running = true;
 
-    while(memory->carp_window.running)
+    while(memory->carp_window.carp_window_running)
     {
         carp_window_update(&memory->carp_window, 0.0f);
         if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
-            memory->carp_window.running = false;
+            memory->carp_window.carp_window_running = false;
             /*
         CARP_LOGDEBUG("Mouse x:%i, y: %i, l:%i, m:%i, r:%i, b4:%i, b5:%i, wheel x:%i, y:%i\n",
             carp_mouse_getPositionX(),

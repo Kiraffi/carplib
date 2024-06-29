@@ -8,10 +8,10 @@ typedef unsigned int GLuint;
 
 typedef struct CarpPixelShader
 {
-    GLuint vertexShader;
-    GLuint fragmentShader;
-    GLuint program;
-    bool isValid;
+    GLuint carp_pixelshader_vertexShader;
+    GLuint carp_pixelshader_fragmentShader;
+    GLuint carp_pixelshader_program;
+    bool carp_pixelshader_isValid;
 } CarpPixelShader;
 
 
