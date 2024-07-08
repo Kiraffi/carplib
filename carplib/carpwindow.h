@@ -23,7 +23,7 @@ typedef struct CarpWindow
                 char carp_window_windowName[104];
                 char carp_window_data[768];
             };
-            _Alignas(16) uint8_t carp_window_alignedData[1024];
+            _Alignas(16) u8 carp_window_alignedData[1024];
         };
 
     };

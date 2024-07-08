@@ -14,9 +14,11 @@
 #error "Unsupported system"
 #endif
 
+#include "carplib/carpbuffer.c"
 #include "carplib/carpdynlib.c"
 #include "carplib/carpgl.c"
 #include "carplib/carpkeyboard.c"
+#include "carplib/carplang.c"
 #include "carplib/carpmath.c"
 #include "carplib/carpmemory.c"
 #include "carplib/carpmouse.c"

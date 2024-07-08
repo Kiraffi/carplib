@@ -9,7 +9,7 @@
         "command": "clang",
         "args": [
           "-g",
-          "examples/cubes.c",
+          "examples/scripttest.c",
           "-obuildout/main.exe",
           "-std=c11",
           "-m64",
@@ -54,7 +54,7 @@
         "command": "clang",
         "args": [
           "-g",
-          "examples/cubes.c",
+          "examples/scripttest.c",
           "-obuildout/main.out",
           "-std=c11",
           "-lX11",

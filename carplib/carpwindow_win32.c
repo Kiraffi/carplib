@@ -489,13 +489,13 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
 
             case WM_MOUSEWHEEL:
             {
-                int16_t wheelAmount = HIWORD(msg.wParam);
+                s16 wheelAmount = HIWORD(msg.wParam);
                 carp_mouse_addWheelMovement(0, wheelAmount);
                 break;
             }
             case WM_MOUSEHWHEEL:
             {
-                int16_t wheelAmount = HIWORD(msg.wParam);
+                s16 wheelAmount = HIWORD(msg.wParam);
                 carp_mouse_addWheelMovement(wheelAmount, 0);
                 break;
             }
