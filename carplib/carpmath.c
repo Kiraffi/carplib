@@ -2080,7 +2080,7 @@ CARP_FN bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
 
     CARP_ASSERT_RETURN(carp_math_abs_f(det) >= CARP_EPSILON, false);
     det = 1.0f / det;
-    for (int i = 0; i < 16; i++)
+    for (s32 i = 0; i < 16; i++)
         outM44->v[i] *= det;
 
     return true;
@@ -2089,7 +2089,7 @@ CARP_FN bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
 
 CARP_FN bool carp_math_eq_m44(const CarpM44* a, const CarpM44* b)
 {
-    for(int i = 0; i < 16; ++i)
+    for(s32 i = 0; i < 16; ++i)
     {
         f32 f = carp_math_abs_f(a->v[i] - b->v[i]);
         if(f > CARP_EPSILON)
@@ -2101,7 +2101,7 @@ CARP_FN bool carp_math_eq_m44(const CarpM44* a, const CarpM44* b)
 
 CARP_FN bool carp_math_isIdentity_m44(const CarpM44* m)
 {
-    for(int i = 0; i < 16; ++i)
+    for(s32 i = 0; i < 16; ++i)
     {
         f32 f = m->v[i];
 

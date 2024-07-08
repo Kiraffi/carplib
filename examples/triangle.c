@@ -32,7 +32,7 @@ static const char fragmentShaderCode[] =
     "} \n";
 
 
-static void sWindowSizeChanged(int width, int height)
+static void sWindowSizeChanged(s32 width, s32 height)
 {
     CARP_LOGINFO("Window size changed: %i - %i\n", width, height);
     if(glad_glViewport)
@@ -53,12 +53,12 @@ static s32 sMainAfterWindow(void)
         return -1;
     }
 
-    GLuint vertexbuffer = 0;
+    GLus32 vertexbuffer = 0;
     {
         glUseProgram(shader.carp_pixelshader_program);
 
 
-        GLuint vertexArrayID = 0;
+        GLus32 vertexArrayID = 0;
         glGenVertexArrays(1, &vertexArrayID);
         glBindVertexArray(vertexArrayID);
 
@@ -157,14 +157,14 @@ static s32 sMain(void)
     return 0;
 }
 
-int main(int argc, char** argv)
+s32 main(s32 argc, char** argv)
 {
     if(!carp_memory_init())
     {
         CARP_LOGERROR("Failed to init the memory\n");
         return -1;
     }
-    int result = sMain();
+    s32 result = sMain();
 
     carp_memory_destroy();
 

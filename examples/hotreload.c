@@ -47,8 +47,8 @@ static const char sHotReloadFn[] = "hotReloadTestFn";
 static CarpDynLib sLoadedLibrary;
 static hotReloadTestFnPtr sHotreloadedFn = NULL;
 
-//static int sFunctionFromMain(int value)
-int functionFromMain(int value)
+//static s32 sFunctionFromMain(s32 value)
+s32 functionFromMain(s32 value)
 {
     CARP_LOGINFO("main function called with value: %i\n", value);
     return value * 2;
@@ -94,7 +94,7 @@ static bool sHotReload(void)
 }
 
 
-static void sWindowSizeChanged(int width, int height)
+static void sWindowSizeChanged(s32 width, s32 height)
 {
     CARP_LOGINFO("Window size changed: %i - %i\n", width, height);
     if(glad_glViewport)
@@ -231,14 +231,14 @@ static s32 sMain(void)
     return 0;
 }
 
-int main(int argc, char** argv)
+s32 main(s32 argc, char** argv)
 {
     if(!carp_memory_init())
     {
         CARP_LOGERROR("Failed to init the memory\n");
         return -1;
     }
-    int result = sMain();
+    s32 result = sMain();
     sUnloadLib();
 
     carp_memory_destroy();

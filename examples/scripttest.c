@@ -43,7 +43,7 @@ static const char vertexShaderCode[] =
 
     "   void main()\n"
     "   {\n"
-    "       int instanceID = gl_InstanceID;\n"
+    "       s32 instanceID = gl_InstanceID;\n"
 
     "       mat4 instanceMat = instanceMatData.entityMats[instanceID];\n"
     "       mat4 camMat = frameData.viewProjMat;\n"
@@ -78,7 +78,7 @@ static const char program[] =
     ;
 
 
-static void sWindowSizeChanged(int width, int height)
+static void sWindowSizeChanged(s32 width, s32 height)
 {
     CARP_LOGINFO("Window size changed: %i - %i\n", width, height);
     if(glad_glViewport)
@@ -222,7 +222,7 @@ static s32 sMainAfterWindow(void)
     positions[3].z = -10.0f;
 
     CarpV3A colors[4];
-    for(int i = 0; i < 4; ++i)
+    for(s32 i = 0; i < 4; ++i)
     {
         colors[i].x = colors[i].y = colors[i].z = 0.6f;
         colors[i].w = 1.0f;
@@ -297,7 +297,7 @@ static s32 sMainAfterWindow(void)
             camPos.y -= MoveSpeed * dt;
 
 
-        for(int i = 0; i < 4; ++i)
+        for(s32 i = 0; i < 4; ++i)
         {
             carp_math_getM44FromTRS(positions + i,
                 &rotation,
@@ -405,7 +405,7 @@ static s32 sMain(void)
     return 0;
 }
 
-int main(int argc, char** argv)
+s32 main(s32 argc, char** argv)
 {
     if(!carp_memory_init())
     {
@@ -420,7 +420,7 @@ int main(int argc, char** argv)
         return -1;
     }
 
-    int result = sMain();
+    s32 result = sMain();
 
     carp_memory_destroy();
 

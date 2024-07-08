@@ -2,7 +2,7 @@
 #define HOTRELOADFN_HH
 
 #include "carplib/carptype.h"
-int CARP_LIBEXPORT functionFromMain(int value);
+s32 CARP_LIBEXPORT functionFromMain(s32 value);
 
 #endif //HOTRELOADFN_HH
 

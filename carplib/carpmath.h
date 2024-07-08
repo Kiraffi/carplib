@@ -34,7 +34,7 @@ typedef struct CarpV2
             f32 y;
         };
         _Alignas(8) f32 v[2];
-        _Alignas(8) int intArr[2];
+        _Alignas(8) s32 intArr[2];
         _Alignas(8) uint64_t u64;
     };
 } CarpV2;
@@ -53,7 +53,7 @@ typedef struct CarpV3A
             f32 w;
         };
         _Alignas(16) f32 v[4];
-        _Alignas(16) int intArr[4];
+        _Alignas(16) s32 intArr[4];
         _Alignas(16) __m128 simdv3a;
     };
 } CarpV3A;

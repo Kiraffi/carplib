@@ -3,7 +3,7 @@
 
 #include "carplib/carptype.h"
 
-typedef int (*mainFunctionPtr)(int);
+typedef s32 (*mainFunctionPtr)(int);
 typedef struct MainLoad
 {
     mainFunctionPtr mainFn;
@@ -12,6 +12,6 @@ typedef struct MainLoad
 
 
 
-typedef int (*hotReloadTestFnPtr)(MainLoad mainLoad, int, int);
+typedef s32 (*hotReloadTestFnPtr)(MainLoad mainLoad, int, int);
 
 #endif //HOTRELOAD_HH

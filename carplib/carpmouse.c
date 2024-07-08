@@ -33,11 +33,11 @@ CARP_FN void carp_mouse_resetState(void)
 
     mem->carp_mouseState.carp_mouse_wheelX = 0;
     mem->carp_mouseState.carp_mouse_wheelY = 0;
-    for(int i = 0; i < MAX_AMOUNT_MOUSEINPUT; ++i)
+    for(s32 i = 0; i < MAX_AMOUNT_MOUSEINPUT; ++i)
         mem->carp_mouseState.carp_mouse_buttonHalfPress[i] = 0;
 }
 
-CARP_FN void carp_mouse_setPosition(int x, int y)
+CARP_FN void carp_mouse_setPosition(s32 x, s32 y)
 {
     CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
@@ -49,7 +49,7 @@ CARP_FN void carp_mouse_setPosition(int x, int y)
     mem->carp_mouseState.carp_mouse_y = y;
 }
 
-CARP_FN void carp_mouse_addWheelMovement(int x, int y)
+CARP_FN void carp_mouse_addWheelMovement(s32 x, s32 y)
 {
     CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
@@ -71,14 +71,14 @@ CARP_FN void carp_mouse_setButtonState(CarpMouseButton button, bool down)
 }
 
 
-CARP_FN int carp_mouse_getPositionX(void)
+CARP_FN s32 carp_mouse_getPositionX(void)
 {
     CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return 0;
     return mem->carp_mouseState.carp_mouse_x;
 }
-CARP_FN int carp_mouse_getPositionY(void)
+CARP_FN s32 carp_mouse_getPositionY(void)
 {
     CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
@@ -86,14 +86,14 @@ CARP_FN int carp_mouse_getPositionY(void)
     return mem->carp_mouseState.carp_mouse_y;
 }
 
-CARP_FN int carp_mouse_getWheelX(void)
+CARP_FN s32 carp_mouse_getWheelX(void)
 {
     CarpMemory* mem = carp_memory_get();
     if(mem == NULL)
         return 0;
     return mem->carp_mouseState.carp_mouse_wheelX;
 }
-CARP_FN int carp_mouse_getWheelY(void)
+CARP_FN s32 carp_mouse_getWheelY(void)
 {
     CarpMemory* mem = carp_memory_get();
     if(mem == NULL)

@@ -27,7 +27,7 @@ static b8 s_resized = false;
 
 static const char className[] = "CarpWindow";
 
-static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT win32WndProc(HWND hWnd, Us32 uMsg, WPARAM wParam, LPARAM lParam);
 
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
 #define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
@@ -176,7 +176,7 @@ static b8 s_initGL(CarpWindow* carp_window)
 
     winSwapIntervalEXTFn = (PFNSWAPINTERVALEXT_CARP)wglGetProcAddress("wglSwapIntervalEXT\0");
 
-    int attrs[] = {
+    s32 attrs[] = {
         WGL_CONTEXT_MAJOR_VERSION_ARB, 4,
         WGL_CONTEXT_MINOR_VERSION_ARB, 6,
         WGL_CONTEXT_FLAGS_ARB, WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB,
@@ -196,7 +196,7 @@ static b8 s_initGL(CarpWindow* carp_window)
             wnd->hglrc = modernRC;
         }
     }
-    int version = gladLoaderLoadGL();
+    s32 version = gladLoaderLoadGL();
     CARP_LOGINFO("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
 	//Checking GL version
@@ -393,8 +393,8 @@ static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 
         case WM_EXITSIZEMOVE:
         {
-            //int width = LOWORD(lParam);
-            //int height = HIWORD(lParam);
+            //s32 width = LOWORD(lParam);
+            //s32 height = HIWORD(lParam);
             /*
             let width = LOWORD(lParam as u32);
             let height = HIWORD(lParam as u32);

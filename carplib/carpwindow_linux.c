@@ -22,7 +22,7 @@
 typedef GLXContext (*GLXCreateContextAttribs)(Display* dpy, GLXFBConfig config, GLXContext shareContext, bool directRendering, const int* attribList);
 GLXCreateContextAttribs glxCreateContextAttribsFn = NULL;
 
-typedef void (*GLXSwapIntervalEXT)(Display *dpy, GLXDrawable drawable, int interval);
+typedef void (*GLXSwapIntervalEXT)(Display *dpy, GLXDrawable drawable, s32 interval);
 GLXSwapIntervalEXT glxSwapIntervalEXTFn = NULL;
 
 
@@ -37,7 +37,7 @@ typedef struct CarpWindowInternal
     Window carpWindowRoot;
     Window carpWindow;
     Colormap carpColormap;
-    int carpWindowScreen;
+    s32 carpWindowScreen;
     Atom wmDeleteWindow;
     GLXContext carpGLContext;
 
@@ -144,7 +144,7 @@ static void s_destroyWindow(CarpWindow* carp_window)
 static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
     // TODO: Notice this, if using multisamples, should pass it as init?
-    static const int multisample = 0;
+    static const s32 multisample = 0;
 
     if(carp_window == NULL)
         return false;
@@ -160,10 +160,10 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     wnd->carpWindowRoot = RootWindow(wnd->carpDisplay, wnd->carpWindowScreen);
 
 
-    int majorGlxVersion = 0;
-    int minorGlxVersion = 0;
+    s32 majorGlxVersion = 0;
+    s32 minorGlxVersion = 0;
 
-    int queryGlx  = glXQueryVersion(wnd->carpDisplay, &majorGlxVersion, &minorGlxVersion);
+    s32 queryGlx  = glXQueryVersion(wnd->carpDisplay, &majorGlxVersion, &minorGlxVersion);
     CARP_LOGINFO("Query glx result: %i, major: %i, minor: %i\n", queryGlx, majorGlxVersion, minorGlxVersion);
     if(queryGlx == 0 || majorGlxVersion < 1 || (majorGlxVersion == 1 && minorGlxVersion < 4))
     {
@@ -172,7 +172,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
     }
 
 
-    int attribs[] = {
+    s32 attribs[] = {
         GLX_X_RENDERABLE    , 1,
         GLX_DRAWABLE_TYPE   , GLX_WINDOW_BIT,
         GLX_RENDER_TYPE     , GLX_RGBA_BIT,
@@ -187,7 +187,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
         0,0
     };
 
-    int fbCount = 0;
+    s32 fbCount = 0;
     GLXFBConfig* fbConfigs = glXChooseFBConfig(wnd->carpDisplay, wnd->carpWindowScreen, attribs, &fbCount);
     if(fbConfigs == NULL)
     {
@@ -197,22 +197,22 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 
     CARP_LOGINFO("Found %i matching framebuffers.\n", fbCount);
 
-    int bestFBConfigIndex =  -1;
-    int bestNumSamp = -1;
+    s32 bestFBConfigIndex =  -1;
+    s32 bestNumSamp = -1;
 
     bool foundSRGB = false;
     bool foundMultisample = false;
 
-    for(int i = 0; i < fbCount; ++i)
+    for(s32 i = 0; i < fbCount; ++i)
     {
         GLXFBConfig fbConf = fbConfigs[i];
         XVisualInfo* visualInfoTmp = glXGetVisualFromFBConfig( wnd->carpDisplay, fbConf);
 
         if(visualInfoTmp != NULL)
         {
-            int sampBuf = 0;
-            int samples = 0;
-            int srgb = 0;
+            s32 sampBuf = 0;
+            s32 samples = 0;
+            s32 srgb = 0;
 
             glXGetFBConfigAttrib( wnd->carpDisplay, fbConf, GLX_SAMPLE_BUFFERS, &sampBuf );
             glXGetFBConfigAttrib( wnd->carpDisplay, fbConf, GLX_SAMPLES, &samples  );
@@ -281,7 +281,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 
     XFree(visualInfo);
 
-    int contextAttribs[] = {
+    s32 contextAttribs[] = {
         GLX_CONTEXT_MAJOR_VERSION_ARB, 4,
         GLX_CONTEXT_MINOR_VERSION_ARB, 6,
         GLX_CONTEXT_PROFILE_MASK_ARB, GLX_CONTEXT_CORE_PROFILE_BIT_ARB,
@@ -325,7 +325,7 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 
     carp_window_setWindowTitle(carp_window, windowName);
 
-    int version = gladLoaderLoadGL();
+    s32 version = gladLoaderLoadGL();
     CARP_LOGINFO("GL %d.%d\n", GLAD_VERSION_MAJOR(version), GLAD_VERSION_MINOR(version));
 
 	//Checking GL version
@@ -363,8 +363,8 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     carp_mouse_resetState();
 
     CarpWindowInternal* wnd = (CarpWindowInternal*)(&carp_window->carp_window_data);
-    int minKeyCodes = 0;
-    int maxKeyCodes = 0;
+    s32 minKeyCodes = 0;
+    s32 maxKeyCodes = 0;
     XDisplayKeycodes(wnd->carpDisplay, &minKeyCodes, &maxKeyCodes);
 
     XEvent event;
@@ -438,12 +438,12 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
         }
 
     }
-    int mousePosX = 0;
-    int mousePosY = 0;
-    int mouseWindowPosX = 0;
-    int mouseWindowPosY = 0;
+    s32 mousePosX = 0;
+    s32 mousePosY = 0;
+    s32 mouseWindowPosX = 0;
+    s32 mouseWindowPosY = 0;
 
-    unsigned int tmpMask = 0;
+    u32 tmpMask = 0;
 
     Window tmpWindow1 = {0};
     Window tmpWindow2 = {0};

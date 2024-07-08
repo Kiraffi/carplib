@@ -1,10 +1,11 @@
 #ifndef CARP_SHADER_HH
 #define CARP_SHADER_HH
 
-typedef int GLint;
-typedef unsigned int GLuint;
-
 #include "carptype.h"
+
+typedef s32 GLint;
+typedef u32 GLuint;
+
 
 typedef struct CarpPixelShader
 {

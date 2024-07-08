@@ -31,7 +31,7 @@ CARP_FN void carp_keyboard_resetState(void)
     if(mem == NULL)
         return;
 
-    for(int i = 0; i < MAX_AMOUNT_INPUT; ++i)
+    for(s32 i = 0; i < MAX_AMOUNT_INPUT; ++i)
         mem->carp_keyboardState.carp_keyboard_halfPress[i] = 0;
 }
 

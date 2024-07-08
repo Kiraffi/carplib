@@ -44,7 +44,7 @@ CARP_FN bool carp_ogl_destroyBuffer(CarpOGLBuffer* buffer)
     return true;
 }
 
-CARP_FN bool carp_ogl_bindBuffer(const CarpOGLBuffer* buffer, int slot, u32 bufferType)
+CARP_FN bool carp_ogl_bindBuffer(const CarpOGLBuffer* buffer, s32 slot, u32 bufferType)
 {
     CARP_ASSERT_RETURN(buffer && "Needs non null outbuffer", false);
     CARP_ASSERT_RETURN(buffer->carp_OGLBuffer_handle != 0

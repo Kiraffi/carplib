@@ -29,7 +29,7 @@
 #define GL_TRUE 1
 #endif
 
-static GLuint sCompileShader(int shaderType, const char* code)
+static GLuint sCompileShader(s32 shaderType, const char* code)
 {
     GLint isCompiled = 0;
     GLuint shader = glCreateShader(shaderType);
@@ -81,7 +81,7 @@ CARP_FN CarpPixelShader carp_shader_compilePixelShader(const char* vertexCode, c
     glLinkProgram(program);
 
     GLint isLinked = 0;
-    glGetProgramiv(program, GL_LINK_STATUS, (int *)&isLinked);
+    glGetProgramiv(program, GL_LINK_STATUS, (s32 *)&isLinked);
     if (isLinked == GL_FALSE)
     {
         GLint maxLength = 0;

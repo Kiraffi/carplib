@@ -16,13 +16,13 @@ typedef enum CarpMouseButton
 
 CARP_FN void carp_mouse_resetState(void);
 CARP_FN void carp_mouse_setButtonState(CarpMouseButton button, bool down);
-CARP_FN void carp_mouse_setPosition(int x, int y);
-CARP_FN void carp_mouse_addWheelMovement(int x, int y);
+CARP_FN void carp_mouse_setPosition(s32 x, s32 y);
+CARP_FN void carp_mouse_addWheelMovement(s32 x, s32 y);
 
-CARP_FN int carp_mouse_getPositionX(void);
-CARP_FN int carp_mouse_getPositionY(void);
-CARP_FN int carp_mouse_getWheelX(void);
-CARP_FN int carp_mouse_getWheelY(void);
+CARP_FN s32 carp_mouse_getPositionX(void);
+CARP_FN s32 carp_mouse_getPositionY(void);
+CARP_FN s32 carp_mouse_getWheelX(void);
+CARP_FN s32 carp_mouse_getWheelY(void);
 
 CARP_FN bool carp_mouse_wasButtonPressed(CarpMouseButton button);
 CARP_FN bool carp_mouse_wasButtonReleased(CarpMouseButton button);
