@@ -72,8 +72,12 @@ static const char fragmentShaderCode[] =
 static const char program[] =
     "const var let constant 1234 _fio,. \n"
     " + - , . / * "
+    " /* these are between comments */ \n "
     "! != == := && || & | \n"
     " \" \\ \n"
+    " */ \n"
+    " asdf // commented out text asdf2 \0 \n"
+    " aftercomments \n"
     "\0"
     ;
 

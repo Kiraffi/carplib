@@ -5,132 +5,137 @@
 #include <stdlib.h> // calloc
 #include <string.h> // memcpy
 
-typedef enum TokenType
+typedef enum CarpTokenType
 {
-    TokenTypeUnknownToken,
-    TokenTypeEndOfTokens, // '\0'
-    TokenTypePercentSign, // %
-    TokenTypePlus, // +
-    TokenTypeMinus, // -
-    TokenTypeStar, // *
-    TokenTypeSlash, // /
-    TokenTypeBackSlash, // '\'
-    TokenTypeComma, // ,
-    TokenTypeDot, // .
-    TokenTypeF, // 'f'
-    TokenTypeSetEqual, // :=
-    TokenTypeNotEqual, // !=
-    TokenTypeDoubleEqual, // ==
-    TokenTypeDoubleQuote, // "
-    TokenTypeExclamationMark, // !
-    TokenTypeAtSign, // @
-    TokenTypeBitwiseAnd, // &
-    TokenTypeBitwiseOr, // |
-    TokenTypeLogicalAnd, // ||
-    TokenTypeLogicalOr, // ||
-    TokenTypeHashSign, // #
-    TokenTypeQuestionMark, // ?
-    TokenTypeColon, // :
-    TokenTypeSemiColon, // ;
-    TokenTypeParenthesesOpen, // ()
-    TokenTypeParenthesesClose,
-    TokenTypeSquareBracketOpen, // []
-    TokenTypeSquareBracketClose,
-    TokenTypeCurlyBracketOpen, // {}
-    TokenTypeCurlyBracketClose,
-    TokenTypeAngleBracketOpen, // <>
-    TokenTypeAngleBracketClose,
+    CarpTokenTypeUnknownToken,
+    CarpTokenTypeEndOfTokens, // '\0'
+    CarpTokenTypePercentSign, // %
+    CarpTokenTypePlus, // +
+    CarpTokenTypeMinus, // -
+    CarpTokenTypeStar, // *
+    CarpTokenTypeSlash, // /
+    CarpTokenTypeBackSlash, // '\'
+    CarpTokenTypeComma, // ,
+    CarpTokenTypeDot, // .
+    CarpTokenTypeF, // 'f'
+    CarpTokenTypeComment, // //
+    CarpTokenTypeCommentBlockBegin, // '*/'
+
+    CarpTokenTypeSetEqual, // :=
+    CarpTokenTypeNotEqual, // !=
+    CarpTokenTypeDoubleEqual, // ==
+    CarpTokenTypeDoubleQuote, // "
+    CarpTokenTypeExclamationMark, // !
+    CarpTokenTypeAtSign, // @
+    CarpTokenTypeBitwiseAnd, // &
+    CarpTokenTypeBitwiseOr, // |
+    CarpTokenTypeLogicalAnd, // ||
+    CarpTokenTypeLogicalOr, // ||
+    CarpTokenTypeHashSign, // #
+    CarpTokenTypeQuestionMark, // ?
+    CarpTokenTypeColon, // :
+    CarpTokenTypeSemiColon, // ;
+    CarpTokenTypeParenthesesOpen, // ()
+    CarpTokenTypeParenthesesClose,
+    CarpTokenTypeSquareBracketOpen, // []
+    CarpTokenTypeSquareBracketClose,
+    CarpTokenTypeCurlyBracketOpen, // {}
+    CarpTokenTypeCurlyBracketClose,
+    CarpTokenTypeAngleBracketOpen, // <>
+    CarpTokenTypeAngleBracketClose,
 
     // Number type
-    TokenTypeNumber,
+    CarpTokenTypeNumber,
 
     // Keywords
-    TokenTypeConst,
-    TokenTypeWhile,
-    TokenTypeFunc,
-    TokenTypeLet,
-    TokenTypeVar,
+    CarpTokenTypeConst,
+    CarpTokenTypeWhile,
+    CarpTokenTypeFunc,
+    CarpTokenTypeLet,
+    CarpTokenTypeVar,
 
-    TokenTypeIdentifier,
+    CarpTokenTypeIdentifier,
 
-    TokenTypeCount,
-} TokenType;
+    CarpTokenTypeCount,
+} CarpTokenType;
 
 
-typedef struct Token
+typedef struct CarpToken
 {
-    s32 tokenStart;
-    s32 tokenLen;
-    TokenType tokenType;
-} Token;
+    s32 carpTokenStart;
+    s32 carpTokenLen;
+    CarpTokenType carpTokenType;
+} CarpToken;
 
 
-typedef struct TokenHelper
+typedef struct CarpTokenHelper
 {
     const char* tokenHelperStr;
     s32 tokenHelperLen;
-    TokenType tokenHelperType;
-} TokenHelper;
+    CarpTokenType tokenHelperType;
+} CarpTokenHelper;
 
-#define TokenHelperLine(name, type) { name, (sizeof(name) - 1), type }
+#define CarpTokenHelperLine(name, type) { name, (sizeof(name) - 1), type }
 
-static const TokenHelper tokenHelpers[] =
+static const CarpTokenHelper tokenHelpers[] =
 {
-    TokenHelperLine("\0", TokenTypeEndOfTokens), // '\0'
-    TokenHelperLine(":=", TokenTypeSetEqual), // :=
-    TokenHelperLine("!=", TokenTypeNotEqual), // !=
-    TokenHelperLine("==", TokenTypeDoubleEqual), // ==
-    TokenHelperLine("\"", TokenTypeDoubleQuote), // "
-    TokenHelperLine("\\", TokenTypeBackSlash), // '\'
-    TokenHelperLine("||", TokenTypeLogicalOr), // '\'
-    TokenHelperLine("&&", TokenTypeLogicalAnd), // '\'
+    CarpTokenHelperLine("\0", CarpTokenTypeEndOfTokens), // '\0'
+    CarpTokenHelperLine(":=", CarpTokenTypeSetEqual), // :=
+    CarpTokenHelperLine("!=", CarpTokenTypeNotEqual), // !=
+    CarpTokenHelperLine("==", CarpTokenTypeDoubleEqual), // ==
+    CarpTokenHelperLine("\"", CarpTokenTypeDoubleQuote), // "
+    CarpTokenHelperLine("||", CarpTokenTypeLogicalOr), // '\'
+    CarpTokenHelperLine("&&", CarpTokenTypeLogicalAnd), // '\'
+    CarpTokenHelperLine("//", CarpTokenTypeComment), // /
+    CarpTokenHelperLine("\\", CarpTokenTypeBackSlash), // '\'
+    CarpTokenHelperLine("/*", CarpTokenTypeCommentBlockBegin), // '*/'
 
-    TokenHelperLine("%", TokenTypePercentSign), // %
-    TokenHelperLine("+", TokenTypePlus), // +
-    TokenHelperLine("-", TokenTypeMinus), // -
-    TokenHelperLine("*", TokenTypeStar), // *
-    TokenHelperLine("/", TokenTypeSlash), // /
-    TokenHelperLine(",", TokenTypeComma), // ,
-    TokenHelperLine(".", TokenTypeDot), // .
-    TokenHelperLine("f", TokenTypeF), // 'f'
-    TokenHelperLine("!", TokenTypeExclamationMark), // !
-    TokenHelperLine("@", TokenTypeAtSign), // @
-    TokenHelperLine("&", TokenTypeBitwiseAnd), // &
-    TokenHelperLine("|", TokenTypeBitwiseOr), // &
-    TokenHelperLine("#", TokenTypeHashSign), // #
-    TokenHelperLine("?", TokenTypeQuestionMark), // ?
+    CarpTokenHelperLine("%", CarpTokenTypePercentSign), // %
+    CarpTokenHelperLine("+", CarpTokenTypePlus), // +
+    CarpTokenHelperLine("-", CarpTokenTypeMinus), // -
+    CarpTokenHelperLine("*", CarpTokenTypeStar), // *
+    CarpTokenHelperLine("/", CarpTokenTypeSlash), // /
+    CarpTokenHelperLine(",", CarpTokenTypeComma), // ,
+    CarpTokenHelperLine(".", CarpTokenTypeDot), // .
+    CarpTokenHelperLine("f", CarpTokenTypeF), // 'f'
+    CarpTokenHelperLine("!", CarpTokenTypeExclamationMark), // !
+    CarpTokenHelperLine("@", CarpTokenTypeAtSign), // @
+    CarpTokenHelperLine("&", CarpTokenTypeBitwiseAnd), // &
+    CarpTokenHelperLine("|", CarpTokenTypeBitwiseOr), // &
+    CarpTokenHelperLine("#", CarpTokenTypeHashSign), // #
+    CarpTokenHelperLine("?", CarpTokenTypeQuestionMark), // ?
 
-    TokenHelperLine(":", TokenTypeColon), // :
-    TokenHelperLine(";", TokenTypeSemiColon), // ;
+    CarpTokenHelperLine(":", CarpTokenTypeColon), // :
+    CarpTokenHelperLine(";", CarpTokenTypeSemiColon), // ;
 
-    TokenHelperLine("(", TokenTypeParenthesesOpen), // ()
-    TokenHelperLine(")", TokenTypeParenthesesClose),
-    TokenHelperLine("[", TokenTypeSquareBracketOpen), // []
-    TokenHelperLine("]", TokenTypeSquareBracketClose),
-    TokenHelperLine("{", TokenTypeCurlyBracketOpen), // {}
-    TokenHelperLine("}", TokenTypeCurlyBracketClose),
-    TokenHelperLine("<", TokenTypeAngleBracketOpen), // <>
-    TokenHelperLine(">", TokenTypeAngleBracketClose),
+    CarpTokenHelperLine("(", CarpTokenTypeParenthesesOpen), // ()
+    CarpTokenHelperLine(")", CarpTokenTypeParenthesesClose),
+    CarpTokenHelperLine("[", CarpTokenTypeSquareBracketOpen), // []
+    CarpTokenHelperLine("]", CarpTokenTypeSquareBracketClose),
+    CarpTokenHelperLine("{", CarpTokenTypeCurlyBracketOpen), // {}
+    CarpTokenHelperLine("}", CarpTokenTypeCurlyBracketClose),
+    CarpTokenHelperLine("<", CarpTokenTypeAngleBracketOpen), // <>
+    CarpTokenHelperLine(">", CarpTokenTypeAngleBracketClose),
 
-    TokenHelperLine("const", TokenTypeConst),
-    TokenHelperLine("while", TokenTypeWhile),
-    TokenHelperLine("fn", TokenTypeFunc),
-    TokenHelperLine("let", TokenTypeLet),
-    TokenHelperLine("var", TokenTypeVar),
+    CarpTokenHelperLine("const", CarpTokenTypeConst),
+    CarpTokenHelperLine("while", CarpTokenTypeWhile),
+    CarpTokenHelperLine("fn", CarpTokenTypeFunc),
+    CarpTokenHelperLine("let", CarpTokenTypeLet),
+    CarpTokenHelperLine("var", CarpTokenTypeVar),
 };
-static const s32 TokenHelperCount
-    = (s32)(sizeof(tokenHelpers) / sizeof(TokenHelper));
+static const s32 CarpTokenHelperCount
+    = (s32)(sizeof(tokenHelpers) / sizeof(CarpTokenHelper));
 
 
-#undef TokenHelperLine
+#undef CarpTokenHelperLine
 
-typedef struct TokenIndex
+typedef struct CarpTokenIndex
 {
     const CarpBuffer tokenIndexBuffer;
     s32 tokenIndexIndex;
-} TokenIndex;
+} CarpTokenIndex;
 
-static bool sSkipWhiteSpace(TokenIndex* tokenIndex)
+static bool sSkipWhiteSpace(CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, false);
     CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < tokenIndex->tokenIndexBuffer.carpBufferSize, false);
@@ -154,7 +159,7 @@ static bool sSkipWhiteSpace(TokenIndex* tokenIndex)
 }
 
 
-static s32 sTryParseIdentifier(const TokenIndex* tokenIndex)
+static s32 sTryParseIdentifier(const CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, -1);
     CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < tokenIndex->tokenIndexBuffer.carpBufferSize, -1);
@@ -186,7 +191,7 @@ static s32 sTryParseIdentifier(const TokenIndex* tokenIndex)
     return -1;
 }
 
-static s32 sTryParseNumber(const TokenIndex* tokenIndex)
+static s32 sTryParseNumber(const CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, -1);
     CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < tokenIndex->tokenIndexBuffer.carpBufferSize, -1);
@@ -206,12 +211,12 @@ static s32 sTryParseNumber(const TokenIndex* tokenIndex)
     return -1;
 }
 
-static bool sPushToken(const Token* token, CarpBuffer *outTokenBuffer)
+static bool sPushToken(const CarpToken* token, CarpBuffer *outTokenBuffer)
 {
-    return carp_buffer_pushBuffer(outTokenBuffer, (const u8*)token, sizeof(Token));
+    return carp_buffer_pushBuffer(outTokenBuffer, (const u8*)token, sizeof(CarpToken));
 }
 
-static bool sParseTokens(TokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
+static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
 {
     CARP_ASSERT_RETURN(tokenIndex, false);
     CARP_ASSERT_RETURN(outTokenBuffer, false);
@@ -221,17 +226,17 @@ static bool sParseTokens(TokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
     CARP_ASSERT_RETURN(input->carpBufferData, false);
     CARP_ASSERT_RETURN(input->carpBufferData[input->carpBufferSize - 1] == '\0', false);
 
-    s32 capacity = (1 << 18) * (sizeof(Token) + 4);
-    CARP_ASSERT_RETURN(carp_buffer_create(capacity, 256, outTokenBuffer), NULL);
+    s32 capacity = (1 << 18) * (sizeof(CarpToken) + 4);
+    CARP_ASSERT_RETURN(carp_buffer_create(capacity, 16, outTokenBuffer), NULL);
 
     while(tokenIndex->tokenIndexIndex < input->carpBufferSize)
     {
-        Token pushToken = { 0 };
+        CarpToken pushToken = { 0 };
 
         CARP_ASSERT_RETURN(sSkipWhiteSpace(tokenIndex), false);
         CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < input->carpBufferSize, false);
 
-        pushToken.tokenStart = tokenIndex->tokenIndexIndex;
+        pushToken.carpTokenStart = tokenIndex->tokenIndexIndex;
         const u8* pos = input->carpBufferData + tokenIndex->tokenIndexIndex;
 
         s32 idLen = sTryParseIdentifier(tokenIndex);
@@ -239,43 +244,69 @@ static bool sParseTokens(TokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
 
         if(idLen > 0)
         {
-            pushToken.tokenType = TokenTypeIdentifier;
-            pushToken.tokenLen = idLen;
+            pushToken.carpTokenType = CarpTokenTypeIdentifier;
+            pushToken.carpTokenLen = idLen;
         }
 
-        for(s32 helperIndex = 0; helperIndex < TokenHelperCount; ++helperIndex)
+        for(s32 helperIndex = 0; helperIndex < CarpTokenHelperCount; ++helperIndex)
         {
-            const TokenHelper* helper = tokenHelpers + helperIndex;
+            const CarpTokenHelper* helper = tokenHelpers + helperIndex;
             if(idLen <=  helper->tokenHelperLen
                 && memcmp(helper->tokenHelperStr, pos, helper->tokenHelperLen) == 0)
             {
-                pushToken.tokenType = helper->tokenHelperType;
-                pushToken.tokenLen = helper->tokenHelperLen;
+                pushToken.carpTokenType = helper->tokenHelperType;
+                pushToken.carpTokenLen = helper->tokenHelperLen;
 
-                if(helper->tokenHelperType == TokenTypeEndOfTokens)
+                if(helper->tokenHelperType == CarpTokenTypeEndOfTokens)
                 {
+                    CARP_ASSERT_RETURN(sPushToken(&pushToken, outTokenBuffer), false);
                     return true;
+                }
+                else if(helper->tokenHelperType == CarpTokenTypeComment)
+                {
+                    while(tokenIndex->tokenIndexIndex < input->carpBufferSize
+                        && input->carpBufferData[tokenIndex->tokenIndexIndex] != '\0'
+                        && input->carpBufferData[tokenIndex->tokenIndexIndex] != '\n')
+                    {
+                        ++(tokenIndex->tokenIndexIndex);
+                    }
+                }
+                else if(helper->tokenHelperType == CarpTokenTypeCommentBlockBegin)
+                {
+                    while(tokenIndex->tokenIndexIndex < input->carpBufferSize
+                        && input->carpBufferData[tokenIndex->tokenIndexIndex] != '\0'
+                        && memcmp( input->carpBufferData + tokenIndex->tokenIndexIndex, "*/", 2) != 0)
+                    {
+                        ++(tokenIndex->tokenIndexIndex);
+                    }
+                    CARP_ASSERT_RETURN(input->carpBufferData[tokenIndex->tokenIndexIndex] != '\0', false);
+                    (tokenIndex->tokenIndexIndex) += 2;
                 }
                 break;
             }
         }
-        if(pushToken.tokenType == TokenTypeUnknownToken)
+        if(pushToken.carpTokenType == CarpTokenTypeComment
+            || pushToken.carpTokenType == CarpTokenTypeCommentBlockBegin)
+        {
+            continue;
+        }
+        if(pushToken.carpTokenType == CarpTokenTypeUnknownToken)
         {
             s32 numLen = sTryParseNumber(tokenIndex);
             CARP_ASSERT_RETURN(numLen > 0, false);
 
-            pushToken.tokenLen = numLen;
-            pushToken.tokenType = TokenTypeNumber;
+            pushToken.carpTokenLen = numLen;
+            pushToken.carpTokenType = CarpTokenTypeNumber;
         }
-        CARP_ASSERT_RETURN(pushToken.tokenType != TokenTypeUnknownToken, false);
+        CARP_ASSERT_RETURN(pushToken.carpTokenType != CarpTokenTypeUnknownToken, false);
 
-        tokenIndex->tokenIndexIndex += pushToken.tokenLen;
+        tokenIndex->tokenIndexIndex += pushToken.carpTokenLen;
         CARP_ASSERT_RETURN(sPushToken(&pushToken, outTokenBuffer), false);
     }
 
     return false;
 }
-void sPrintErrorAt(const TokenIndex* tokenIndex)
+void sPrintErrorAt(const CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, ;);
     CARP_ASSERT_RETURN(tokenIndex->tokenIndexBuffer.carpBufferData, ;);
@@ -303,73 +334,76 @@ void sPrintErrorAt(const TokenIndex* tokenIndex)
 }
 void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
 {
-    const Token* token = (const Token*)tokenBuffer->carpBufferData;
-    const Token* endToken = (const Token*)
+    const CarpToken* token = (const CarpToken*)tokenBuffer->carpBufferData;
+    const CarpToken* endToken = (const CarpToken*)
         (tokenBuffer->carpBufferData + tokenBuffer->carpBufferSize);
     s32 tokenCount = 0;
     while(token < endToken)
     {
         const char* name = "";
-        switch(token->tokenType)
+        switch(token->carpTokenType)
         {
-            case TokenTypeUnknownToken: name = "Unknown"; break;
-            case TokenTypeEndOfTokens: name = "End Of Tokens"; break;
-            case TokenTypePercentSign: name = "%"; break;
-            case TokenTypePlus: name = "+"; break;
-            case TokenTypeMinus: name = "-"; break;
-            case TokenTypeStar: name = "*"; break;
-            case TokenTypeSlash: name = "/"; break;
-            case TokenTypeBackSlash: name = "\\"; break;
-            case TokenTypeComma: name = ","; break;
-            case TokenTypeDot: name = "."; break;
-            case TokenTypeF: name = "f"; break;
-            case TokenTypeSetEqual: name = ":="; break;
-            case TokenTypeNotEqual: name = "!="; break;
-            case TokenTypeDoubleEqual: name = "=="; break;
-            case TokenTypeDoubleQuote: name = "\""; break;
-            case TokenTypeExclamationMark: name = "!"; break;
-            case TokenTypeAtSign: name = "@"; break;
-            case TokenTypeBitwiseAnd: name = "&"; break;
-            case TokenTypeBitwiseOr: name = "|"; break;
-            case TokenTypeLogicalAnd: name = "&&"; break;
-            case TokenTypeLogicalOr: name = "||"; break;
-            case TokenTypeHashSign: name = "#"; break;
-            case TokenTypeQuestionMark: name = "?"; break;
-            case TokenTypeColon: name = ":"; break;
-            case TokenTypeSemiColon: name = ";"; break;
-            case TokenTypeParenthesesOpen: name = "("; break;
-            case TokenTypeParenthesesClose: name = ")"; break;
-            case TokenTypeSquareBracketOpen: name = "["; break;
-            case TokenTypeSquareBracketClose: name = "]"; break;
-            case TokenTypeCurlyBracketOpen: name = "{"; break;
-            case TokenTypeCurlyBracketClose: name = "}"; break;
-            case TokenTypeAngleBracketOpen: name = "<"; break;
-            case TokenTypeAngleBracketClose: name = ">"; break;
+            case CarpTokenTypeUnknownToken: name = "Unknown"; break;
+            case CarpTokenTypeEndOfTokens: name = "End Of CarpTokens"; break;
+            case CarpTokenTypePercentSign: name = "%"; break;
+            case CarpTokenTypePlus: name = "+"; break;
+            case CarpTokenTypeMinus: name = "-"; break;
+            case CarpTokenTypeStar: name = "*"; break;
+            case CarpTokenTypeSlash: name = "/"; break;
+            case CarpTokenTypeBackSlash: name = "\\"; break;
+            case CarpTokenTypeComma: name = ","; break;
+            case CarpTokenTypeDot: name = "."; break;
+            case CarpTokenTypeF: name = "f"; break;
+            case CarpTokenTypeSetEqual: name = ":="; break;
+            case CarpTokenTypeNotEqual: name = "!="; break;
+            case CarpTokenTypeDoubleEqual: name = "=="; break;
+            case CarpTokenTypeDoubleQuote: name = "\""; break;
+            case CarpTokenTypeExclamationMark: name = "!"; break;
+            case CarpTokenTypeAtSign: name = "@"; break;
+            case CarpTokenTypeBitwiseAnd: name = "&"; break;
+            case CarpTokenTypeBitwiseOr: name = "|"; break;
+            case CarpTokenTypeLogicalAnd: name = "&&"; break;
+            case CarpTokenTypeLogicalOr: name = "||"; break;
+            case CarpTokenTypeHashSign: name = "#"; break;
+            case CarpTokenTypeQuestionMark: name = "?"; break;
+            case CarpTokenTypeColon: name = ":"; break;
+            case CarpTokenTypeSemiColon: name = ";"; break;
+            case CarpTokenTypeParenthesesOpen: name = "("; break;
+            case CarpTokenTypeParenthesesClose: name = ")"; break;
+            case CarpTokenTypeSquareBracketOpen: name = "["; break;
+            case CarpTokenTypeSquareBracketClose: name = "]"; break;
+            case CarpTokenTypeCurlyBracketOpen: name = "{"; break;
+            case CarpTokenTypeCurlyBracketClose: name = "}"; break;
+            case CarpTokenTypeAngleBracketOpen: name = "<"; break;
+            case CarpTokenTypeAngleBracketClose: name = ">"; break;
+
+            case CarpTokenTypeComment: name = "//"; break;
+            case CarpTokenTypeCommentBlockBegin: name = "/*"; break;
 
             // Number type
-            case TokenTypeNumber: name = "Number"; break;
+            case CarpTokenTypeNumber: name = "Number"; break;
 
             // Keywords
-            case TokenTypeConst: name = "Const"; break;
-            case TokenTypeWhile: name = "While"; break;
-            case TokenTypeFunc: name = "Func"; break;
-            case TokenTypeLet: name = "Let"; break;
-            case TokenTypeVar: name = "Var"; break;
+            case CarpTokenTypeConst: name = "Const"; break;
+            case CarpTokenTypeWhile: name = "While"; break;
+            case CarpTokenTypeFunc: name = "Func"; break;
+            case CarpTokenTypeLet: name = "Let"; break;
+            case CarpTokenTypeVar: name = "Var"; break;
 
-            case TokenTypeIdentifier: name = "Identifier"; break;
-            case TokenTypeCount: name = "Count"; break;
+            case CarpTokenTypeIdentifier: name = "Identifier"; break;
+            case CarpTokenTypeCount: name = "Count"; break;
         }
         if((tokenCount % 8) == 0)
         {
             CARP_LOG("\n");
         }
-        if(token->tokenType == TokenTypeIdentifier
-            || token->tokenType == TokenTypeNumber)
+        if(token->carpTokenType == CarpTokenTypeIdentifier
+            || token->carpTokenType == CarpTokenTypeNumber)
         {
             CARP_LOG("'%s[%-.*s]', ",
                 name,
-                token->tokenLen,
-                (const char*)(input->carpBufferData + token->tokenStart));
+                token->carpTokenLen,
+                (const char*)(input->carpBufferData + token->carpTokenStart));
 
         }
         else
@@ -383,6 +417,99 @@ void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
 }
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+//////////////////////
+//
+// AST
+//
+/////////////////////
+
+typedef enum CarpExprType {
+    CarpExprTypeAdd,
+    CarpExprTypeSub,
+    CarpExprTypeMul,
+    CarpExprTypeDiv,
+
+
+    CarpExprTypeIntNumber,
+    CarpExprTypeFloatNumber,
+    CarpExprString,
+
+    CarpExprTypeCount,
+
+} CarpExprType;
+
+typedef struct CarpExpr {
+    CarpExprType carpASTNodeType;
+    int32_t carpASTNodeStart;
+    int32_t carpASTNodeLen;
+} CarpExpr;
+
+
+typedef struct CarpASTNode {
+    CarpExprType carpASTNodeType;
+    CarpExpr* left;
+    CarpExpr* right;
+} CarpASTNode;
+
+
+static bool sParseNumber(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenBuffer, false);
+    CARP_ASSERT_RETURN(tokenBuffer->carpBufferData, false);
+    CARP_ASSERT_RETURN(outASTBuffer, false);
+    CARP_ASSERT_RETURN(outASTBuffer->carpBufferData == NULL, false);
+
+    const CarpToken* tokens = (const CarpToken*)tokenBuffer->carpBufferData;
+
+    if(tokens->carpTokenType == CarpTokenTypeNumber)
+    {
+
+    }
+
+    return false;
+}
+
+static bool sParseExpression(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenBuffer, false);
+    CARP_ASSERT_RETURN(tokenBuffer->carpBufferData, false);
+    CARP_ASSERT_RETURN(outASTBuffer, false);
+    CARP_ASSERT_RETURN(outASTBuffer->carpBufferData == NULL, false);
+
+    const CarpToken* tokens = (const CarpToken*)tokenBuffer->carpBufferData;
+
+    return true;
+}
+
+static bool sParseAST(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenBuffer, false);
+    CARP_ASSERT_RETURN(tokenBuffer->carpBufferData, false);
+    CARP_ASSERT_RETURN(outASTBuffer, false);
+    CARP_ASSERT_RETURN(outASTBuffer->carpBufferData == NULL, false);
+
+
+    s32 capacity = (1 << 18) * (sizeof(CarpToken) + 4);
+    CARP_ASSERT_RETURN(carp_buffer_create(capacity, 16, outASTBuffer), NULL);
+
+
+
+
+    return true;
+}
 
 CARP_FN bool carp_lang_compileToSpecialBuffer(
     const char* input,
@@ -401,7 +528,7 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
             .carpBufferAlignment = 1,
     };
 
-    TokenIndex tokenIndex = {.tokenIndexBuffer = inputBuffer };
+    CarpTokenIndex tokenIndex = {.tokenIndexBuffer = inputBuffer };
     if(!sParseTokens(&tokenIndex, &tokenOutBuffer))
     {
         sPrintErrorAt(&tokenIndex);
@@ -410,6 +537,14 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
     }
     sPrintTokens(&tokenIndex.tokenIndexBuffer, &tokenOutBuffer);
 
+    CarpBuffer commandBuffer = {0};
+    if(!sParseAST(&tokenOutBuffer, &commandBuffer))
+    {
+        CARP_LOGERROR("Failed to parse commands\n");
+        return false;
+    }
+
     carp_buffer_free(&tokenOutBuffer);
+    carp_buffer_free(&commandBuffer);
     return true;
 }

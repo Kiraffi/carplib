@@ -22,7 +22,7 @@ typedef double f64;
 #if COMPILE_SINGLE_SOURCE
 #define CARP_FN static
 #else
-#define CARP_FN 
+#define CARP_FN
 #endif
 
 #if _WIN32
