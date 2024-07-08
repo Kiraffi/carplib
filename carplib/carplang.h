@@ -13,7 +13,7 @@ typedef struct CarpSpecialBuffer
 
 CARP_FN bool carp_lang_compileToSpecialBuffer(
     const char* input,
-    int32_t inputLen,
+    s32 inputLen,
     CarpSpecialBuffer* outBuffer);
 
 CARP_FN void carp_lang_deleteSpecialBuffer(CarpSpecialBuffer* buffer);

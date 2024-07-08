@@ -118,8 +118,8 @@ static const TokenHelper tokenHelpers[] =
     TokenHelperLine("let", TokenTypeLet),
     TokenHelperLine("var", TokenTypeVar),
 };
-static const int32_t TokenHelperCount
-    = (int32_t)(sizeof(tokenHelpers) / sizeof(TokenHelper));
+static const s32 TokenHelperCount
+    = (s32)(sizeof(tokenHelpers) / sizeof(TokenHelper));
 
 
 #undef TokenHelperLine
@@ -221,7 +221,7 @@ static bool sParseTokens(TokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
     CARP_ASSERT_RETURN(input->carpBufferData, false);
     CARP_ASSERT_RETURN(input->carpBufferData[input->carpBufferSize - 1] == '\0', false);
 
-    int32_t capacity = (1 << 18) * (sizeof(Token) + 4);
+    s32 capacity = (1 << 18) * (sizeof(Token) + 4);
     CARP_ASSERT_RETURN(carp_buffer_create(capacity, 256, outTokenBuffer), NULL);
 
     while(tokenIndex->tokenIndexIndex < input->carpBufferSize)
@@ -386,7 +386,7 @@ void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
 
 CARP_FN bool carp_lang_compileToSpecialBuffer(
     const char* input,
-    int32_t inputLen,
+    s32 inputLen,
     CarpSpecialBuffer* outBuffer)
 {
     CARP_ASSERT_RETURN(input, false);

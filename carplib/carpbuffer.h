@@ -11,7 +11,7 @@ typedef struct CarpBuffer
     s32 carpBufferAlignment;
 } CarpBuffer;
 
-CARP_FN bool carp_buffer_create(int32_t size, int32_t alignment, CarpBuffer* outBuffer);
+CARP_FN bool carp_buffer_create(s32 size, s32 alignment, CarpBuffer* outBuffer);
 CARP_FN bool carp_buffer_free(CarpBuffer* buffer);
 
 
