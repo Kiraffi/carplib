@@ -19,7 +19,7 @@
 
 #define BORDER_WIDTH 0
 
-typedef GLXContext (*GLXCreateContextAttribs)(Display* dpy, GLXFBConfig config, GLXContext shareContext, bool directRendering, const int* attribList);
+typedef GLXContext (*GLXCreateContextAttribs)(Display* dpy, GLXFBConfig config, GLXContext shareContext, bool directRendering, const s32* attribList);
 GLXCreateContextAttribs glxCreateContextAttribsFn = NULL;
 
 typedef void (*GLXSwapIntervalEXT)(Display *dpy, GLXDrawable drawable, s32 interval);

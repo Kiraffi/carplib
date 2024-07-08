@@ -158,7 +158,7 @@ CARP_FN void carp_math_set_v2(const CarpV2* a, CarpV2* outV2)
         : "+m" (outV2)
     );
 #else
-    outV2->u64 = a->u64;
+    outV2->u64Value = a->u64Value;
 #endif
 }
 
@@ -216,7 +216,7 @@ CARP_FN void carp_math_neg_v2(const CarpV2* a, CarpV2* outV2)
     );
 #else
     static const u64 negz2 = 0x8000000080000000;
-    outV2->u64 = a->u64 ^ negz2;
+    outV2->u64Value = a->u64Value ^ negz2;
 #endif
 }
 

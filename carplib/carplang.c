@@ -232,7 +232,7 @@ static bool sParseTokens(TokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
         CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < input->carpBufferSize, false);
 
         pushToken.tokenStart = tokenIndex->tokenIndexIndex;
-        const uint8_t* pos = input->carpBufferData + tokenIndex->tokenIndexIndex;
+        const u8* pos = input->carpBufferData + tokenIndex->tokenIndexIndex;
 
         s32 idLen = sTryParseIdentifier(tokenIndex);
         CARP_ASSERT_RETURN(idLen >= 0, false);

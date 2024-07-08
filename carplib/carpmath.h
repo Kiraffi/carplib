@@ -35,7 +35,7 @@ typedef struct CarpV2
         };
         _Alignas(8) f32 v[2];
         _Alignas(8) s32 intArr[2];
-        _Alignas(8) uint64_t u64;
+        _Alignas(8) u64 u64Value;
     };
 } CarpV2;
 

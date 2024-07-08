@@ -32,7 +32,7 @@ static const char fragmentShaderCode[] =
     "} \n";
 
 
-static void sWindowSizeChanged(s32 width, s32 height)
+static void sWindowSizeChanged(int width, int height)
 {
     CARP_LOGINFO("Window size changed: %i - %i\n", width, height);
     if(glad_glViewport)
@@ -53,12 +53,12 @@ static s32 sMainAfterWindow(void)
         return -1;
     }
 
-    GLus32 vertexbuffer = 0;
+    GLuint vertexbuffer = 0;
     {
         glUseProgram(shader.carp_pixelshader_program);
 
 
-        GLus32 vertexArrayID = 0;
+        GLuint vertexArrayID = 0;
         glGenVertexArrays(1, &vertexArrayID);
         glBindVertexArray(vertexArrayID);
 
