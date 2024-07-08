@@ -3,7 +3,7 @@
 
 #include "carptype.h"
 
-typedef void (*WindowSizeChangedCallbackFn)(int,int);
+typedef void (*WindowSizeChangedCallbackFn)(s32, s32);
 
 
 typedef struct CarpWindow

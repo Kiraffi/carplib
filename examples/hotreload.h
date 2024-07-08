@@ -3,7 +3,7 @@
 
 #include "carplib/carptype.h"
 
-typedef s32 (*mainFunctionPtr)(int);
+typedef s32 (*mainFunctionPtr)(s32);
 typedef struct MainLoad
 {
     mainFunctionPtr mainFn;

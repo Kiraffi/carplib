@@ -42,7 +42,7 @@ static const char vertexShaderCode[] =
 
     "   void main()\n"
     "   {\n"
-    "       s32 instanceID = gl_InstanceID;\n"
+    "       int instanceID = gl_InstanceID;\n"
 
     "       mat4 instanceMat = instanceMatData.entityMats[instanceID];\n"
     "       mat4 camMat = frameData.viewProjMat;\n"

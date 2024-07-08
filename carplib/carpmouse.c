@@ -4,15 +4,15 @@
 static bool sIsValidMouseButton(CarpMouseButton button)
 {
     return button != CarpMouseButton_Invalid
-        && (int)button >= 0
-        && (int)button < MAX_AMOUNT_MOUSEINPUT;
+        && (s32)button >= 0
+        && (s32)button < MAX_AMOUNT_MOUSEINPUT;
 }
 
 // Validity is checked before calling this!!
 static bool sIsMouseButtonDown(CarpMemory* mem, CarpMouseButton key)
 {
     return mem && sIsValidMouseButton(key)
-        ? mem->carp_mouseState.carp_mouse_buttonDown[(int)key]
+        ? mem->carp_mouseState.carp_mouse_buttonDown[(s32)key]
         : false;
 }
 
@@ -20,7 +20,7 @@ static bool sIsMouseButtonDown(CarpMemory* mem, CarpMouseButton key)
 static b8 sGetMouseButtonHalfPressCount(CarpMemory* mem, CarpMouseButton key)
 {
     return mem && sIsValidMouseButton(key)
-        ? mem->carp_mouseState.carp_mouse_buttonHalfPress[(int)key]
+        ? mem->carp_mouseState.carp_mouse_buttonHalfPress[(s32)key]
         : 0;
 }
 
@@ -66,8 +66,8 @@ CARP_FN void carp_mouse_setButtonState(CarpMouseButton button, bool down)
     if(mem == NULL || !sIsValidMouseButton(button))
         return;
 
-    mem->carp_mouseState.carp_mouse_buttonHalfPress[(int)button]++;
-    mem->carp_mouseState.carp_mouse_buttonDown[(int)button] = down ? 1 : 0;
+    mem->carp_mouseState.carp_mouse_buttonHalfPress[(s32)button]++;
+    mem->carp_mouseState.carp_mouse_buttonDown[(s32)button] = down ? 1 : 0;
 }
 
 
