@@ -1,9 +1,9 @@
 rem @echo off
 @setlocal
 
-rem set compiler=tcc.exe
+set compiler=tcc.exe
 rem set compiler=clang.exe -O2
-set compiler=clang.exe  -g -Wpedantic
+rem set compiler=clang.exe  -g -Wpedantic
 
 set links=-lopengl32 -lgdi32 -luser32 -lwinmm -m64 -std=c11
 set linkfolders=-Lc:/windows/SysWOW64 -I./

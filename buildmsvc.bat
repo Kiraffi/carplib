@@ -6,10 +6,12 @@ rem /Zi debugging info /Zo optimized debugging information?
 
 set links=opengl32.lib gdi32.lib user32.lib winmm.lib
 set linkoptions= /I.
-set compileroptimize= /std:clatest /Oi /Ot /MT
+set compileroptimize= /std:clatest /Oi /Ot /MT /O2
 
-rem set compilesource=examples\triangle.c
-set compilesource=examples\hotreload.c
+rem set compilesource=examples/triangle.c
+rem set compilesource=examples/hotreload.c
+rem set compilesource=examples/cubes.c
+compilesource=examples/scripttest.c
 
 rem Oi = intrinsics, Ot = fast, Gv use vectorcall, MT multithreading /Gv 
 rem /arch:AVX 

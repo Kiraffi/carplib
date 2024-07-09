@@ -1951,9 +1951,9 @@ CARP_FN void carp_math_getM44fromLookAt(const CarpV3A* pos, const CarpV3A* targe
 
 CARP_FN void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44)
 {
+    CarpM44 tmp;
     if(m == outM44)
     {
-        CarpM44 tmp;
         carp_math_set_m44(m, &tmp);
         m = &tmp;
     }
@@ -1980,9 +1980,9 @@ CARP_FN void carp_math_transpose_m44(const CarpM44* m, CarpM44* outM44)
 
 CARP_FN bool carp_math_inverse_m44(const CarpM44* m, CarpM44* outM44)
 {
+    CarpM44 tmp;
     if(m == outM44)
     {
-        CarpM44 tmp;
         carp_math_set_m44(m, &tmp);
         m = &tmp;
     }
@@ -2117,9 +2117,9 @@ CARP_FN bool carp_math_isIdentity_m44(const CarpM44* m)
 
 CARP_FN void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* outV3)
 {
+    CarpV3A tmp;
     if(v == outV3)
     {
-        CarpV3A tmp;
         carp_math_set_v3(v, &tmp);
         v = &tmp;
     }
@@ -2132,9 +2132,9 @@ CARP_FN void carp_math_mul_m44_v3(const CarpM44* m, const CarpV3A* v, CarpV3A* o
 
 CARP_FN void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* outV3)
 {
+    CarpV3A tmp;
     if(v == outV3)
     {
-        CarpV3A tmp;
         carp_math_set_v3(v, &tmp);
         v = &tmp;
     }
@@ -2146,9 +2146,9 @@ CARP_FN void carp_math_mul_v3_m44(const CarpV3A* v, const CarpM44* m, CarpV3A* o
 
 CARP_FN void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* outV3)
 {
+    CarpV3A tmp;
     if(v == outV3)
     {
-        CarpV3A tmp;
         carp_math_set_v3(v, &tmp);
         v = &tmp;
     }
@@ -2159,9 +2159,9 @@ CARP_FN void carp_math_mul_m34_v3(const CarpM34* m, const CarpV3A* v, CarpV3A* o
 }
 CARP_FN void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* outV3)
 {
+    CarpV3A tmp;
     if(v == outV3)
     {
-        CarpV3A tmp;
         carp_math_set_v3(v, &tmp);
         v = &tmp;
     }
@@ -2174,15 +2174,14 @@ CARP_FN void carp_math_mul_v3_m34(const CarpV3A* v, const CarpM34* m, CarpV3A* o
 // Simdify / asm this later
 CARP_FN void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* outM44)
 {
+    CarpM44 tmp;
     if(outM44 == a)
     {
-        CarpM44 tmp;
         carp_math_set_m44(a, &tmp);
         a = &tmp;
     }
     else if(outM44 == b)
     {
-        CarpM44 tmp;
         carp_math_set_m44(b, &tmp);
         b = &tmp;
     }
@@ -2221,15 +2220,14 @@ CARP_FN void carp_math_mul_m44_m44(const CarpM44* a, const CarpM44* b, CarpM44* 
 
 CARP_FN void carp_math_mul_m34_m34(const CarpM34* a, const CarpM34* b, CarpM34* outM34)
 {
+    CarpM34 tmp;
     if(outM34 == a)
     {
-        CarpM34 tmp;
         carp_math_set_m34(a, &tmp);
         a = &tmp;
     }
     else if(outM34 == b)
     {
-        CarpM34 tmp;
         carp_math_set_m34(b, &tmp);
         b = &tmp;
     }

@@ -12,6 +12,7 @@
           "examples/scripttest.c",
           "-obuildout/main.exe",
           "-std=c11",
+          //"-O2",
           "-m64",
           "-lopengl32",
           "-lgdi32",
