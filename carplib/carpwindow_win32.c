@@ -516,11 +516,12 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
                 {
                     carp_keyboard_setKeyState((CarpKeyboardKey)translated, down);
                 }
+                /*
                 else
                 {
                     //dispatch = true;
                 }
-
+                */
                 break;
                 //println!("button down: {}, b2: {}, transl: {}",  button, msg.wParam, transusize);
             };

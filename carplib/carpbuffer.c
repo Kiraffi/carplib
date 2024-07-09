@@ -76,12 +76,12 @@ CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s3
         ), false);
         newBuffer.carpBufferSize = oldSize;
         
-        memcpy(newBuffer.carpBufferData, buffer->carpBufferData, oldSize);
+        memcpy_s(newBuffer.carpBufferData, oldSize, buffer->carpBufferData, oldSize);
         carp_buffer_free(buffer);
 
         *buffer = newBuffer;
     }
-    memcpy(buffer->carpBufferData + buffer->carpBufferSize, pushBuffer, pushBufferSize);
+    memcpy_s(buffer->carpBufferData + buffer->carpBufferSize, pushBufferSize, pushBuffer, pushBufferSize);
     buffer->carpBufferSize += pushBufferSize;
     return true;
 }

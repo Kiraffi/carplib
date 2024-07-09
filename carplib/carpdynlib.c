@@ -56,7 +56,7 @@ CARP_FN bool carp_dynLib_unload(CarpDynLib* loadedLib)
     #endif //_WIN32
     loadedLib->loadedLib = NULL;
 
-    return true;
+    return success;
 }
 
 CARP_FN bool carp_dynLib_loadFn(const CarpDynLib* loadedLib, const char* functionName, CarpDynLibFn* outFn)

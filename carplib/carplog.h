@@ -19,7 +19,7 @@
 
 #define CARP_HELPER_LOG(...) \
                 do { \
-                    fprintf(__VA_ARGS__); \
+                    fprintf_s(__VA_ARGS__); \
                 } while(0)
 #else
 //#define HELPER_LOG(LOG_TEXT_STRING, ...)
