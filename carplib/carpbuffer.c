@@ -2,14 +2,36 @@
 
 #include "carpassert.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+// Note, aligned_alloc seemed to only use 32bit version returning int instead of void*.
+
+static bool carp_buffer_createAlignedBuffer(s32 size, s32 alignment, CarpBuffer* outBuffer)
+{
+    CARP_ASSERT_RETURN(outBuffer, false);
+    CARP_ASSERT_RETURN(outBuffer->carpBufferActualPointer == NULL, false);
+    CARP_ASSERT_RETURN(((alignment - 1) & alignment) == 0, false);
+    CARP_ASSERT_RETURN(alignment >= 16, false);
+
+    u8* mem = (u8*)calloc(size + alignment, alignment);
+    outBuffer->carpBufferActualPointer = mem;
+
+    intptr_t alignmentPtrMinusOne = alignment - 1;
+    intptr_t memPtr = (intptr_t)mem;
+
+    outBuffer->carpBufferData = (u8*)((memPtr + alignmentPtrMinusOne) & (~alignmentPtrMinusOne));
+    outBuffer->carpBufferAlignment = alignment;
+    outBuffer->carpBufferCapacity = size;
+    outBuffer->carpBufferSize = 0;
+    return true;
+}
 
 CARP_FN bool carp_buffer_create(s32 size, s32 alignment, CarpBuffer* outBuffer)
 {
     CARP_ASSERT_RETURN(outBuffer, false);
-    CARP_ASSERT_RETURN(alignment > 0 , false);
+    CARP_ASSERT_RETURN(alignment >= 16, false);
     CARP_ASSERT_RETURN(size >= 32 , false);
     CARP_ASSERT_RETURN(outBuffer->carpBufferData == NULL, false);
     // only accept power of 2 reserves
@@ -17,13 +39,7 @@ CARP_FN bool carp_buffer_create(s32 size, s32 alignment, CarpBuffer* outBuffer)
     // only accept power of 2 alignments
     CARP_ASSERT_RETURN(((alignment - 1) & alignment) == 0, false);
 
-    outBuffer->carpBufferData = aligned_alloc(alignment, size);
-    memset(outBuffer->carpBufferData, 0, size);
-
-    outBuffer->carpBufferCapacity = size;
-    outBuffer->carpBufferAlignment = alignment;
-    outBuffer->carpBufferSize = 0;
-
+    CARP_ASSERT_RETURN(carp_buffer_createAlignedBuffer(size, alignment, outBuffer), false);
     return true;
 }
 
@@ -31,8 +47,9 @@ CARP_FN bool carp_buffer_free(CarpBuffer* buffer)
 {
     CARP_ASSERT_RETURN(buffer, false);
     CARP_ASSERT_RETURN(buffer->carpBufferData, false);
-    free(buffer->carpBufferData);
-    buffer->carpBufferData = NULL;
+    free(buffer->carpBufferActualPointer);
+    CarpBuffer tmp = {0};
+    *buffer = tmp;
     return true;
 }
 
@@ -47,16 +64,25 @@ CARP_FN bool carp_buffer_pushBuffer(
 
     if(buffer->carpBufferSize + pushBufferSize >= buffer->carpBufferCapacity)
     {
-        if(buffer->carpBufferCapacity < 32)
-            buffer->carpBufferCapacity = 32;
+        s32 oldSize = buffer->carpBufferSize;
+        s32 capacity = buffer->carpBufferCapacity; 
+        if(capacity < 32)
+            capacity = 32;
 
-        while(buffer->carpBufferCapacity < buffer->carpBufferSize + pushBufferSize)
-            buffer->carpBufferCapacity *= 2;
-        u8* newBuffer = (u8*)aligned_alloc(buffer->carpBufferAlignment, buffer->carpBufferCapacity);
-        memcpy(newBuffer, buffer->carpBufferData, buffer->carpBufferSize);
-        memset(newBuffer + buffer->carpBufferSize, 0, buffer->carpBufferCapacity - buffer->carpBufferSize);
-        free(buffer->carpBufferData);
-        buffer->carpBufferData = newBuffer;
+        while(capacity < oldSize + pushBufferSize)
+            capacity *= 2;
+        CarpBuffer newBuffer = {0};
+        CARP_ASSERT_RETURN(carp_buffer_createAlignedBuffer(
+            capacity,
+            buffer->carpBufferAlignment,
+            &newBuffer
+        ), false);
+        newBuffer.carpBufferSize = oldSize;
+        
+        memcpy(newBuffer.carpBufferData, buffer->carpBufferData, oldSize);
+        carp_buffer_free(buffer);
+
+        *buffer = newBuffer;
     }
     memcpy(buffer->carpBufferData + buffer->carpBufferSize, pushBuffer, pushBufferSize);
     buffer->carpBufferSize += pushBufferSize;
@@ -79,6 +105,6 @@ CARP_FN bool carp_buffer_pop##helperFnName (CarpBuffer* buffer, helperFnType* ou
     return true; \
 }
 
-BufferPushHelper(S32, s32);
-BufferPopHelper(S32, s32);
+BufferPushHelper(S32, s32)
+BufferPopHelper(S32, s32)
 

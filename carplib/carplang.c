@@ -227,7 +227,7 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
     CARP_ASSERT_RETURN(input->carpBufferData[input->carpBufferSize - 1] == '\0', false);
 
     s32 capacity = (1 << 18) * (sizeof(CarpToken) + 4);
-    CARP_ASSERT_RETURN(carp_buffer_create(capacity, 16, outTokenBuffer), NULL);
+    CARP_ASSERT_RETURN(carp_buffer_create(capacity, 16, outTokenBuffer), false);
 
     while(tokenIndex->tokenIndexIndex < input->carpBufferSize)
     {
@@ -503,7 +503,7 @@ static bool sParseAST(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
 
 
     s32 capacity = (1 << 18) * (sizeof(CarpToken) + 4);
-    CARP_ASSERT_RETURN(carp_buffer_create(capacity, 16, outASTBuffer), NULL);
+    CARP_ASSERT_RETURN(carp_buffer_create(capacity, 16, outASTBuffer), false);
 
 
 

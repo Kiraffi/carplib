@@ -1,4 +1,4 @@
-#if !_WIN32
+#if CARP_LINUX
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -511,4 +511,4 @@ CARP_FN void carp_window_enableVSync(CarpWindow* carp_window, bool vSyncEnabled)
 
 
 
-#endif // !_WIN32
+#endif // CARP_LINUX

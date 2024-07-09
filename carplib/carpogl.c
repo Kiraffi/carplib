@@ -39,7 +39,7 @@ CARP_FN bool carp_ogl_destroyBuffer(CarpOGLBuffer* buffer)
         false);
 
     glDeleteBuffers(1, &buffer->carp_OGLBuffer_handle);
-    CarpOGLBuffer emptyBuffer = {};
+    CarpOGLBuffer emptyBuffer = {0};
     (*buffer) = emptyBuffer;
     return true;
 }
@@ -95,3 +95,4 @@ CARP_FN bool carp_ogl_updateBuffer(
     return true;
 
 }
+

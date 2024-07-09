@@ -162,11 +162,11 @@ static s32 sMainAfterWindow(void)
 
     };
 
-    CarpOGLBuffer vertexBuffer = {};
+    CarpOGLBuffer vertexBuffer = {0};
 
-    CarpOGLBuffer uniformBuffer = {};
-    CarpOGLBuffer matBuffer = {};
-    CarpOGLBuffer colorBuffer = {};
+    CarpOGLBuffer uniformBuffer = {0};
+    CarpOGLBuffer matBuffer = {0};
+    CarpOGLBuffer colorBuffer = {0};
     {
         carp_ogl_createBuffer(
             16 * 1024,
@@ -215,7 +215,7 @@ static s32 sMainAfterWindow(void)
     CARP_LOGINFO("Window start running\n");
     memory->carp_window.carp_window_running = true;
 
-    CarpV3A positions[4] = {};
+    CarpV3A positions[4] = {0};
     positions[1].y = 2.0f;
     positions[2].y = 4.0f;
     positions[3].y = 6.0f;
@@ -233,14 +233,14 @@ static s32 sMainAfterWindow(void)
     }
 
 
-    CarpM44 mats[4] = {};
+    CarpM44 mats[4] = {0};
 
     CarpQuat rotation; carp_math_getQuatIdentity(&rotation);
     CarpV3A scale = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    CarpM44 cameraPerspectiveMat = {};
-    CarpM44 cameraTransformMat = {};
-    CarpV3A camPos = {};
+    CarpM44 cameraPerspectiveMat = {0};
+    CarpM44 cameraTransformMat = {0};
+    CarpV3A camPos = {0};
     static const CarpV3A UpVector = {0.0f, 1.0f, 0.0f, 1.0f};
     static const CarpV3A RightVector = {1.0f, 0.0f, 0.0f, 1.0f};
 
@@ -416,7 +416,7 @@ s32 main(s32 argc, char** argv)
         CARP_LOGERROR("Failed to init the memory\n");
         return -1;
     }
-    CarpSpecialBuffer specialBuffer = {};
+    CarpSpecialBuffer specialBuffer = {0};
     if(!carp_lang_compileToSpecialBuffer(program, sizeof(program), &specialBuffer))
     {
         CARP_LOGERROR("Failed to compile program\n");

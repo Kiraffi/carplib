@@ -27,7 +27,7 @@ static b8 s_resized = false;
 
 static const char className[] = "CarpWindow";
 
-static LRESULT win32WndProc(HWND hWnd, Us32 uMsg, WPARAM wParam, LPARAM lParam);
+static LRESULT win32WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
 #define WGL_CONTEXT_FORWARD_COMPATIBLE_BIT_ARB 0x00000002
 #define WGL_CONTEXT_PROFILE_MASK_ARB 0x9126
@@ -52,12 +52,12 @@ typedef struct CarpWindowWin32
 
 } CarpWindowWin32;
 
-_Static_assert(sizeof(CarpWindowWin32) <= sizeof(((CarpWindow*)0)->data), "CarpWindowWin32 size is should be less than CarpWindow::data bytes!");
+_Static_assert(sizeof(CarpWindowWin32) <= sizeof(((CarpWindow*)0)->carp_window_data), "CarpWindowWin32 size is should be less than CarpWindow::data bytes!");
 
 
 static b8 s_initWindow(CarpWindow* carp_window, const char* windowName, s32 width, s32 height, s32 x, s32 y)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->carp_window_data);
 
     WNDCLASSA wndclass = {0};
 
@@ -79,8 +79,8 @@ static b8 s_initWindow(CarpWindow* carp_window, const char* windowName, s32 widt
     DWORD winExStyle = WS_EX_APPWINDOW | WS_EX_WINDOWEDGE;
     RECT rect = { .left = x, .top = y, .right = 0, .bottom = 0 };
 
-    carp_window->width = width;
-    carp_window->height = height;
+    carp_window->carp_window_width = width;
+    carp_window->carp_window_height = height;
     rect.right = width + x;
     rect.bottom = height + y;
 
@@ -120,7 +120,7 @@ static b8 s_initWindow(CarpWindow* carp_window, const char* windowName, s32 widt
 
 static b8 s_initGL(CarpWindow* carp_window)
 {
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->carp_window_data);
 
     PIXELFORMATDESCRIPTOR pxFormatDesired = {0};
     pxFormatDesired.nSize = sizeof(PIXELFORMATDESCRIPTOR);
@@ -203,7 +203,7 @@ static b8 s_initGL(CarpWindow* carp_window)
 	const GLubyte* GLVersionString = glGetString(GL_VERSION);
     CARP_LOGINFO("GL version: %s\n", GLVersionString);
 
-    carp_window->resized = true;
+    carp_window->carp_window_resized = true;
 
 
 
@@ -463,7 +463,7 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     {
         return false;
     }
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->carp_window_data);
 
     MSG msg = {0};
 
@@ -471,7 +471,7 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     carp_mouse_resetState();
 
     while(PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE) != 0
-        && carp_window->running)
+        && carp_window->carp_window_running)
     {
         //LONG t = GetMessageTime();
         PeekMessageA(&msg, NULL, 0, 0, PM_REMOVE);
@@ -481,7 +481,7 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
         {
             case WM_QUIT:
             {
-                carp_window->running = false;
+                carp_window->carp_window_running = false;
                 break;
             };
 
@@ -546,11 +546,11 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
             DWORD width = rect.right - rect.left;
             DWORD height = rect.bottom - rect.top;
 
-            if (carp_window->width != width || carp_window->height != height)
+            if (carp_window->carp_window_width != width || carp_window->carp_window_height != height)
             {
-                carp_window->resized = true;
-                carp_window->width = width;
-                carp_window->height = height;
+                carp_window->carp_window_resized = true;
+                carp_window->carp_window_width = width;
+                carp_window->carp_window_height = height;
 
                 if(wnd->carpWindowSizeChangedCallbackFn)
                 {
@@ -562,7 +562,7 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
             s_resized = false;
         }
     }
-    if (s_quitRequested && carp_window->running)
+    if (s_quitRequested && carp_window->carp_window_running)
     {
         PostMessageA(wnd->hwnd, WM_CLOSE, 0, 0);
     }
@@ -574,8 +574,8 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
     {
         if(mousePos.x >= 0
             && mousePos.y >= 0
-            && mousePos.x < carp_window->width
-            && mousePos.y < carp_window->height
+            && mousePos.x < carp_window->carp_window_width
+            && mousePos.y < carp_window->carp_window_height
         )
         {
             carp_mouse_setPosition(mousePos.x, mousePos.y);
@@ -591,7 +591,7 @@ CARP_FN void carp_window_setWindowTitle(CarpWindow* carp_window, const char* tit
     {
         return;
     }
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->carp_window_data);
     SetWindowTextA(wnd->hwnd, title);
 }
 
@@ -601,7 +601,7 @@ CARP_FN void carp_window_swapBuffers(CarpWindow* carp_window)
     {
         return;
     }
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->carp_window_data);
     SwapBuffers(wnd->dc);
 }
 
@@ -623,7 +623,7 @@ CARP_FN void carp_window_setWindowSizeChangedCallbackFn(
     {
         return;
     }
-    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->data);
+    CarpWindowWin32* wnd = (CarpWindowWin32*)(&carp_window->carp_window_data);
     wnd->carpWindowSizeChangedCallbackFn = windowSizeChangedCallbackFn;
 }
 

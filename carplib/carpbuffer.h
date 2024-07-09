@@ -5,7 +5,9 @@
 
 typedef struct CarpBuffer
 {
+    // this is aligned pointer
     u8* carpBufferData;
+    u8* carpBufferActualPointer;
     s32 carpBufferCapacity;
     s32 carpBufferSize;
     s32 carpBufferAlignment;
@@ -24,3 +26,4 @@ CARP_FN bool carp_buffer_popS32(CarpBuffer* buffer, s32* outValue);
 
 
 #endif //CARPBUFFER_HH
+
