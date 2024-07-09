@@ -74,6 +74,7 @@ static const char program[] =
     " + - , . / * "
     " /* these are between comments */ \n "
     "! != == := && || & | \n"
+    " \" this should be a \\\"string\\\"? \" \n"
     " \" \\ \n"
     " */ \n"
     " asdf // commented out text asdf2 \0 \n"

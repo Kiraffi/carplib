@@ -44,6 +44,9 @@ typedef enum CarpTokenType
     CarpTokenTypeAngleBracketOpen, // <>
     CarpTokenTypeAngleBracketClose,
 
+    // String type
+    CarpTokenTypeString,
+
     // Number type
     CarpTokenTypeNumber,
 
@@ -262,13 +265,29 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
                     CARP_ASSERT_RETURN(sPushToken(&pushToken, outTokenBuffer), false);
                     return true;
                 }
-                else if(helper->tokenHelperType == CarpTokenTypeComment)
+                else if(helper->tokenHelperType == CarpTokenTypeDoubleQuote)
                 {
+                    const u8* prev = input->carpBufferData + tokenIndex->tokenIndexIndex;
+                    const u8* curr = prev + 1;
+                    ++(tokenIndex->tokenIndexIndex);
                     while(tokenIndex->tokenIndexIndex < input->carpBufferSize
-                        && input->carpBufferData[tokenIndex->tokenIndexIndex] != '\0'
-                        && input->carpBufferData[tokenIndex->tokenIndexIndex] != '\n')
+                        && *curr != '\0' && ( *curr != '\"' || *prev == '\\' ))
                     {
                         ++(tokenIndex->tokenIndexIndex);
+                        ++prev;
+                        ++curr;
+                    }
+                    ++(tokenIndex->tokenIndexIndex);
+                }
+                else if(helper->tokenHelperType == CarpTokenTypeComment)
+                {
+                    u8* curr = input->carpBufferData + tokenIndex->tokenIndexIndex;
+                    while(tokenIndex->tokenIndexIndex < input->carpBufferSize
+                        && *curr != '\0'
+                        && *curr != '\n')
+                    {
+                        ++(tokenIndex->tokenIndexIndex);
+                        ++curr;
                     }
                 }
                 else if(helper->tokenHelperType == CarpTokenTypeCommentBlockBegin)
@@ -289,6 +308,13 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
             || pushToken.carpTokenType == CarpTokenTypeCommentBlockBegin)
         {
             continue;
+        }
+
+        if(pushToken.carpTokenType == CarpTokenTypeDoubleQuote)
+        {
+            pushToken.carpTokenType = CarpTokenTypeString;
+            pushToken.carpTokenLen = tokenIndex->tokenIndexIndex - pushToken.carpTokenStart;
+            tokenIndex->tokenIndexIndex = pushToken.carpTokenStart;
         }
         if(pushToken.carpTokenType == CarpTokenTypeUnknownToken)
         {
@@ -380,6 +406,9 @@ void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
             case CarpTokenTypeComment: name = "//"; break;
             case CarpTokenTypeCommentBlockBegin: name = "/*"; break;
 
+            // String type
+            case CarpTokenTypeString: name = ""; break;
+
             // Number type
             case CarpTokenTypeNumber: name = "Number"; break;
 
@@ -398,7 +427,8 @@ void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
             CARP_LOG("\n");
         }
         if(token->carpTokenType == CarpTokenTypeIdentifier
-            || token->carpTokenType == CarpTokenTypeNumber)
+            || token->carpTokenType == CarpTokenTypeNumber
+            || token->carpTokenType == CarpTokenTypeString)
         {
             CARP_LOG("'%s[%-.*s]', ",
                 name,

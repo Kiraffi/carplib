@@ -212,7 +212,7 @@ void testMat(void)
 }
 
 
-int main(void)
+s32 main(void)
 {
     CARP_LOG("Begin test\n");
     testf32();
