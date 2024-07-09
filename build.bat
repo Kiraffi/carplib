@@ -7,8 +7,7 @@ rem set compiler=clang.exe  -g -Wpedantic
 
 set links=-lopengl32 -lgdi32 -luser32 -lwinmm -m64 -std=c11
 set linkfolders=-Lc:/windows/SysWOW64 -I./
-
-set final=%links% %linkfolders%
+set final=%links% %linkfolders% 
 rem set compilesource=examples/triangle.c
 rem set compilesource=examples/hotreload.c
 rem set compilesource=examples/cubes.c

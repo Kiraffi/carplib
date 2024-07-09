@@ -50,7 +50,8 @@ typedef enum CarpTokenType
     CarpTokenTypeString,
 
     // Number type
-    CarpTokenTypeNumber,
+    CarpTokenTypeIntNumber,
+    CarpTokenTypeRealNumber,
 
     // Keywords
     CarpTokenTypeConst,
@@ -67,7 +68,12 @@ typedef enum CarpTokenType
 
 typedef struct CarpToken
 {
-    const u8* carpToken;
+    union
+    {
+        const u8* carpToken;
+        f64 carpTokenRealNumber;
+        s64 carpTokenIntNumber;
+    };
     s32 carpTokenLen;
     CarpTokenType carpTokenType;
 } CarpToken;
@@ -199,26 +205,6 @@ static s32 sTryParseIdentifier(const CarpTokenIndex* tokenIndex)
     return -1;
 }
 
-static s32 sTryParseNumber(const CarpTokenIndex* tokenIndex)
-{
-    CARP_ASSERT_RETURN(tokenIndex, -1);
-    CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < tokenIndex->tokenIndexBuffer.carpBufferSize, -1);
-    CARP_ASSERT_RETURN(tokenIndex->tokenIndexBuffer.carpBufferData, -1);
-
-    s32 len = 0;
-
-    while(tokenIndex->tokenIndexIndex + len < tokenIndex->tokenIndexBuffer.carpBufferSize)
-    {
-        char c = tokenIndex->tokenIndexBuffer.carpBufferData[tokenIndex->tokenIndexIndex + len];
-        if(c < '0' || c > '9')
-        {
-            return len;
-        }
-        ++len;
-    }
-    return -1;
-}
-
 static bool sPushToken(const CarpToken* token, CarpBuffer *outTokenBuffer)
 {
     return carp_buffer_pushBuffer(outTokenBuffer, (const u8*)token, sizeof(CarpToken));
@@ -324,12 +310,22 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
         }
         else if(pushToken.carpTokenType == CarpTokenTypeUnknownToken)
         {
-            s32 numLen = sTryParseNumber(tokenIndex);
+            char* end = NULL;
+            const char* p = (const char*)pos;
+
+            pushToken.carpTokenIntNumber = strtoll(p, &end, 10);
+            s32 numLen = (s32)(end - p);
             CARP_ASSERT_RETURN(numLen > 0, false);
+            pushToken.carpTokenType = CarpTokenTypeIntNumber;
+
+            if(*end == '.')
+            {
+                pushToken.carpTokenRealNumber = strtod(p, &end);
+                pushToken.carpTokenType = CarpTokenTypeRealNumber;
+            }
+            pos += end - p;
 
             pushToken.carpTokenLen = numLen;
-            pushToken.carpTokenType = CarpTokenTypeNumber;
-            pos += numLen;
         }
         else 
         {
@@ -440,7 +436,8 @@ void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
             case CarpTokenTypeString: name = ""; break;
 
             // Number type
-            case CarpTokenTypeNumber: name = "Num"; break;
+            case CarpTokenTypeIntNumber: name = "s64"; break;
+            case CarpTokenTypeRealNumber: name = "f64"; break;
 
             // Keywords
             case CarpTokenTypeConst: name = "Const"; break;
@@ -457,10 +454,17 @@ void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
             CARP_LOG("\n");
         }
         if(token->carpTokenType == CarpTokenTypeIdentifier
-            || token->carpTokenType == CarpTokenTypeNumber
             || token->carpTokenType == CarpTokenTypeString)
         {
             CARP_LOG("'%s[%-.*s]', ", name, token->carpTokenLen, token->carpToken);
+        }
+        else if(token->carpTokenType == CarpTokenTypeIntNumber)
+        {
+            CARP_LOG("'%s[%" PRIi64 "]'\n", name, token->carpTokenIntNumber);
+        }
+        else if(token->carpTokenType == CarpTokenTypeRealNumber)
+        {
+            CARP_LOG("'%s[%f]'\n", name, token->carpTokenRealNumber);
         }
         else
         {
@@ -569,8 +573,8 @@ static bool sAdvanceIfToken(CarpTokenIndexer* tokenIndexer, CarpTokenType type)
 
 static s32 sParseNumber(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
 {
-    CARP_ASSERT_RETURN(tokenIndexer, -2);
-    CARP_ASSERT_RETURN(outASTBuffer, -2);
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outASTBuffer, -1);
 
     s32 currentIndex = tokenIndexer->carpTokenIndexerIndex;
 
@@ -578,43 +582,32 @@ static s32 sParseNumber(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer
 
     const CarpToken* next = NULL;
     CARP_ASSERT_RETURN(sGetNextToken(tokenIndexer, &next), false);
-    char* endPtr = NULL;
 
-    if(!sAdvanceIfToken(tokenIndexer, CarpTokenTypeNumber))
-    {
-        if(neg)
-            tokenIndexer->carpTokenIndexerIndex--;
-        return -1;
-    }
     CarpExpr expr = {0};
+    expr.carpASTNodeStart = currentIndex;
+    expr.carpASTNodeLen = neg ? 2 : 1;
 
-    s32 result = outASTBuffer->carpBufferSize;
-
-    if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeDot))
+    if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeIntNumber))
     {
-        const CarpToken* nextDecimal = NULL;
-        CARP_ASSERT_RETURN(sGetNextToken(tokenIndexer, &nextDecimal), false);
+        expr.carpASTNodeType = CarpExprTypeIntNumber;
+        expr.intNumber = neg ? -next->carpTokenIntNumber : next->carpTokenIntNumber;
+        printf("s64: %" PRIi64 "\n", expr.intNumber);
 
-        expr.realNumber = strtod((const char*)next->carpToken, &endPtr);
-        s32 len = (s32)(endPtr - (const char*)next->carpToken);
-        printf("%i vs %i\n", len, next->carpTokenLen + 1 + nextDecimal->carpTokenLen);
-        CARP_ASSERT_RETURN(len == next->carpTokenLen + 1 + nextDecimal->carpTokenLen, -2);
+    }
+    else if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeRealNumber))
+    {
         expr.carpASTNodeType = CarpExprTypeRealNumber;
-        if(neg)
-            expr.realNumber = -expr.realNumber;
-        CARP_LOG("float: %f\n", expr.realNumber);
+        expr.realNumber = neg ? -next->carpTokenRealNumber : next->carpTokenRealNumber;
+        printf("f64: %f\n", expr.realNumber);
     }
     else
     {
-        expr.intNumber = strtoll((const char*)next->carpToken, &endPtr, 10);
-        expr.carpASTNodeType = CarpExprTypeIntNumber;
         if(neg)
-            expr.intNumber = -expr.intNumber;
-        CARP_LOG("s64: %" PRIi64 "\n", expr.intNumber);
+            tokenIndexer->carpTokenIndexerIndex--;
+        return 0;
     }
-    CARP_ASSERT_RETURN(carp_buffer_pushBuffer(outASTBuffer, (const u8*)&expr, sizeof(CarpExpr)), -2);
 
-    return result;
+    return 1;
 }
 
 static bool sParseExpression(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
@@ -622,7 +615,7 @@ static bool sParseExpression(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTB
     CARP_ASSERT_RETURN(tokenIndexer, false);
     CARP_ASSERT_RETURN(outASTBuffer, false);
     s32 numberResult = sParseNumber(tokenIndexer, outASTBuffer);
-    CARP_ASSERT_RETURN(numberResult >= -1, false); 
+    CARP_ASSERT_RETURN(numberResult >= 0, false); 
     return numberResult >= 0;
 }
 

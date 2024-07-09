@@ -71,6 +71,8 @@ static const char fragmentShaderCode[] =
 
 static const char program[] =
     "const var let constant 1234 _fio,. \n"
+    "538495723985729835728374259873452987435982734598273498572349857983 \n"
+    " 1.5e+3 \n"
     " + - , . / * 3.141596534095839045830495839085349080"
     //"   ö \n"
     " /* these are between comments */ \n "
@@ -429,6 +431,5 @@ s32 main(s32 argc, char** argv)
     s32 result = sMain();
 
     carp_memory_destroy();
-
     return result;
 }
