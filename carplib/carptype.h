@@ -1,6 +1,7 @@
 #ifndef CARP_TYPE_HH
 #define CARP_TYPE_HH
 
+#include <inttypes.h> // PRIi64
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>

@@ -54,10 +54,7 @@ CARP_FN bool carp_buffer_free(CarpBuffer* buffer)
 }
 
 
-CARP_FN bool carp_buffer_pushBuffer(
-    CarpBuffer* buffer,
-    const u8* pushBuffer,
-    s32 pushBufferSize)
+CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s32 pushBufferSize)
 {
     CARP_ASSERT_RETURN(buffer, false);
     CARP_ASSERT_RETURN(buffer->carpBufferData, false);
@@ -99,9 +96,11 @@ CARP_FN bool carp_buffer_push##helperFnName (CarpBuffer* buffer, helperFnType va
 CARP_FN bool carp_buffer_pop##helperFnName (CarpBuffer* buffer, helperFnType* outValue) \
 { \
     CARP_ASSERT_RETURN(buffer, false); \
+    CARP_ASSERT_RETURN(outValue, false); \
     CARP_ASSERT_RETURN(buffer->carpBufferData, false); \
     CARP_ASSERT_RETURN(buffer->carpBufferSize < sizeof(helperFnType), false); \
-    *outValue = *((helperFnType*)(buffer->carpBufferData + buffer->carpBufferSize - sizeof(helperFnType))); \
+    buffer->carpBufferSize -= sizeof(helperFnType); \
+    *outValue = *((helperFnType*)(buffer->carpBufferData + buffer->carpBufferSize)); \
     return true; \
 }
 

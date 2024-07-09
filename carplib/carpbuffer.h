@@ -18,8 +18,7 @@ CARP_FN bool carp_buffer_free(CarpBuffer* buffer);
 
 
 
-CARP_FN bool carp_buffer_pushBuffer(
-    CarpBuffer* buffer, const u8* pushBuffer, s32 pushBufferSize);
+CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s32 pushBufferSize);
 CARP_FN bool carp_buffer_pushS32(CarpBuffer* buffer, s32 value);
 CARP_FN bool carp_buffer_popS32(CarpBuffer* buffer, s32* outValue);
 

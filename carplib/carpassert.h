@@ -3,6 +3,8 @@
 
 #include "carplog.h"
 
+#include <assert.h>
+
 #if _MSC_VER
 #define CARP_DEBUG_BREAK() __debugbreak()
 #elif __TINYC__ && (defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__))
