@@ -72,10 +72,11 @@ static const char fragmentShaderCode[] =
 static const char program[] =
     "const var let constant 1234 _fio,. \n"
     " + - , . / * "
+    //"   ö \n"
     " /* these are between comments */ \n "
     "! != == := && || & | \n"
     " \" this should be a \\\"string\\\"? \" \n"
-    " \" \\ \n"
+    //" \" \\ \n"
     " */ \n"
     " asdf // commented out text asdf2 \0 \n"
     " aftercomments \n"
@@ -258,7 +259,7 @@ static s32 sMainAfterWindow(void)
         f64 dt = carp_time_getDifference(&carpTime, &newTime);
         carpTime = newTime;
 
-        //printf("deltatime: %f\n", dt);
+        //CARP_LOG("deltatime: %f\n", dt);
         static f32 MoveSpeed = 10.0f;
         static f32 RotationSpeed = 1.0f;
         carp_window_update(&memory->carp_window, 0.0f);

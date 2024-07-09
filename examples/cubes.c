@@ -242,8 +242,8 @@ static s32 sMainAfterWindow(void)
         CarpTime newTime; carp_time_getCurrentTime(&newTime);
         f64 dt = carp_time_getDifference(&carpTime, &newTime);
         carpTime = newTime;
-
-        //printf("deltatime: %f\n", dt);
+    
+        //CARP_LOG("deltatime: %f\n", dt);
         static f32 MoveSpeed = 10.0f;
         static f32 RotationSpeed = 1.0f;
         carp_window_update(&memory->carp_window, 0.0f);
