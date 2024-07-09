@@ -506,6 +506,9 @@ typedef enum CarpExprType
     CarpExprTypeDiv,
 
 
+    CarpExprTypeVarName,
+    CarpExprTypeConstName,
+    CarpExprTypeFnName,
     CarpExprTypeIntNumber,
     CarpExprTypeRealNumber,
     CarpExprString,
@@ -520,12 +523,12 @@ typedef struct CarpExpr
     {
         struct
         {
-            int32_t carpASTNodeStart;
+            s32 carpASTNodeStart;
+            s32 carpASTNodeLen;
         };
         s64 intNumber;
         f64 realNumber;
     };
-    int32_t carpASTNodeLen;
     CarpExprType carpASTNodeType;
 } CarpExpr;
 
