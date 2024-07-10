@@ -1720,7 +1720,7 @@ CARP_FN void carp_math_getM34Identity(CarpM34* outM34)
     };
     static const CarpM34* ptrM34Identity = &M34Identity;
 
-    memmove_s(outM34, sizeof(CarpM34), &M34Identity, sizeof(CarpM34));
+    memmove(outM34, &M34Identity, sizeof(CarpM34));
 }
 
 CARP_FN void carp_math_getM44Identity(CarpM44* outM44)
@@ -1731,21 +1731,21 @@ CARP_FN void carp_math_getM44Identity(CarpM44* outM44)
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     };
-    memmove_s(outM44, sizeof(CarpM44), &M44Identity, sizeof(CarpM44));
+    memmove(outM44, &M44Identity, sizeof(CarpM44));
 }
 
 CARP_FN void carp_math_set_m34(const CarpM34* a, CarpM34* outM34)
 {
     if(a != outM34)
     {
-        memmove_s(outM34, sizeof(CarpM34), a, sizeof(CarpM34));
+        memmove(outM34, a, sizeof(CarpM34));
     }
 }
 CARP_FN void carp_math_set_m44(const CarpM44* a, CarpM44* outM44)
 {
     if(a != outM44)
     {
-        memmove_s(outM44, sizeof(CarpM44), a, sizeof(CarpM44));
+        memmove(outM44, a, sizeof(CarpM44));
     }
 }
 

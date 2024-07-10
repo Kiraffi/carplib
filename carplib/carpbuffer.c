@@ -1,10 +1,7 @@
 #include "carpbuffer.h"
 
 #include "carpassert.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include "carplib.h"
 
 // Note, aligned_alloc seemed to only use 32bit version returning int instead of void*.
 
@@ -15,7 +12,7 @@ static bool carp_buffer_createAlignedBuffer(s32 size, s32 alignment, CarpBuffer*
     CARP_ASSERT_RETURN(((alignment - 1) & alignment) == 0, false);
     CARP_ASSERT_RETURN(alignment >= 16, false);
 
-    u8* mem = (u8*)calloc(size + alignment, alignment);
+    u8* mem = (u8*)carp_lib_calloc(size + alignment, alignment);
     outBuffer->carpBufferActualPointer = mem;
 
     intptr_t alignmentPtrMinusOne = alignment - 1;
@@ -47,7 +44,7 @@ CARP_FN bool carp_buffer_free(CarpBuffer* buffer)
 {
     CARP_ASSERT_RETURN(buffer, false);
     CARP_ASSERT_RETURN(buffer->carpBufferData, false);
-    free(buffer->carpBufferActualPointer);
+    carp_lib_free(buffer->carpBufferActualPointer);
     CarpBuffer tmp = {0};
     *buffer = tmp;
     return true;
@@ -62,7 +59,7 @@ CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s3
     if(buffer->carpBufferSize + pushBufferSize >= buffer->carpBufferCapacity)
     {
         s32 oldSize = buffer->carpBufferSize;
-        s32 capacity = buffer->carpBufferCapacity; 
+        s32 capacity = buffer->carpBufferCapacity;
         if(capacity < 32)
             capacity = 32;
 
@@ -75,13 +72,15 @@ CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s3
             &newBuffer
         ), false);
         newBuffer.carpBufferSize = oldSize;
-        
-        memcpy_s(newBuffer.carpBufferData, oldSize, buffer->carpBufferData, oldSize);
+
+        carp_lib_memcopy(
+            newBuffer.carpBufferData, buffer->carpBufferData, oldSize);
         carp_buffer_free(buffer);
 
         *buffer = newBuffer;
     }
-    memcpy_s(buffer->carpBufferData + buffer->carpBufferSize, pushBufferSize, pushBuffer, pushBufferSize);
+    carp_lib_memcopy(
+        buffer->carpBufferData + buffer->carpBufferSize, pushBuffer, pushBufferSize);
     buffer->carpBufferSize += pushBufferSize;
     return true;
 }

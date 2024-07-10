@@ -1,9 +1,7 @@
 #include "carplang.h"
 
 #include "carpassert.h"
-
-#include <stdlib.h> // calloc
-#include <string.h> // memcpy
+#include "carplog.h"
 
 typedef enum CarpTokenType
 {
@@ -251,7 +249,7 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
         {
             const CarpTokenHelper* helper = CarpTokenHelpers + helperIndex;
             if(idLen <=  helper->carpTokenHelperLen
-                && memcmp(helper->carpTokenHelperStr, pos, helper->carpTokenHelperLen) == 0)
+                && carp_lib_memcmp(helper->carpTokenHelperStr, pos, helper->carpTokenHelperLen) == 0)
             {
                 idLen = helper->carpTokenHelperLen;
 
@@ -310,24 +308,24 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
         }
         else if(pushToken.carpTokenType == CarpTokenTypeUnknownToken)
         {
-            char* end = NULL;
+            const char* end = NULL;
             const char* p = (const char*)pos;
 
-            pushToken.carpTokenIntNumber = strtoll(p, &end, 10);
+            pushToken.carpTokenIntNumber = carp_lib_strtoll(p, &end, 10);
             s32 numLen = (s32)(end - p);
             CARP_ASSERT_RETURN(numLen > 0, false);
             pushToken.carpTokenType = CarpTokenTypeIntNumber;
 
             if(*end == '.')
             {
-                pushToken.carpTokenRealNumber = strtod(p, &end);
+                pushToken.carpTokenRealNumber = carp_lib_strtod(p, &end);
                 pushToken.carpTokenType = CarpTokenTypeRealNumber;
             }
             pos += end - p;
 
             pushToken.carpTokenLen = numLen;
         }
-        else 
+        else
         {
             pos += idLen;
         }
@@ -574,9 +572,9 @@ CarpPresedence CarpPresedences[] =
     { &sParseNumber, CarpTokenTypePlus },
     { &sParseNumber, CarpTokenTypeIntNumber },
     { &sParseNumber, CarpTokenTypeRealNumber },
-    
+
 };
-static const s32 CarpPresedeceCount 
+static const s32 CarpPresedeceCount
     = (s32)(sizeof(CarpPresedences) / sizeof(CarpPresedence));
 
 
@@ -669,7 +667,7 @@ static bool sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
     CARP_ASSERT_RETURN(outASTBuffer, false);
 
     s32 numberResult = sParseNumber(tokenIndexer, outASTBuffer);
-    CARP_ASSERT_RETURN(numberResult >= 0, false); 
+    CARP_ASSERT_RETURN(numberResult >= 0, false);
 
     return numberResult > 0;
 }
@@ -768,8 +766,8 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
     /*
     for(int i = 0; i < CarpTokenHelperCount; ++i)
     {
-        CARP_LOG("%i, str: %s, len:%i, type: %i\n", 
-            i, 
+        CARP_LOG("%i, str: %s, len:%i, type: %i\n",
+            i,
             CarpTokenHelpers[i].carpTokenHelperStr,
             CarpTokenHelpers[i].carpTokenHelperLen,
             CarpTokenHelpers[i].carpTokenHelperType);

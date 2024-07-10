@@ -22,6 +22,17 @@
         "span": "c",
         "carplog.h": "c",
         "carpbuffer.h": "c",
-        "string.h": "c"
+        "string.h": "c",
+        "carplib.h": "c",
+        "immintrin.h": "c",
+        "avxintrin.h": "c",
+        "emmintrin.h": "c",
+        "smmintrin.h": "c",
+        "popcntintrin.h": "c",
+        "lzcntintrin.h": "c",
+        "x86intrin.h": "c",
+        "x86gprintrin.h": "c",
+        "uintrintrin.h": "c",
+        "pmmintrin.h": "c"
     }
 }

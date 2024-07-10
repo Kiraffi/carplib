@@ -2,12 +2,13 @@
 #define CARPLOG_HH
 
 #include <stdio.h>
-#include <string.h> // memset?
 
+/*
 // without this the attribute will be defined for tinycc
 #if !defined __GNUC__ || __GNUC__ < 2
 #undef __attribute__
 #endif
+*/
 
 #define CARP_USE_LOG 1
 #if CARP_USE_LOG == 1
@@ -19,7 +20,7 @@
 
 #define CARP_HELPER_LOG(...) \
                 do { \
-                    fprintf_s(__VA_ARGS__); \
+                    fprintf(__VA_ARGS__); \
                 } while(0)
 #else
 //#define HELPER_LOG(LOG_TEXT_STRING, ...)

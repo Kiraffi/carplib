@@ -1,17 +1,22 @@
 #ifndef CARP_MATH_HH
 #define CARP_MATH_HH
 
+#include "carplib.h"
 #include "carptype.h"
 
 #if defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__)
 
 #ifndef __TINYC__
-    #include <immintrin.h>
+    //#include <immintrin.h> // takes slightly bit longer to compile
+    //#include <smmintrin.h>
+    #include <emmintrin.h>
+    #include <popcntintrin.h>
 #else
 
-    typedef double __m128d;
+    // typedef f64 __m128d;
+    // typedef s32 __m128i;
     //typedef f32 __m128;
-    typedef float __m128 __attribute__((__vector_size__(16), __aligned__(16)));
+    typedef f32 __m128 __attribute__((__vector_size__(16), __aligned__(16)));
 
 #endif
 

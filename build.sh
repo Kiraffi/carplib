@@ -18,6 +18,7 @@ tcccompileoptionsextra="-L../tinycc -I../tinycc/include"
 #compilesource="examples/cubes.c"
 compilesource="examples/scripttest.c"
 
+#launchprog="buildout/main.out"
 
 # echo ''
 # echo 'clang'
@@ -33,8 +34,8 @@ compilesource="examples/scripttest.c"
 
 if [[ "$compiler" ]] && [[ "$compiler" != "tcc" ]]; then
 echo "using $compiler:"
-$compiler $compilesource -O2 -obuildout/main.out  $compilealloptions && buildout/main.out
+$compiler $compilesource -O2 -obuildout/main.out  $compilealloptions && $launchprog
 else
 echo "using tcc:"
-tcc $compilesource -O2 -obuildout/main.out  $compilealloptions $tcccompileoptionsextra && buildout/main.out
+tcc $compilesource -O2 -obuildout/main.out  $compilealloptions $tcccompileoptionsextra && $launchprog
 fi
