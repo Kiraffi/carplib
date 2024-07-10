@@ -33,6 +33,8 @@
         "x86intrin.h": "c",
         "x86gprintrin.h": "c",
         "uintrintrin.h": "c",
-        "pmmintrin.h": "c"
+        "pmmintrin.h": "c",
+        "wmmintrin.h": "c",
+        "xmmintrin.h": "c"
     }
 }

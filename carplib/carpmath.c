@@ -1719,7 +1719,6 @@ CARP_FN void carp_math_getM34Identity(CarpM34* outM34)
         0.0f, 0.0f, 1.0f, 0.0f,
     };
     static const CarpM34* ptrM34Identity = &M34Identity;
-
     memmove(outM34, &M34Identity, sizeof(CarpM34));
 }
 
