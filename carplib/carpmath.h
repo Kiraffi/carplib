@@ -5,11 +5,10 @@
 #include "carptype.h"
 
 #if defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__)
-
 #ifndef __TINYC__
-    #include <immintrin.h> // takes slightly bit longer to compile
-    //#include <smmintrin.h>
-    // #include <emmintrin.h> // once popcnt or trailing zeroes needed...
+    //#include <immintrin.h> // takes slightly bit longer to compile
+    #include <smmintrin.h>
+    //#include <emmintrin.h> // once popcnt or trailing zeroes needed...
     //#include <popcntintrin.h> not found on msvc
 #else
 

@@ -58,6 +58,7 @@
           "examples/scripttest.c",
           "-obuildout/main.out",
           "-std=c11",
+          "-fno-inline",
           "-lX11",
           "-m64",
           "-lGL",
@@ -71,6 +72,20 @@
         "dependsOn": [
           "Create Build Directory"
         ]
+      },
+      {
+        "label": "Compile linux script",
+        "type": "process",
+        "command": "./build.sh",
+        "args": [  ],
+        "presentation": {
+          "reveal": "always",
+          "panel": "new"
+        },
+        "dependsOn": [
+          "Create Build Directory"
+        ]
       }
+
     ]
   }

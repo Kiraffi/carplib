@@ -30,6 +30,15 @@
             "args": [],
             "cwd": "${workspaceFolder}",
             "preLaunchTask": "Compile linux"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug linux script",
+            "program": "${workspaceFolder}/buildout/main.out",
+            "args": [],
+            "cwd": "${workspaceFolder}",
+            "preLaunchTask": "Compile linux script"
         }
     ]
 }

@@ -8,9 +8,12 @@ mkdir buildout
 fi
 
 compiler=$1
-compileoptions="-std=c11 -lX11 -lGL -lm -m64 -g"
+compileoptions="-std=c11 -lX11 -lGL -lm -m64 -g -gdwarf"
+#compileoptionsreport="-ftime-report"
+#"-fno-inline-small-functions"
+compilernoinline="-fno-inline"
 compileincludes="-I./"
-compilealloptions="$compileoptions $compileincludes"
+compilealloptions="$compileoptions $compileincludes $compileoptionsreport $compilernoinline"
 tcccompileoptionsextra="-L../tinycc -I../tinycc/include"
 
 #compilesource="examples/triangle.c"
