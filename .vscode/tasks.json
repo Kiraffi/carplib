@@ -77,7 +77,7 @@
         "label": "Compile linux script",
         "type": "process",
         "command": "./build.sh",
-        "args": [  ],
+        "args": [ "clang" ],
         "presentation": {
           "reveal": "always",
           "panel": "new"

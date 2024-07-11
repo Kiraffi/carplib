@@ -70,18 +70,22 @@ static const char fragmentShaderCode[] =
 
 
 static const char program[] =
-    "const var let constant 1234 _fio,. \n"
-    "538495723985729835728374259873452987435982734598273498572349857983 \n"
-    " 1.5e+3 \n"
-    " + - , . / * 3.141596534095839045830495839085349080"
-    //"   ö \n"
-    " /* these are between comments */ \n "
-    "! != == := && || & | \n"
-    " \" this should be a \\\"string\\\"? \" \n"
-    //" \" \\ \n"
-    " */ \n"
-    " asdf // commented out text asdf2 \0 \n"
-    " aftercomments \n"
+    //"const var let constant 1234 _fio,. \n"
+    //"538495723985729835728374259873452987435982734598273498572349857983 \n"
+    //" 1.5e+3 \n"
+    //" + - , . / * 3.141596534095839045830495839085349080"
+    ////"   ö \n"
+    //" /* these are between comments */ \n "
+    //"! != == := && || & | \n"
+    //" \" this should be a \\\"string\\\"? \" \n"
+    ////" \" \\ \n"
+    //" */ \n"
+    //" asdf // commented out text asdf2 \0 \n"
+    //" aftercomments \n"
+
+    "(24) ((32.72)) \n"
+    "(24 + 32)\n"
+    "(24 + 32 * 28 + 103 + 96 * 12)\n"
     "\0"
     ;
 
@@ -428,7 +432,8 @@ s32 main(s32 argc, char** argv)
         return -1;
     }
 
-    s32 result = sMain();
+    s32 result = 0;
+    //result = sMain();
 
     carp_memory_destroy();
     return result;

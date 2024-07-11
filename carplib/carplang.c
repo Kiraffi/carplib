@@ -335,7 +335,7 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
 
     return false;
 }
-void sPrintTokenErrorAt(const CarpTokenIndex* tokenIndex)
+static void sPrintTokenErrorAt(const CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, ;);
     CARP_ASSERT_RETURN(tokenIndex->tokenIndexBuffer.carpBufferData, ;);
@@ -380,94 +380,105 @@ void sPrintTokenErrorAt(const CarpTokenIndex* tokenIndex)
         tokenIndex->tokenIndexBuffer.carpBufferData + index);
 
 }
-void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
+
+static void sPrintToken(const CarpToken* token)
 {
+    CARP_ASSERT_RETURN(token, ;);
+
+    const char* name = {0};
+    switch(token->carpTokenType)
+    {
+        case CarpTokenTypeUnknownToken: name = "Unknown"; break;
+        case CarpTokenTypeEndOfTokens: name = "End Of CarpTokens"; break;
+        case CarpTokenTypePercentSign: name = "%"; break;
+        case CarpTokenTypePlus: name = "+"; break;
+        case CarpTokenTypeMinus: name = "-"; break;
+        case CarpTokenTypeStar: name = "*"; break;
+        case CarpTokenTypeSlash: name = "/"; break;
+        case CarpTokenTypeBackSlash: name = "\\"; break;
+        case CarpTokenTypeComma: name = ","; break;
+        case CarpTokenTypeDot: name = "."; break;
+        case CarpTokenTypeF: name = "f"; break;
+        case CarpTokenTypeSetEqual: name = ":="; break;
+        case CarpTokenTypeNotEqual: name = "!="; break;
+        case CarpTokenTypeDoubleEqual: name = "=="; break;
+        case CarpTokenTypeDoubleQuote: name = "\""; break;
+        case CarpTokenTypeExclamationMark: name = "!"; break;
+        case CarpTokenTypeAtSign: name = "@"; break;
+        case CarpTokenTypeBitwiseAnd: name = "&"; break;
+        case CarpTokenTypeBitwiseOr: name = "|"; break;
+        case CarpTokenTypeBitwiseXor: name = "^"; break;
+        case CarpTokenTypeBitwiseNot: name = "~"; break;
+        case CarpTokenTypeLogicalAnd: name = "&&"; break;
+        case CarpTokenTypeLogicalOr: name = "||"; break;
+        case CarpTokenTypeHashSign: name = "#"; break;
+        case CarpTokenTypeQuestionMark: name = "?"; break;
+        case CarpTokenTypeColon: name = ":"; break;
+        case CarpTokenTypeSemiColon: name = ";"; break;
+        case CarpTokenTypeParenthesesOpen: name = "("; break;
+        case CarpTokenTypeParenthesesClose: name = ")"; break;
+        case CarpTokenTypeSquareBracketOpen: name = "["; break;
+        case CarpTokenTypeSquareBracketClose: name = "]"; break;
+        case CarpTokenTypeCurlyBracketOpen: name = "{"; break;
+        case CarpTokenTypeCurlyBracketClose: name = "}"; break;
+        case CarpTokenTypeAngleBracketOpen: name = "<"; break;
+        case CarpTokenTypeAngleBracketClose: name = ">"; break;
+
+        case CarpTokenTypeComment: name = "//"; break;
+        case CarpTokenTypeCommentBlockBegin: name = "/*"; break;
+
+        // String type
+        case CarpTokenTypeString: name = ""; break;
+
+        // Number type
+        case CarpTokenTypeIntNumber: name = "s64"; break;
+        case CarpTokenTypeRealNumber: name = "f64"; break;
+
+        // Keywords
+        case CarpTokenTypeConst: name = "Const"; break;
+        case CarpTokenTypeWhile: name = "While"; break;
+        case CarpTokenTypeFunc: name = "Func"; break;
+        case CarpTokenTypeLet: name = "Let"; break;
+        case CarpTokenTypeVar: name = "Var"; break;
+
+        case CarpTokenTypeIdentifier: name = "Identifier"; break;
+        case CarpTokenTypeCount: name = "Count"; break;
+    }
+    if(token->carpTokenType == CarpTokenTypeIdentifier
+        || token->carpTokenType == CarpTokenTypeString)
+    {
+        CARP_LOG("'%s[%-.*s]', ", name, token->carpTokenLen, token->carpToken);
+    }
+    else if(token->carpTokenType == CarpTokenTypeIntNumber)
+    {
+        CARP_LOG("'%s[%" PRIi64 "]'", name, token->carpTokenIntNumber);
+    }
+    else if(token->carpTokenType == CarpTokenTypeRealNumber)
+    {
+        CARP_LOG("'%s[%f]'", name, token->carpTokenRealNumber);
+    }
+    else
+    {
+        CARP_LOG("'%s', ", name);
+    }
+}
+
+static void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
+{
+    CARP_ASSERT_RETURN(input, ;);
+    CARP_ASSERT_RETURN(tokenBuffer, ;);
+
     const CarpToken* token = (const CarpToken*)tokenBuffer->carpBufferData;
     const CarpToken* endToken = (const CarpToken*)
         (tokenBuffer->carpBufferData + tokenBuffer->carpBufferSize);
     s32 tokenCount = 0;
     while(token < endToken)
     {
-        const char* name = {0};
-        switch(token->carpTokenType)
-        {
-            case CarpTokenTypeUnknownToken: name = "Unknown"; break;
-            case CarpTokenTypeEndOfTokens: name = "End Of CarpTokens"; break;
-            case CarpTokenTypePercentSign: name = "%"; break;
-            case CarpTokenTypePlus: name = "+"; break;
-            case CarpTokenTypeMinus: name = "-"; break;
-            case CarpTokenTypeStar: name = "*"; break;
-            case CarpTokenTypeSlash: name = "/"; break;
-            case CarpTokenTypeBackSlash: name = "\\"; break;
-            case CarpTokenTypeComma: name = ","; break;
-            case CarpTokenTypeDot: name = "."; break;
-            case CarpTokenTypeF: name = "f"; break;
-            case CarpTokenTypeSetEqual: name = ":="; break;
-            case CarpTokenTypeNotEqual: name = "!="; break;
-            case CarpTokenTypeDoubleEqual: name = "=="; break;
-            case CarpTokenTypeDoubleQuote: name = "\""; break;
-            case CarpTokenTypeExclamationMark: name = "!"; break;
-            case CarpTokenTypeAtSign: name = "@"; break;
-            case CarpTokenTypeBitwiseAnd: name = "&"; break;
-            case CarpTokenTypeBitwiseOr: name = "|"; break;
-            case CarpTokenTypeBitwiseXor: name = "^"; break;
-            case CarpTokenTypeBitwiseNot: name = "~"; break;
-            case CarpTokenTypeLogicalAnd: name = "&&"; break;
-            case CarpTokenTypeLogicalOr: name = "||"; break;
-            case CarpTokenTypeHashSign: name = "#"; break;
-            case CarpTokenTypeQuestionMark: name = "?"; break;
-            case CarpTokenTypeColon: name = ":"; break;
-            case CarpTokenTypeSemiColon: name = ";"; break;
-            case CarpTokenTypeParenthesesOpen: name = "("; break;
-            case CarpTokenTypeParenthesesClose: name = ")"; break;
-            case CarpTokenTypeSquareBracketOpen: name = "["; break;
-            case CarpTokenTypeSquareBracketClose: name = "]"; break;
-            case CarpTokenTypeCurlyBracketOpen: name = "{"; break;
-            case CarpTokenTypeCurlyBracketClose: name = "}"; break;
-            case CarpTokenTypeAngleBracketOpen: name = "<"; break;
-            case CarpTokenTypeAngleBracketClose: name = ">"; break;
-
-            case CarpTokenTypeComment: name = "//"; break;
-            case CarpTokenTypeCommentBlockBegin: name = "/*"; break;
-
-            // String type
-            case CarpTokenTypeString: name = ""; break;
-
-            // Number type
-            case CarpTokenTypeIntNumber: name = "s64"; break;
-            case CarpTokenTypeRealNumber: name = "f64"; break;
-
-            // Keywords
-            case CarpTokenTypeConst: name = "Const"; break;
-            case CarpTokenTypeWhile: name = "While"; break;
-            case CarpTokenTypeFunc: name = "Func"; break;
-            case CarpTokenTypeLet: name = "Let"; break;
-            case CarpTokenTypeVar: name = "Var"; break;
-
-            case CarpTokenTypeIdentifier: name = "Identifier"; break;
-            case CarpTokenTypeCount: name = "Count"; break;
-        }
         if((tokenCount % 8) == 0)
         {
             CARP_LOG("\n");
         }
-        if(token->carpTokenType == CarpTokenTypeIdentifier
-            || token->carpTokenType == CarpTokenTypeString)
-        {
-            CARP_LOG("'%s[%-.*s]', ", name, token->carpTokenLen, token->carpToken);
-        }
-        else if(token->carpTokenType == CarpTokenTypeIntNumber)
-        {
-            CARP_LOG("'%s[%" PRIi64 "]'\n", name, token->carpTokenIntNumber);
-        }
-        else if(token->carpTokenType == CarpTokenTypeRealNumber)
-        {
-            CARP_LOG("'%s[%f]'\n", name, token->carpTokenRealNumber);
-        }
-        else
-        {
-            CARP_LOG("'%s', ", name);
-        }
+        sPrintToken(token);
         ++token;
         ++tokenCount;
     }
@@ -498,6 +509,8 @@ void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
 
 typedef enum CarpExprType
 {
+    CarpExprTypeUnknown,
+
     CarpExprTypeAdd,
     CarpExprTypeSub,
     CarpExprTypeMul,
@@ -515,28 +528,47 @@ typedef enum CarpExprType
 
 } CarpExprType;
 
+typedef enum CarpExprPresedenceType
+{
+    CarpExprPresedenceTypeUnknown,
+
+    CarpExprPresedenceTypeFnCall,
+
+    CarpExprPresedenceTypeMulDiv,
+    CarpExprPresedenceTypeAddSub,
+    CarpExprPresedenceTypeNumberVariable,
+
+    CarpExprPresedenceTypeCount,
+} CarpExprPresedenceType;
+
 typedef struct CarpExpr
 {
     union
     {
         struct
         {
-            s32 carpASTNodeStart;
-            s32 carpASTNodeLen;
+            s32 carpExprLeft;
+            s32 carpExprRight;
         };
         s64 intNumber;
         f64 realNumber;
     };
-    CarpExprType carpASTNodeType;
+    CarpExprType carpExprType;
+    s32 carpExprStart;
+    CarpExprPresedenceType carpExprPresedence;
+    s32 carpExprPadding[3];
 } CarpExpr;
+static_assert(sizeof(CarpExpr) == 32, "CarpExpr expected size doesnt match");
 
 
 typedef struct CarpASTNode
 {
     CarpExpr* left;
     CarpExpr* right;
-    CarpExprType carpASTNodeType;
+    CarpExprType carpExprType;
+    s32 carpASTNodePadding[3];
 } CarpASTNode;
+static_assert(sizeof(CarpASTNode) == 32, "CarpASTNode expected size doesnt match");
 
 typedef struct CarpTokenIndexer
 {
@@ -544,39 +576,58 @@ typedef struct CarpTokenIndexer
     s32 carpTokenIndexerTokenAmount;
     s32 carpTokenIndexerIndex;
 } CarpTokenIndexer;
+static_assert(sizeof(CarpTokenIndexer) == 16, "CarpTokenIndexer expected size doesnt match");
 
-typedef s32 (*CarpPresedenceFn)(struct CarpTokenIndexer* tokenIndexer,
+typedef s32 (*CarpPresedenceFn)(struct CarpTokenIndexer* tokenIndexer, s32 leftIndex,
     CarpBuffer* outASTBuffer);
 
 typedef struct CarpPresedence
 {
     CarpPresedenceFn carpPresedenceFn;
-    CarpTokenType carpPresedenceTokenType;
+    CarpExprPresedenceType carpPresedenceType;
+    s32 carpPresedencePadding;
 } CarpPresedence;
-
+static_assert(sizeof(CarpPresedence) == 16, "CarpPresedence expected size doesnt match");
 
 
 static bool sAdvanceToken(CarpTokenIndexer* tokenIndexer);
-static bool sGetNextToken(const CarpTokenIndexer* tokenIndexer, const CarpToken** outToken);
+static bool sGetToken(const CarpTokenIndexer* tokenIndexer, const CarpToken** outToken);
 static bool sAdvanceIfToken(CarpTokenIndexer* tokenIndexer, CarpTokenType type);
 static s32 sParseNumber(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer);
 
-static bool sParseExpression(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer);
+static s32 sParseExpression(
+    CarpTokenIndexer* tokenIndexer,
+    CarpExprPresedenceType presedence,
+    CarpBuffer* outASTBuffer);
 
 static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer);
+static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer);
 
+
+static s32 sParseMulDiv(CarpTokenIndexer* tokenIndexer, s32 leftIndex, CarpBuffer* outASTBuffer);
+static s32 sParseAddSub(CarpTokenIndexer* tokenIndexer, s32 leftIndex, CarpBuffer* outASTBuffer);
 
 CarpPresedence CarpPresedences[] =
 {
-    { &sParseNumber, CarpTokenTypeMinus },
-    { &sParseNumber, CarpTokenTypePlus },
-    { &sParseNumber, CarpTokenTypeIntNumber },
-    { &sParseNumber, CarpTokenTypeRealNumber },
+    { &sParseMulDiv, CarpExprPresedenceTypeMulDiv },
+    { &sParseAddSub, CarpExprPresedenceTypeAddSub },
 
 };
-static const s32 CarpPresedeceCount
-    = (s32)(sizeof(CarpPresedences) / sizeof(CarpPresedence));
+static const s32 CarpPresedeceCount = (s32)(sizeof(CarpPresedences) / sizeof(CarpPresedences[0]));
 
+
+
+static void sPrintTokenFromCarpTokenIndexer(const CarpTokenIndexer* tokenIndexer)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, ;);
+
+    const CarpToken* token = NULL;
+    CARP_ASSERT_RETURN(sGetToken(tokenIndexer, &token), ;);
+
+    CARP_LOG("Token: ");
+    sPrintToken(token);
+    CARP_LOG("index: %i\n", tokenIndexer->carpTokenIndexerIndex);
+}
 
 static bool sAdvanceToken(CarpTokenIndexer* tokenIndexer)
 {
@@ -586,7 +637,7 @@ static bool sAdvanceToken(CarpTokenIndexer* tokenIndexer)
     return true;
 }
 
-static bool sGetNextToken(const CarpTokenIndexer* tokenIndexer, const CarpToken** outToken)
+static bool sGetToken(const CarpTokenIndexer* tokenIndexer, const CarpToken** outToken)
 {
     CARP_ASSERT_RETURN(tokenIndexer, false);
     CARP_ASSERT_RETURN(outToken, false);
@@ -603,14 +654,14 @@ static s32 sPushExpr(const CarpExpr* expr, CarpBuffer* outASTBuffer)
 
     s32 result = outASTBuffer->carpBufferSize;
     carp_buffer_pushBuffer(outASTBuffer, (const u8*)expr, sizeof(CarpExpr));
-    return result;
+    return result + 1;
 }
 
 static bool sAdvanceIfToken(CarpTokenIndexer* tokenIndexer, CarpTokenType type)
 {
     CARP_ASSERT_RETURN(tokenIndexer, false);
     const CarpToken* next = NULL;
-    CARP_ASSERT_RETURN(sGetNextToken(tokenIndexer, &next), false);
+    CARP_ASSERT_RETURN(sGetToken(tokenIndexer, &next), false);
     if(next->carpTokenType == type)
         sAdvanceToken(tokenIndexer);
     return next->carpTokenType == type;
@@ -624,85 +675,220 @@ static s32 sParseNumber(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer
     s32 currentIndex = tokenIndexer->carpTokenIndexerIndex;
 
     bool neg = false;
-    while(sAdvanceIfToken(tokenIndexer, CarpTokenTypeMinus))
-        neg = !neg;
-
-    while(sAdvanceIfToken(tokenIndexer, CarpTokenTypePlus));
-
+    while(true)
+    {
+        if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeMinus))
+        {
+            neg = !neg;
+        }
+        else if(sAdvanceIfToken(tokenIndexer, CarpTokenTypePlus))
+        {
+        }
+        else
+        {
+            break;
+        }
+    }
     const CarpToken* next = NULL;
-    CARP_ASSERT_RETURN(sGetNextToken(tokenIndexer, &next), false);
+    CARP_ASSERT_RETURN(sGetToken(tokenIndexer, &next), false);
 
     CarpExpr expr = {0};
-    expr.carpASTNodeStart = currentIndex;
-    expr.carpASTNodeLen = neg ? 2 : 1;
+    expr.carpExprStart = currentIndex;
+    expr.carpExprPresedence = CarpExprPresedenceTypeNumberVariable;
 
     if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeIntNumber))
     {
-        expr.carpASTNodeType = CarpExprTypeIntNumber;
+        expr.carpExprType = CarpExprTypeIntNumber;
         expr.intNumber = neg ? -next->carpTokenIntNumber : next->carpTokenIntNumber;
-        CARP_LOGINFO("s64: %" PRIi64 "\n", expr.intNumber);
-
+        //CARP_LOGINFO("s64: %" PRIi64 "\n", expr.intNumber);
     }
     else if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeRealNumber))
     {
-        expr.carpASTNodeType = CarpExprTypeRealNumber;
+        expr.carpExprType = CarpExprTypeRealNumber;
         expr.realNumber = neg ? -next->carpTokenRealNumber : next->carpTokenRealNumber;
-        CARP_LOGINFO("f64: %f\n", expr.realNumber);
+        //CARP_LOGINFO("f64: %f\n", expr.realNumber);
     }
     else
     {
-        if(neg)
-            tokenIndexer->carpTokenIndexerIndex = currentIndex;
+        tokenIndexer->carpTokenIndexerIndex = currentIndex;
         return 0;
     }
     s32 result = sPushExpr(&expr, outASTBuffer);
-    CARP_ASSERT_RETURN(result >= 0, -1);
-    return result + 1;
+    CARP_ASSERT_RETURN(result > 0, -1);
+    return result;
 }
 
 
-static bool sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
+static s32 sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
 {
-    CARP_ASSERT_RETURN(tokenIndexer, false);
-    CARP_ASSERT_RETURN(outASTBuffer, false);
-
-    s32 numberResult = sParseNumber(tokenIndexer, outASTBuffer);
-    CARP_ASSERT_RETURN(numberResult >= 0, false);
-
-    return numberResult > 0;
-}
-
-static bool sParseExpression(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
-{
-    CARP_ASSERT_RETURN(tokenIndexer, false);
-    CARP_ASSERT_RETURN(outASTBuffer, false);
-
-    s32 numb = 0;
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outASTBuffer, -1);
 
     if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesOpen))
     {
-        CARP_ASSERT_RETURN(sParseExpression(tokenIndexer, outASTBuffer), false);
-        CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesClose), false);
-        return true;
-    }
-    for(s32 i = 0; i < CarpPresedeceCount; ++i)
-    {
-        numb = CarpPresedences[i].carpPresedenceFn(tokenIndexer, outASTBuffer);
-        CARP_ASSERT_RETURN(numb >= 0, false);
-        if(numb)
-        {
-        }
+        s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+        CARP_ASSERT_RETURN(expr >= 0, -1);
+        //CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesClose), -1);
+        return expr;
     }
 
+    // fn call
+    // identifier (expr, expr, expr..)
+
+    // const/variable array
+    // identifier[expr]
+
+    // const/variable
+    // identifier
+
+    // number
+
+    s32 numberResult = sParseNumber(tokenIndexer, outASTBuffer);
+    CARP_ASSERT_RETURN(numberResult >= 0, -1);
+
+    return numberResult;
+}
+
+
+
+
+
+
+
+
+static CarpExpr* sGetExpr(s32 index, const CarpBuffer* astBuffer)
+{
+    CARP_ASSERT_RETURN(astBuffer, NULL);
+
+    CARP_ASSERT_RETURN(index > 0, NULL);
+    CARP_ASSERT_RETURN(index - 1 + sizeof(CarpExpr) <= astBuffer->carpBufferSize, NULL);
+
+    return (CarpExpr*)(astBuffer->carpBufferData + (index - 1));
+}
+
+
+
+static s32 sParseExpressionRight(
+    CarpTokenIndexer* tokenIndexer,
+    CarpExprPresedenceType presedence,
+    s32 leftIndex,
+    CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outASTBuffer, -1);
+    CARP_ASSERT_RETURN(leftIndex > 0, -1);
+    for(s32 i = 0; i < CarpPresedeceCount; ++i)
+    {
+        if(CarpPresedences[i].carpPresedenceType < presedence)
+        {
+            s32 expr = CarpPresedences[i].carpPresedenceFn(tokenIndexer, leftIndex, outASTBuffer);
+            CARP_ASSERT_RETURN(expr >= 0, -1);
+            if(expr)
+            {
+                return expr;
+            }
+        }
+    }
+    return leftIndex;
+}
+
+static s32 sParseExpression(
+    CarpTokenIndexer* tokenIndexer,
+    CarpExprPresedenceType presedence,
+    CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outASTBuffer, -1);
+
+    s32 expr = 0;
+
+    s32 leftIndex = sParseNext(tokenIndexer, outASTBuffer);
+    CARP_ASSERT_RETURN(leftIndex >= 0, -1);
+    if(leftIndex == 0)
+    {
+        return 0;
+    }
+
+    while((expr = sParseExpressionRight(tokenIndexer, presedence, leftIndex, outASTBuffer))
+        && expr != leftIndex)
+    {
+        CARP_ASSERT_RETURN(expr >= 0, -1);
+        leftIndex = expr;
+    }
+
+    return leftIndex;
+}
+
+
+static bool sPrintExprLeftRight(
+    s32 leftIndex,
+    s32 rightIndex,
+    const char* oper,
+    const CarpBuffer* astBuffer
+)
+{
+    CARP_ASSERT_RETURN(oper, false);
+    CARP_LOG("(");
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(leftIndex, astBuffer), false);
+    CARP_LOG(" %s ", oper);
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(rightIndex, astBuffer), false);
+    CARP_LOG(")");
     return true;
 }
 
+static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer)
+{
+    #define TMP_SWITCH_HELPER(helperType, helperOper) \
+        case helperType: \
+            CARP_ASSERT_RETURN(sPrintExprLeftRight( \
+                expr->carpExprLeft, \
+                expr->carpExprRight, \
+                helperOper, \
+                astBuffer), false); \
+            break
+
+    const CarpExpr* expr = sGetExpr(index, astBuffer);
+    CARP_ASSERT_RETURN(expr, false);
+    switch(expr->carpExprType)
+    {
+        TMP_SWITCH_HELPER(CarpExprTypeAdd, "+");
+        TMP_SWITCH_HELPER(CarpExprTypeSub, "-");
+        TMP_SWITCH_HELPER(CarpExprTypeMul, "*");
+        TMP_SWITCH_HELPER(CarpExprTypeDiv, "/");
+
+        case CarpExprTypeIntNumber:
+            CARP_LOG("%" PRIi64, expr->intNumber);
+            break;
+        case CarpExprTypeRealNumber:
+            CARP_LOG("%f", expr->realNumber);
+            break;
+        default:
+            break;
+
+    }
+
+
+    #undef TMP_SWITCH_HELPER
+    return true;
+}
+static bool sPrintExpression(s32 index, const CarpBuffer* astBuffer)
+{
+    CARP_LOG("Expr: ");
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(index, astBuffer), false);
+    CARP_LOG("\n");
+    return true;
+}
 static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
 {
     CARP_ASSERT_RETURN(tokenIndexer, false);
     CARP_ASSERT_RETURN(outASTBuffer, false);
-
-    return sParseExpression(tokenIndexer, outASTBuffer);
+    s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+    CARP_ASSERT_RETURN(expr >= 0, false);
+    if(expr > 0)
+    {
+        sPrintExpression(expr, outASTBuffer);
+    }
+    return expr;
 }
 
 static bool sParseAST(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
@@ -723,8 +909,8 @@ static bool sParseAST(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
 
     while(indexer.carpTokenIndexerIndex < indexer.carpTokenIndexerTokenAmount)
     {
-        sParseStatement(&indexer, outASTBuffer);
-        indexer.carpTokenIndexerIndex++;
+        if(sParseStatement(&indexer, outASTBuffer) == 0)
+            indexer.carpTokenIndexerIndex++;
         /*
         if(!sParseStatement())
         {
@@ -736,6 +922,90 @@ static bool sParseAST(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
 
     return true;
 }
+
+
+static s32 sParseBinomRight(
+    CarpTokenIndexer* tokenIndexer,
+    s32 leftIndex,
+    CarpTokenType type,
+    CarpExprType exprType,
+    CarpExprPresedenceType presedenceType,
+    CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outASTBuffer, -1);
+
+    const CarpToken* token = NULL;
+    CARP_ASSERT_RETURN(sGetToken(tokenIndexer, &token), -1);
+
+    s32 currentIndex = tokenIndexer->carpTokenIndexerIndex;
+
+    if(sAdvanceIfToken(tokenIndexer, type))
+    {
+        CarpExpr expr = {0};
+        expr.carpExprStart = currentIndex;
+        expr.carpExprType = exprType;
+        expr.carpExprPresedence = presedenceType;
+
+        s32 rightIndex = sParseExpression(tokenIndexer, presedenceType, outASTBuffer);
+        expr.carpExprLeft = leftIndex;
+        expr.carpExprRight = rightIndex;
+
+
+        s32 result = sPushExpr(&expr, outASTBuffer);
+        CARP_ASSERT_RETURN(result > 0, -1);
+        return result;
+    }
+    return 0;
+}
+
+static s32 sParseMulDiv(CarpTokenIndexer* tokenIndexer, s32 leftIndex, CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outASTBuffer, -1);
+    CARP_ASSERT_RETURN(leftIndex > 0, -1);
+
+    s32 expr = sParseBinomRight(
+        tokenIndexer, leftIndex, CarpTokenTypeStar, CarpExprTypeMul, CarpExprPresedenceTypeMulDiv, outASTBuffer);
+    expr |= sParseBinomRight(
+        tokenIndexer, leftIndex, CarpTokenTypeSlash, CarpExprTypeDiv, CarpExprPresedenceTypeMulDiv, outASTBuffer);
+    CARP_ASSERT_RETURN(expr >= 0, -1);
+    return expr;
+}
+
+
+static s32 sParseAddSub(CarpTokenIndexer* tokenIndexer, s32 leftIndex, CarpBuffer* outASTBuffer)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outASTBuffer, -1);
+    CARP_ASSERT_RETURN(leftIndex > 0, -1);
+
+    s32 expr = sParseBinomRight(
+        tokenIndexer, leftIndex, CarpTokenTypePlus, CarpExprTypeAdd, CarpExprPresedenceTypeAddSub, outASTBuffer);
+    expr |= sParseBinomRight(
+        tokenIndexer, leftIndex, CarpTokenTypeMinus, CarpExprTypeSub, CarpExprPresedenceTypeAddSub, outASTBuffer);
+    CARP_ASSERT_RETURN(expr >= 0, -1);
+    return expr;
+
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 CARP_FN bool carp_lang_compileToSpecialBuffer(
     const char* input,

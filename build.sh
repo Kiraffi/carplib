@@ -11,7 +11,7 @@ compiler=$1
 compileoptions="-std=c11 -lX11 -lGL -lm -m64 -g -gdwarf"
 #compileoptionsreport="-ftime-report"
 #"-fno-inline-small-functions"
-compilernoinline="-fno-inline"
+#compilernoinline="-fno-inline"
 compileincludes="-I./"
 compilealloptions="$compileoptions $compileincludes $compileoptionsreport $compilernoinline"
 tcccompileoptionsextra="-L../tinycc -I../tinycc/include"
@@ -37,8 +37,8 @@ compilesource="examples/scripttest.c"
 
 if [[ "$compiler" ]] && [[ "$compiler" != "tcc" ]]; then
 echo "using $compiler:"
-$compiler $compilesource -O2 -obuildout/main.out  $compilealloptions && $launchprog
+$compiler $compilesource -obuildout/main.out  $compilealloptions && $launchprog
 else
 echo "using tcc:"
-tcc $compilesource -O2 -obuildout/main.out  $compilealloptions $tcccompileoptionsextra && $launchprog
+tcc $compilesource -obuildout/main.out  $compilealloptions $tcccompileoptionsextra && $launchprog
 fi
