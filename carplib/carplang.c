@@ -1,7 +1,29 @@
 #include "carplang.h"
 
 #include "carpassert.h"
+#include "carplib.h"
 #include "carplog.h"
+
+typedef struct CarpLangMemoryHelpers
+{
+    s32 caarpLangMemoryHelpersVariableMemorySize; // current size of variable memory
+} CarpLangMemoryHelpers;
+
+typedef struct CarpLangMemory
+{
+    CarpBuffer carpLangMemoryTokens;
+    CarpBuffer carpLangMemoryAST;
+    CarpBuffer carpLangMemoryStatements;
+    CarpBuffer carpLangMemoryVars;
+    CarpBuffer carpLangMemoryConsts;
+
+    CarpBuffer carpLangMemoryProgram;
+
+
+    CarpLangMemoryHelpers carpLangMemoryHelpers;
+
+} CarpLangMemory;
+
 
 typedef enum CarpTokenType
 {
@@ -19,7 +41,7 @@ typedef enum CarpTokenType
     CarpTokenTypeComment, // //
     CarpTokenTypeCommentBlockBegin, // '*/'
 
-    CarpTokenTypeSetEqual, // :=
+    CarpTokenTypeAssign, // :=
     CarpTokenTypeNotEqual, // !=
     CarpTokenTypeDoubleEqual, // ==
     CarpTokenTypeDoubleQuote, // "
@@ -90,7 +112,7 @@ typedef struct CarpTokenHelper
 static const CarpTokenHelper CarpTokenHelpers[] =
 {
     CarpTokenHelperLine("\0", CarpTokenTypeEndOfTokens), // '\0'
-    CarpTokenHelperLine(":=", CarpTokenTypeSetEqual), // :=
+    CarpTokenHelperLine(":=", CarpTokenTypeAssign), // :=
     CarpTokenHelperLine("!=", CarpTokenTypeNotEqual), // !=
     CarpTokenHelperLine("==", CarpTokenTypeDoubleEqual), // ==
     CarpTokenHelperLine("\"", CarpTokenTypeDoubleQuote), // "
@@ -399,7 +421,7 @@ static void sPrintToken(const CarpToken* token)
         case CarpTokenTypeComma: name = ","; break;
         case CarpTokenTypeDot: name = "."; break;
         case CarpTokenTypeF: name = "f"; break;
-        case CarpTokenTypeSetEqual: name = ":="; break;
+        case CarpTokenTypeAssign: name = ":="; break;
         case CarpTokenTypeNotEqual: name = "!="; break;
         case CarpTokenTypeDoubleEqual: name = "=="; break;
         case CarpTokenTypeDoubleQuote: name = "\""; break;
@@ -538,6 +560,12 @@ typedef enum CarpExprPresedenceType
     CarpExprPresedenceTypeAddSub,
     CarpExprPresedenceTypeNumberVariable,
 
+    CarpExprPresedenceTypeDefineVariable,
+    CarpExprPresedenceTypeDefineConst,
+
+
+    CarpExprPresedenceTypeLowest,
+
     CarpExprPresedenceTypeCount,
 } CarpExprPresedenceType;
 
@@ -552,11 +580,12 @@ typedef struct CarpExpr
         };
         s64 carpExprIntNumber;
         f64 carpExprRealNumber;
+        f32 carpExprV4[4];
     };
     CarpExprType carpExprType;
     s32 carpExprStart;
     CarpExprPresedenceType carpExprPresedence;
-    s32 carpExprPadding[3];
+    s32 carpExprPadding;
 } CarpExpr;
 static_assert(sizeof(CarpExpr) == 32, "CarpExpr expected size doesnt match");
 
@@ -581,6 +610,31 @@ typedef struct CarpPresedence
 static_assert(sizeof(CarpPresedence) == 16, "CarpPresedence expected size doesnt match");
 
 
+typedef enum CarpVariableType
+{
+    CarpVariableTypeInt        = 0x01,
+    CarpVariableTypeFloat      = 0x02,
+    CarpVariableTypeV4         = 0x04,
+    CarpVariableTypeString     = 0x08,
+    CarpVariableTypeConst      = 0x10,
+} CarpVariableType;
+
+
+typedef struct CarpVariable
+{
+    s32 carpVariableTokenIndexName;
+    s32 carpVariableMemoryAddress;
+    CarpVariableType carpVariableTypeFlags;
+    s32 carpVariableMemoryPadding;
+} CarpVariable;
+static_assert(sizeof(CarpVariable) == 16, "CarpVariable expected size doesnt match");
+
+
+
+
+
+
+
 static bool sAdvanceToken(CarpTokenIndexer* tokenIndexer);
 static bool sGetToken(const CarpTokenIndexer* tokenIndexer, const CarpToken** outToken);
 static bool sAdvanceIfToken(CarpTokenIndexer* tokenIndexer, CarpTokenType type);
@@ -591,7 +645,7 @@ static s32 sParseExpression(
     CarpExprPresedenceType presedence,
     CarpBuffer* outASTBuffer);
 
-static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer);
+static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem);
 static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* outValue);
 
 
@@ -717,7 +771,7 @@ static s32 sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
 
     if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesOpen))
     {
-        s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+        s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeLowest, outASTBuffer);
         CARP_ASSERT_RETURN(expr >= 0, -1);
         CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesClose), -1);
         return expr;
@@ -730,7 +784,7 @@ static s32 sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
             s32 expr = 0;
             do
             {
-                expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+                expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeLowest, outASTBuffer);
                 CARP_ASSERT_RETURN(expr >= 0, -1);
                 // do something with parameters....
             } while(expr);
@@ -741,7 +795,7 @@ static s32 sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
         // identifier[expr] indexing array
         if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeSquareBracketOpen))
         {
-            s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+            s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeLowest, outASTBuffer);
             CARP_ASSERT_RETURN(expr >= 0, -1);
 
             // need index....
@@ -903,39 +957,102 @@ static bool sPrintExpression(s32 index, const CarpBuffer* astBuffer)
     CARP_LOG(" = %" PRIi64 "\n", tmpValue);
     return true;
 }
-static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
+
+static s32 sCheckIfVariableExists(const CarpToken* token, const CarpBuffer* buffer)
+{
+    CARP_ASSERT_RETURN(token, -1);
+    CARP_ASSERT_RETURN(buffer, -1);
+
+    for(s32 i = 0; i < buffer->carp_buffer_size;)
+    {
+        if(carp_lib_memcmp(
+            buffer->carp_buffer_data + i, token->carpToken, token->carpTokenLen) == 0)
+        {
+            return i + 1;
+        }
+        i += sizeof(CarpVariable);
+    }
+    return 0;
+}
+
+
+static s32 sParseVariable(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outMem, -1);
+
+    const CarpToken* nameToken;
+    sGetToken(tokenIndexer, &nameToken);
+    CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeIdentifier), -1);
+
+    CARP_ASSERT_RETURN(sCheckIfVariableExists(nameToken, &outMem->carpLangMemoryConsts), -1);
+    CARP_ASSERT_RETURN(sCheckIfVariableExists(nameToken, &outMem->carpLangMemoryVars), -1);
+
+    CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeAssign), -1);
+
+    s32 exprValue = sParseExpression(tokenIndexer, CarpExprPresedenceTypeLowest, &outMem->carpLangMemoryAST);
+    CARP_ASSERT_RETURN(exprValue > 0, -1);
+
+    CarpExpr expr = { 0 };
+    expr.carpExprStart = outMem->carpLangMemoryAST.carp_buffer_size;
+
+    return 1;
+}
+
+static s32 sParseConst(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem)
+{
+    CARP_ASSERT_RETURN(tokenIndexer, -1);
+    CARP_ASSERT_RETURN(outMem, -1);
+    s32 result = sParseVariable(tokenIndexer, outMem);
+
+    CARP_ASSERT_RETURN(result > 0, -1);
+
+    return result;
+}
+
+static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem)
 {
     CARP_ASSERT_RETURN(tokenIndexer, false);
-    CARP_ASSERT_RETURN(outASTBuffer, false);
-    s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+    CARP_ASSERT_RETURN(outMem, false);
+
+    if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeConst))
+    {
+
+    }
+    else if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeVar))
+    {
+
+    }
+
+
+    s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeLowest, &outMem->carpLangMemoryAST);
     CARP_ASSERT_RETURN(expr >= 0, false);
     CARP_ASSERT_RETURN(expr == 0 || sAdvanceIfToken(tokenIndexer, CarpTokenTypeSemiColon), false);
     if(expr > 0)
     {
-        sPrintExpression(expr, outASTBuffer);
+        sPrintExpression(expr, &outMem->carpLangMemoryAST);
+
+
     }
     return expr;
 }
 
-static bool sParseAST(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
+static bool sParseAST(CarpLangMemory* outMem)
 {
-    CARP_ASSERT_RETURN(tokenBuffer, false);
-    CARP_ASSERT_RETURN(tokenBuffer->carp_buffer_data, false);
-    CARP_ASSERT_RETURN(outASTBuffer, false);
-    CARP_ASSERT_RETURN(outASTBuffer->carp_buffer_data == NULL, false);
+    CARP_ASSERT_RETURN(outMem, false);
 
-    CARP_ASSERT_RETURN(carp_buffer_create((1 << 20), 16, outASTBuffer), false);
+    CARP_ASSERT_RETURN(carp_buffer_create((1 << 20), 16, &outMem->carpLangMemoryAST), false);
 
 
-    const CarpToken* tokens = (const CarpToken*)tokenBuffer->carp_buffer_data;
+    const CarpToken* tokens = (const CarpToken*)&outMem->carpLangMemoryTokens.carp_buffer_data;
     CarpTokenIndexer indexer = {0};
 
     indexer.carpTokenIndexerTokens = tokens;
-    indexer.carpTokenIndexerTokenAmount = tokenBuffer->carp_buffer_size / sizeof(CarpToken);
+    indexer.carpTokenIndexerTokenAmount = outMem->carpLangMemoryTokens.carp_buffer_size / sizeof(CarpToken);
 
     while(indexer.carpTokenIndexerIndex < indexer.carpTokenIndexerTokenAmount)
     {
-        if(sParseStatement(&indexer, outASTBuffer) == 0)
+        if(sParseStatement(&indexer, outMem) == 0)
             indexer.carpTokenIndexerIndex++;
         /*
         if(!sParseStatement())
@@ -1025,6 +1142,57 @@ static s32 sParseAddSub(CarpTokenIndexer* tokenIndexer, s32 leftIndex, CarpBuffe
 
 
 
+///////////////////////////////////
+//
+// Codegen
+//
+///////////////////////////////////
+
+// win
+// volatile: RAX, RCX, RDX, R8, R9, R10, R11, and XMM0-XMM5
+// linux...
+// volatile RAX, RCX, RDX, RDI, RSI, R8, R9, R10, R11, not sure XMMs probably all volatile?
+
+typedef enum CarpRegType
+{
+    CarpRegTypeRAX,
+    CarpRegTypeRCX,
+    CarpRegTypeRDX,
+    CarpRegTypeRSI,
+    CarpRegTypeRDI,
+    CarpRegTypeRBP,
+    CarpRegTypeRSP,
+    CarpRegTypeRBX,
+    CarpRegTypeR8,
+    CarpRegTypeR9,
+    CarpRegTypeR10,
+    CarpRegTypeR11,
+    CarpRegTypeR12,
+    CarpRegTypeR13,
+    CarpRegTypeR14,
+    CarpRegTypeR15,
+
+    CarpRegTypeRIP,
+    CarpRegTypeRFlags,
+
+    CarpRegTypeXMM0,
+    CarpRegTypeXMM1,
+    CarpRegTypeXMM2,
+    CarpRegTypeXMM3,
+    CarpRegTypeXMM4,
+    CarpRegTypeXMM5,
+    CarpRegTypeXMM6,
+    CarpRegTypeXMM7,
+    CarpRegTypeXMM8,
+    CarpRegTypeXMM9,
+    CarpRegTypeXMM10,
+    CarpRegTypeXMM11,
+    CarpRegTypeXMM12,
+    CarpRegTypeXMM13,
+    CarpRegTypeXMM14,
+    CarpRegTypeXMM15,
+
+} CarpRegType;
 
 
 
@@ -1042,7 +1210,8 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
     CARP_ASSERT_RETURN(outBuffer, false);
     CARP_ASSERT_RETURN(inputLen > 0, false);
 
-    CarpBuffer tokenOutBuffer = {0};
+    CarpLangMemory mem = {0};
+
     const CarpBuffer inputBuffer = {
             .carp_buffer_data = (u8*)input,
             .carp_buffer_capacity = inputLen,
@@ -1051,13 +1220,13 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
     };
 
     CarpTokenIndex tokenIndex = {.carpTokenIndexBuffer = inputBuffer };
-    if(!sParseTokens(&tokenIndex, &tokenOutBuffer))
+    if(!sParseTokens(&tokenIndex, &mem.carpLangMemoryTokens))
     {
         sPrintTokenErrorAt(&tokenIndex);
         CARP_LOGERROR("Failed to parse tokens\n");
         return false;
     }
-    sPrintTokens(&tokenIndex.carpTokenIndexBuffer, &tokenOutBuffer);
+    sPrintTokens(&tokenIndex.carpTokenIndexBuffer, &mem.carpLangMemoryTokens);
 
     /*
     for(int i = 0; i < CarpTokenHelperCount; ++i)
@@ -1070,14 +1239,13 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
     }
     */
 
-    CarpBuffer commandBuffer = {0};
-    if(!sParseAST(&tokenOutBuffer, &commandBuffer))
+    if(!sParseAST(&mem))
     {
         CARP_LOGERROR("Failed to parse commands\n");
         return false;
     }
 
-    carp_buffer_free(&tokenOutBuffer);
-    carp_buffer_free(&commandBuffer);
+    carp_buffer_free(&mem.carpLangMemoryTokens);
+    carp_buffer_free(&mem.carpLangMemoryAST);
     return true;
 }
