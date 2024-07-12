@@ -38,7 +38,7 @@ typedef struct CarpWindowInternal
     Window carpWindow;
     Colormap carpColormap;
     s32 carpWindowScreen;
-    Atom wmDeleteWindow;
+    Atom carpWMDeleteWindow;
     GLXContext carpGLContext;
 
 } CarpWindowInternal;
@@ -316,8 +316,8 @@ static b8 s_initDisplay(CarpWindow* carp_window, const char* windowName, s32 wid
 
 
     // Handle pressing X-button on carp_window
-    wnd->wmDeleteWindow = XInternAtom(wnd->carpDisplay, "WM_DELETE_WINDOW", False);
-    XSetWMProtocols(wnd->carpDisplay, wnd->carpWindow, &wnd->wmDeleteWindow, 1);
+    wnd->carpWMDeleteWindow = XInternAtom(wnd->carpDisplay, "WM_DELETE_WINDOW", False);
+    XSetWMProtocols(wnd->carpDisplay, wnd->carpWindow, &wnd->carpWMDeleteWindow, 1);
 
 
     CARP_LOGINFO("Clear: %i\n", XClearWindow(wnd->carpDisplay, wnd->carpWindow));
@@ -410,7 +410,7 @@ CARP_FN b8 carp_window_update(CarpWindow* carp_window, f32 dt)
 
             case ClientMessage:
             {
-                if ((Atom)event.xclient.data.l[0] == wnd->wmDeleteWindow)
+                if ((Atom)event.xclient.data.l[0] == wnd->carpWMDeleteWindow)
                     carp_window->carp_window_running = false;
                 break;
             }

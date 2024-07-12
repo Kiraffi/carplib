@@ -5,11 +5,16 @@
 
 typedef struct CarpSpecialBuffer
 {
-    u8* CarpSpecialBufferData;
-    s32 CarpSpecialBufferCapacity;
-    s32 CarpSpecialBufferSize;
+    u8* carp_specialBuffer_data;
+    s32 carp_specialBuffer_capacity;
+    s32 carp_specialBuffer_size;
 
 } CarpSpecialBuffer;
+
+typedef struct CarpLangFns
+{
+
+}CarpLangFns;
 
 CARP_FN bool carp_lang_compileToSpecialBuffer(
     const char* input,

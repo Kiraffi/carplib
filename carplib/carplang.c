@@ -143,19 +143,19 @@ static const s32 CarpTokenHelperCount
 
 typedef struct CarpTokenIndex
 {
-    const CarpBuffer tokenIndexBuffer;
-    s32 tokenIndexIndex;
+    const CarpBuffer carpTokenIndexBuffer;
+    s32 carpTokenIndexIndex;
 } CarpTokenIndex;
 
 static bool sSkipWhiteSpace(CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, false);
-    CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < tokenIndex->tokenIndexBuffer.carpBufferSize, false);
-    CARP_ASSERT_RETURN(tokenIndex->tokenIndexBuffer.carpBufferData, false);
+    CARP_ASSERT_RETURN(tokenIndex->carpTokenIndexIndex < tokenIndex->carpTokenIndexBuffer.carp_buffer_size, false);
+    CARP_ASSERT_RETURN(tokenIndex->carpTokenIndexBuffer.carp_buffer_data, false);
 
-    while(tokenIndex->tokenIndexIndex < tokenIndex->tokenIndexBuffer.carpBufferSize)
+    while(tokenIndex->carpTokenIndexIndex < tokenIndex->carpTokenIndexBuffer.carp_buffer_size)
     {
-        switch(tokenIndex->tokenIndexBuffer.carpBufferData[tokenIndex->tokenIndexIndex])
+        switch(tokenIndex->carpTokenIndexBuffer.carp_buffer_data[tokenIndex->carpTokenIndexIndex])
         {
             case ' ':
             case '\t':
@@ -165,7 +165,7 @@ static bool sSkipWhiteSpace(CarpTokenIndex* tokenIndex)
             default:
                 return true;
         }
-        ++tokenIndex->tokenIndexIndex;
+        ++tokenIndex->carpTokenIndexIndex;
     }
     return false;
 }
@@ -174,10 +174,10 @@ static bool sSkipWhiteSpace(CarpTokenIndex* tokenIndex)
 static s32 sTryParseIdentifier(const CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, -1);
-    CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < tokenIndex->tokenIndexBuffer.carpBufferSize, -1);
-    CARP_ASSERT_RETURN(tokenIndex->tokenIndexBuffer.carpBufferData, -1);
+    CARP_ASSERT_RETURN(tokenIndex->carpTokenIndexIndex < tokenIndex->carpTokenIndexBuffer.carp_buffer_size, -1);
+    CARP_ASSERT_RETURN(tokenIndex->carpTokenIndexBuffer.carp_buffer_data, -1);
 
-    char c = tokenIndex->tokenIndexBuffer.carpBufferData[tokenIndex->tokenIndexIndex];
+    char c = tokenIndex->carpTokenIndexBuffer.carp_buffer_data[tokenIndex->carpTokenIndexIndex];
     if(!(
         (c >= 'a' && c <= 'z')
         || (c >= 'A' && c <= 'Z')
@@ -187,9 +187,9 @@ static s32 sTryParseIdentifier(const CarpTokenIndex* tokenIndex)
     }
     s32 len = 1;
 
-    while(tokenIndex->tokenIndexIndex + len < tokenIndex->tokenIndexBuffer.carpBufferSize)
+    while(tokenIndex->carpTokenIndexIndex + len < tokenIndex->carpTokenIndexBuffer.carp_buffer_size)
     {
-        char c = tokenIndex->tokenIndexBuffer.carpBufferData[tokenIndex->tokenIndexIndex + len];
+        char c = tokenIndex->carpTokenIndexBuffer.carp_buffer_data[tokenIndex->carpTokenIndexIndex + len];
         if(!(
             (c >= 'a' && c <= 'z')
             || (c >= 'A' && c <= 'Z')
@@ -213,23 +213,23 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
     CARP_ASSERT_RETURN(tokenIndex, false);
     CARP_ASSERT_RETURN(outTokenBuffer, false);
 
-    const CarpBuffer* input = &(tokenIndex->tokenIndexBuffer);
-    CARP_ASSERT_RETURN(input->carpBufferSize > 0, false);
-    CARP_ASSERT_RETURN(input->carpBufferData, false);
-    CARP_ASSERT_RETURN(input->carpBufferData[input->carpBufferSize - 1] == '\0', false);
+    const CarpBuffer* input = &(tokenIndex->carpTokenIndexBuffer);
+    CARP_ASSERT_RETURN(input->carp_buffer_size > 0, false);
+    CARP_ASSERT_RETURN(input->carp_buffer_data, false);
+    CARP_ASSERT_RETURN(input->carp_buffer_data[input->carp_buffer_size - 1] == '\0', false);
 
     CARP_ASSERT_RETURN(carp_buffer_create((1 << 20), 16, outTokenBuffer), false);
 
-    const u8* pos = input->carpBufferData;
+    const u8* pos = input->carp_buffer_data;
 
-    while(tokenIndex->tokenIndexIndex < input->carpBufferSize)
+    while(tokenIndex->carpTokenIndexIndex < input->carp_buffer_size)
     {
         CarpToken pushToken = { 0 };
-        tokenIndex->tokenIndexIndex = pos - input->carpBufferData;
+        tokenIndex->carpTokenIndexIndex = pos - input->carp_buffer_data;
 
         CARP_ASSERT_RETURN(sSkipWhiteSpace(tokenIndex), false);
-        CARP_ASSERT_RETURN(tokenIndex->tokenIndexIndex < input->carpBufferSize, false);
-        pos = input->carpBufferData + tokenIndex->tokenIndexIndex;
+        CARP_ASSERT_RETURN(tokenIndex->carpTokenIndexIndex < input->carp_buffer_size, false);
+        pos = input->carp_buffer_data + tokenIndex->carpTokenIndexIndex;
         pushToken.carpToken = pos;
 
         // Print start of token
@@ -265,7 +265,7 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
                 {
                     const u8* prev = pos;
                     ++pos;
-                    while(tokenIndex->tokenIndexIndex < input->carpBufferSize
+                    while(tokenIndex->carpTokenIndexIndex < input->carp_buffer_size
                         && *pos != '\0' && ( *pos != '\"' || *prev == '\\' ))
                     {
                         ++prev;
@@ -276,7 +276,7 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
                 }
                 else if(helper->carpTokenHelperType == CarpTokenTypeComment)
                 {
-                    while(tokenIndex->tokenIndexIndex < input->carpBufferSize
+                    while(tokenIndex->carpTokenIndexIndex < input->carp_buffer_size
                         && *pos != '\0' && *pos != '\n')
                     {
                         ++pos;
@@ -284,7 +284,7 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
                 }
                 else if(helper->carpTokenHelperType == CarpTokenTypeCommentBlockBegin)
                 {
-                    while(tokenIndex->tokenIndexIndex < input->carpBufferSize
+                    while(tokenIndex->carpTokenIndexIndex < input->carp_buffer_size
                         && *pos != '\0' && !(*pos == '*' && *(pos + 1) == '/'))
                     {
                         ++pos;
@@ -338,16 +338,16 @@ static bool sParseTokens(CarpTokenIndex* tokenIndex, CarpBuffer *outTokenBuffer)
 static void sPrintTokenErrorAt(const CarpTokenIndex* tokenIndex)
 {
     CARP_ASSERT_RETURN(tokenIndex, ;);
-    CARP_ASSERT_RETURN(tokenIndex->tokenIndexBuffer.carpBufferData, ;);
+    CARP_ASSERT_RETURN(tokenIndex->carpTokenIndexBuffer.carp_buffer_data, ;);
 
     s32 lineNumber = 0;
     s32 charNumber = 0;
 
     s32 index = 0;
     s32 nextLineIndex = 0;
-    while(index < tokenIndex->tokenIndexIndex)
+    while(index < tokenIndex->carpTokenIndexIndex)
     {
-        char c = (char)tokenIndex->tokenIndexBuffer.carpBufferData[index];
+        char c = (char)tokenIndex->carpTokenIndexBuffer.carp_buffer_data[index];
         if(c == '\n')
         {
             lineNumber++;
@@ -357,9 +357,9 @@ static void sPrintTokenErrorAt(const CarpTokenIndex* tokenIndex)
         ++index;
     }
     nextLineIndex = index + 1;
-    while(nextLineIndex < tokenIndex->tokenIndexBuffer.carpBufferSize)
+    while(nextLineIndex < tokenIndex->carpTokenIndexBuffer.carp_buffer_size)
     {
-        char c = (char)tokenIndex->tokenIndexBuffer.carpBufferData[nextLineIndex];
+        char c = (char)tokenIndex->carpTokenIndexBuffer.carp_buffer_data[nextLineIndex];
         if(c == '\n' || c == '\0')
         {
             break;
@@ -368,16 +368,16 @@ static void sPrintTokenErrorAt(const CarpTokenIndex* tokenIndex)
     }
 
 
-    s32 printLenL = (tokenIndex->tokenIndexIndex) > 5 ? 5 : tokenIndex->tokenIndexIndex;
-    s32 printLenR = nextLineIndex - tokenIndex->tokenIndexIndex;
+    s32 printLenL = (tokenIndex->carpTokenIndexIndex) > 5 ? 5 : tokenIndex->carpTokenIndexIndex;
+    s32 printLenR = nextLineIndex - tokenIndex->carpTokenIndexIndex;
     s32 printLen = printLenL +  printLenR;
-    index = tokenIndex->tokenIndexIndex - printLenL;
+    index = tokenIndex->carpTokenIndexIndex - printLenL;
 
     CARP_LOGERROR("Error at: %i:%i \"%-.*s\"\n",
         lineNumber,
         charNumber,
         printLen,
-        tokenIndex->tokenIndexBuffer.carpBufferData + index);
+        tokenIndex->carpTokenIndexBuffer.carp_buffer_data + index);
 
 }
 
@@ -468,9 +468,9 @@ static void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
     CARP_ASSERT_RETURN(input, ;);
     CARP_ASSERT_RETURN(tokenBuffer, ;);
 
-    const CarpToken* token = (const CarpToken*)tokenBuffer->carpBufferData;
+    const CarpToken* token = (const CarpToken*)tokenBuffer->carp_buffer_data;
     const CarpToken* endToken = (const CarpToken*)
-        (tokenBuffer->carpBufferData + tokenBuffer->carpBufferSize);
+        (tokenBuffer->carp_buffer_data + tokenBuffer->carp_buffer_size);
     s32 tokenCount = 0;
     while(token < endToken)
     {
@@ -601,7 +601,7 @@ static s32 sParseExpression(
     CarpBuffer* outASTBuffer);
 
 static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer);
-static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer);
+static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* outValue);
 
 
 static s32 sParseMulDiv(CarpTokenIndexer* tokenIndexer, s32 leftIndex, CarpBuffer* outASTBuffer);
@@ -652,7 +652,7 @@ static s32 sPushExpr(const CarpExpr* expr, CarpBuffer* outASTBuffer)
     CARP_ASSERT_RETURN(expr, -1);
     CARP_ASSERT_RETURN(outASTBuffer, -1);
 
-    s32 result = outASTBuffer->carpBufferSize;
+    s32 result = outASTBuffer->carp_buffer_size;
     carp_buffer_pushBuffer(outASTBuffer, (const u8*)expr, sizeof(CarpExpr));
     return result + 1;
 }
@@ -728,21 +728,42 @@ static s32 sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
     {
         s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
         CARP_ASSERT_RETURN(expr >= 0, -1);
-        //CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesClose), -1);
+        CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesClose), -1);
         return expr;
     }
+    if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeIdentifier))
+    {
+        // fn call, multiple expressions for parameters.
+        if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesOpen))
+        {
+            s32 expr = 0;
+            do
+            {
+                expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+                CARP_ASSERT_RETURN(expr >= 0, -1);
+                // do something with parameters....
+            } while(expr);
 
-    // fn call
-    // identifier (expr, expr, expr..)
+            CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeParenthesesClose), -1);
+        }
 
-    // const/variable array
-    // identifier[expr]
+        // identifier[expr] indexing array
+        if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeSquareBracketOpen))
+        {
+            s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
+            CARP_ASSERT_RETURN(expr >= 0, -1);
 
-    // const/variable
-    // identifier
+            // need index....
+
+            CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeSquareBracketClose), -1);
+        }
+        // const/variable array
+
+    }
+
+
 
     // number
-
     s32 numberResult = sParseNumber(tokenIndexer, outASTBuffer);
     CARP_ASSERT_RETURN(numberResult >= 0, -1);
 
@@ -761,9 +782,9 @@ static CarpExpr* sGetExpr(s32 index, const CarpBuffer* astBuffer)
     CARP_ASSERT_RETURN(astBuffer, NULL);
 
     CARP_ASSERT_RETURN(index > 0, NULL);
-    CARP_ASSERT_RETURN(index - 1 + sizeof(CarpExpr) <= astBuffer->carpBufferSize, NULL);
+    CARP_ASSERT_RETURN(index - 1 + sizeof(CarpExpr) <= astBuffer->carp_buffer_size, NULL);
 
-    return (CarpExpr*)(astBuffer->carpBufferData + (index - 1));
+    return (CarpExpr*)(astBuffer->carp_buffer_data + (index - 1));
 }
 
 
@@ -819,24 +840,35 @@ static s32 sParseExpression(
     return leftIndex;
 }
 
-
 static bool sPrintExprLeftRight(
     s32 leftIndex,
     s32 rightIndex,
     const char* oper,
-    const CarpBuffer* astBuffer
+    const CarpBuffer* astBuffer,
+    s64* outValue
 )
 {
+    s64 tmpL = 0;
+    s64 tmpR = 0;
     CARP_ASSERT_RETURN(oper, false);
     CARP_LOG("(");
-    CARP_ASSERT_RETURN(sPrintExpressionHelper(leftIndex, astBuffer), false);
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(leftIndex, astBuffer, &tmpL), false);
     CARP_LOG(" %s ", oper);
-    CARP_ASSERT_RETURN(sPrintExpressionHelper(rightIndex, astBuffer), false);
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(rightIndex, astBuffer, &tmpR), false);
     CARP_LOG(")");
+
+    if(*oper == '+') *outValue = tmpL + tmpR;
+    else if(*oper == '-') *outValue = tmpL - tmpR;
+    else if(*oper == '*') *outValue = tmpL * tmpR;
+    else if(*oper == '/') *outValue = tmpL / tmpR;
+    else { CARP_LOG("unknown symbol\n"); }
+
+    //CARP_LOG("%"PRIi64 " %s %" PRIi64 " = %" PRIi64 "\n", tmpL, oper, tmpR, *outValue );
+
     return true;
 }
 
-static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer)
+static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* outValue)
 {
     #define TMP_SWITCH_HELPER(helperType, helperOper) \
         case helperType: \
@@ -844,7 +876,7 @@ static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer)
                 expr->carpExprLeft, \
                 expr->carpExprRight, \
                 helperOper, \
-                astBuffer), false); \
+                astBuffer, outValue), false); \
             break
 
     const CarpExpr* expr = sGetExpr(index, astBuffer);
@@ -858,6 +890,7 @@ static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer)
 
         case CarpExprTypeIntNumber:
             CARP_LOG("%" PRIi64, expr->intNumber);
+            *outValue = expr->intNumber;
             break;
         case CarpExprTypeRealNumber:
             CARP_LOG("%f", expr->realNumber);
@@ -874,8 +907,9 @@ static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer)
 static bool sPrintExpression(s32 index, const CarpBuffer* astBuffer)
 {
     CARP_LOG("Expr: ");
-    CARP_ASSERT_RETURN(sPrintExpressionHelper(index, astBuffer), false);
-    CARP_LOG("\n");
+    s64 tmpValue = 0;
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(index, astBuffer, &tmpValue), false);
+    CARP_LOG(" = %" PRIi64 "\n", tmpValue);
     return true;
 }
 static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
@@ -884,6 +918,7 @@ static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBu
     CARP_ASSERT_RETURN(outASTBuffer, false);
     s32 expr = sParseExpression(tokenIndexer, CarpExprPresedenceTypeCount, outASTBuffer);
     CARP_ASSERT_RETURN(expr >= 0, false);
+    CARP_ASSERT_RETURN(expr == 0 || sAdvanceIfToken(tokenIndexer, CarpTokenTypeSemiColon), false);
     if(expr > 0)
     {
         sPrintExpression(expr, outASTBuffer);
@@ -894,18 +929,18 @@ static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBu
 static bool sParseAST(const CarpBuffer* tokenBuffer, CarpBuffer* outASTBuffer)
 {
     CARP_ASSERT_RETURN(tokenBuffer, false);
-    CARP_ASSERT_RETURN(tokenBuffer->carpBufferData, false);
+    CARP_ASSERT_RETURN(tokenBuffer->carp_buffer_data, false);
     CARP_ASSERT_RETURN(outASTBuffer, false);
-    CARP_ASSERT_RETURN(outASTBuffer->carpBufferData == NULL, false);
+    CARP_ASSERT_RETURN(outASTBuffer->carp_buffer_data == NULL, false);
 
     CARP_ASSERT_RETURN(carp_buffer_create((1 << 20), 16, outASTBuffer), false);
 
 
-    const CarpToken* tokens = (const CarpToken*)tokenBuffer->carpBufferData;
+    const CarpToken* tokens = (const CarpToken*)tokenBuffer->carp_buffer_data;
     CarpTokenIndexer indexer = {0};
 
     indexer.carpTokenIndexerTokens = tokens;
-    indexer.carpTokenIndexerTokenAmount = tokenBuffer->carpBufferSize / sizeof(CarpToken);
+    indexer.carpTokenIndexerTokenAmount = tokenBuffer->carp_buffer_size / sizeof(CarpToken);
 
     while(indexer.carpTokenIndexerIndex < indexer.carpTokenIndexerTokenAmount)
     {
@@ -1018,20 +1053,20 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
 
     CarpBuffer tokenOutBuffer = {0};
     const CarpBuffer inputBuffer = {
-            .carpBufferData = (u8*)input,
-            .carpBufferCapacity = inputLen,
-            .carpBufferSize = inputLen,
-            .carpBufferAlignment = 1,
+            .carp_buffer_data = (u8*)input,
+            .carp_buffer_capacity = inputLen,
+            .carp_buffer_size = inputLen,
+            .carp_buffer_alignment = 1,
     };
 
-    CarpTokenIndex tokenIndex = {.tokenIndexBuffer = inputBuffer };
+    CarpTokenIndex tokenIndex = {.carpTokenIndexBuffer = inputBuffer };
     if(!sParseTokens(&tokenIndex, &tokenOutBuffer))
     {
         sPrintTokenErrorAt(&tokenIndex);
         CARP_LOGERROR("Failed to parse tokens\n");
         return false;
     }
-    sPrintTokens(&tokenIndex.tokenIndexBuffer, &tokenOutBuffer);
+    sPrintTokens(&tokenIndex.carpTokenIndexBuffer, &tokenOutBuffer);
 
     /*
     for(int i = 0; i < CarpTokenHelperCount; ++i)

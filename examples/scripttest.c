@@ -82,10 +82,13 @@ static const char program[] =
     //" */ \n"
     //" asdf // commented out text asdf2 \0 \n"
     //" aftercomments \n"
+    "(); \n"
+    " ;;; \n"
+    "(24); ((32.72)); \n"
+    "(24 + 32);\n"
+    "(24 + 32 * 28 + 103 + 96 * 12);\n"
 
-    "(24) ((32.72)) \n"
-    "(24 + 32)\n"
-    "(24 + 32 * 28 + 103 + 96 * 12)\n"
+    "variable; fntest(); array[];"
     "\0"
     ;
 
