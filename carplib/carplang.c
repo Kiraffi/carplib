@@ -550,8 +550,8 @@ typedef struct CarpExpr
             s32 carpExprLeft;
             s32 carpExprRight;
         };
-        s64 intNumber;
-        f64 realNumber;
+        s64 carpExprIntNumber;
+        f64 carpExprRealNumber;
     };
     CarpExprType carpExprType;
     s32 carpExprStart;
@@ -560,15 +560,6 @@ typedef struct CarpExpr
 } CarpExpr;
 static_assert(sizeof(CarpExpr) == 32, "CarpExpr expected size doesnt match");
 
-
-typedef struct CarpASTNode
-{
-    CarpExpr* left;
-    CarpExpr* right;
-    CarpExprType carpExprType;
-    s32 carpASTNodePadding[3];
-} CarpASTNode;
-static_assert(sizeof(CarpASTNode) == 32, "CarpASTNode expected size doesnt match");
 
 typedef struct CarpTokenIndexer
 {
@@ -699,14 +690,14 @@ static s32 sParseNumber(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer
     if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeIntNumber))
     {
         expr.carpExprType = CarpExprTypeIntNumber;
-        expr.intNumber = neg ? -next->carpTokenIntNumber : next->carpTokenIntNumber;
-        //CARP_LOGINFO("s64: %" PRIi64 "\n", expr.intNumber);
+        expr.carpExprIntNumber = neg ? -next->carpTokenIntNumber : next->carpTokenIntNumber;
+        //CARP_LOGINFO("s64: %" PRIi64 "\n", expr.carpExprIntNumber);
     }
     else if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeRealNumber))
     {
         expr.carpExprType = CarpExprTypeRealNumber;
-        expr.realNumber = neg ? -next->carpTokenRealNumber : next->carpTokenRealNumber;
-        //CARP_LOGINFO("f64: %f\n", expr.realNumber);
+        expr.carpExprRealNumber = neg ? -next->carpTokenRealNumber : next->carpTokenRealNumber;
+        //CARP_LOGINFO("f64: %f\n", expr.carpExprRealNumber);
     }
     else
     {
@@ -889,11 +880,11 @@ static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* 
         TMP_SWITCH_HELPER(CarpExprTypeDiv, "/");
 
         case CarpExprTypeIntNumber:
-            CARP_LOG("%" PRIi64, expr->intNumber);
-            *outValue = expr->intNumber;
+            CARP_LOG("%" PRIi64, expr->carpExprIntNumber);
+            *outValue = expr->carpExprIntNumber;
             break;
         case CarpExprTypeRealNumber:
-            CARP_LOG("%f", expr->realNumber);
+            CARP_LOG("%f", expr->carpExprRealNumber);
             break;
         default:
             break;
