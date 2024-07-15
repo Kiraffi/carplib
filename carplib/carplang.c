@@ -485,9 +485,8 @@ static void sPrintToken(const CarpToken* token)
     }
 }
 
-static void sPrintTokens(const CarpBuffer* input, const CarpBuffer* tokenBuffer)
+static void sPrintTokens(const CarpBuffer* tokenBuffer)
 {
-    CARP_ASSERT_RETURN(input, ;);
     CARP_ASSERT_RETURN(tokenBuffer, ;);
 
     const CarpToken* token = (const CarpToken*)tokenBuffer->carp_buffer_data;
@@ -544,7 +543,10 @@ typedef enum CarpExprType
     CarpExprTypeFnName,
     CarpExprTypeIntNumber,
     CarpExprTypeRealNumber,
-    CarpExprString,
+    CarpExprTypeString,
+
+    CarpExprTypeDefineVariable,
+    CarpExprTypeDefineConst,
 
     CarpExprTypeCount,
 
@@ -569,6 +571,12 @@ typedef enum CarpExprPresedenceType
     CarpExprPresedenceTypeCount,
 } CarpExprPresedenceType;
 
+typedef enum CarpExprFlag
+{
+    CarpExprFlagConst = 0x0001,
+
+} CarpExprFlag;
+
 typedef struct CarpExpr
 {
     union
@@ -585,7 +593,7 @@ typedef struct CarpExpr
     CarpExprType carpExprType;
     s32 carpExprStart;
     CarpExprPresedenceType carpExprPresedence;
-    s32 carpExprPadding;
+    CarpExprFlag carpExprFlags;
 } CarpExpr;
 static_assert(sizeof(CarpExpr) == 32, "CarpExpr expected size doesnt match");
 
@@ -646,7 +654,9 @@ static s32 sParseExpression(
     CarpBuffer* outASTBuffer);
 
 static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem);
-static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* outValue);
+static bool sPrintExpressionHelper(s32 index,
+    const CarpLangMemory* langMem,
+    s64* outValue);
 
 
 static s32 sParseMulDiv(CarpTokenIndexer* tokenIndexer, s32 leftIndex, CarpBuffer* outASTBuffer);
@@ -682,6 +692,19 @@ static bool sAdvanceToken(CarpTokenIndexer* tokenIndexer)
     return true;
 }
 
+static bool sGetTokenIndex(
+    s32 tokenIndex,
+    const CarpToken* tokenBuffer,
+    const CarpToken** outToken)
+{
+    CARP_ASSERT_RETURN(outToken, false);
+    CARP_ASSERT_RETURN(tokenBuffer, false);
+
+    *outToken = tokenBuffer + tokenIndex;
+    return true;
+}
+
+
 static bool sGetToken(const CarpTokenIndexer* tokenIndexer, const CarpToken** outToken)
 {
     CARP_ASSERT_RETURN(tokenIndexer, false);
@@ -690,6 +713,17 @@ static bool sGetToken(const CarpTokenIndexer* tokenIndexer, const CarpToken** ou
 
     *outToken = tokenIndexer->carpTokenIndexerTokens + tokenIndexer->carpTokenIndexerIndex;
     return true;
+}
+
+static s32 sPushVariable(const CarpVariable* var, CarpBuffer* outVarBuffer)
+{
+    CARP_ASSERT_RETURN(var, -1);
+    CARP_ASSERT_RETURN(outVarBuffer, -1);
+
+    s32 result = outVarBuffer->carp_buffer_size;
+    carp_buffer_pushBuffer(outVarBuffer, (const u8*)var, sizeof(CarpVariable));
+    return result + 1;
+
 }
 
 static s32 sPushExpr(const CarpExpr* expr, CarpBuffer* outASTBuffer)
@@ -740,7 +774,7 @@ static s32 sParseNumber(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer
     CarpExpr expr = {0};
     expr.carpExprStart = currentIndex;
     expr.carpExprPresedence = CarpExprPresedenceTypeNumberVariable;
-
+    expr.carpExprFlags = CarpExprFlagConst;
     if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeIntNumber))
     {
         expr.carpExprType = CarpExprTypeIntNumber;
@@ -821,6 +855,16 @@ static s32 sParseNext(CarpTokenIndexer* tokenIndexer, CarpBuffer* outASTBuffer)
 
 
 
+static CarpVariable* sGetVariable(s32 index, const CarpBuffer* varBuffer)
+{
+    CARP_ASSERT_RETURN(varBuffer, NULL);
+
+    CARP_ASSERT_RETURN(index > 0, NULL);
+    CARP_ASSERT_RETURN(index - 1 + sizeof(CarpVariable) <= varBuffer->carp_buffer_size, NULL);
+
+    return (CarpVariable*)(varBuffer->carp_buffer_data + (index - 1));
+}
+
 
 static CarpExpr* sGetExpr(s32 index, const CarpBuffer* astBuffer)
 {
@@ -889,7 +933,7 @@ static bool sPrintExprLeftRight(
     s32 leftIndex,
     s32 rightIndex,
     const char* oper,
-    const CarpBuffer* astBuffer,
+    const CarpLangMemory* langMem,
     s64* outValue
 )
 {
@@ -897,9 +941,9 @@ static bool sPrintExprLeftRight(
     s64 tmpR = 0;
     CARP_ASSERT_RETURN(oper, false);
     CARP_LOG("(");
-    CARP_ASSERT_RETURN(sPrintExpressionHelper(leftIndex, astBuffer, &tmpL), false);
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(leftIndex, langMem, &tmpL), false);
     CARP_LOG(" %s ", oper);
-    CARP_ASSERT_RETURN(sPrintExpressionHelper(rightIndex, astBuffer, &tmpR), false);
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(rightIndex, langMem, &tmpR), false);
     CARP_LOG(")");
 
     if(*oper == '+') *outValue = tmpL + tmpR;
@@ -913,18 +957,43 @@ static bool sPrintExprLeftRight(
     return true;
 }
 
-static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* outValue)
+static bool sPrintIdentifier(s32 index, const CarpBuffer* varBuffer, const CarpBuffer* tokenBuffer)
+{
+    CARP_ASSERT_RETURN(index > 0, false);
+    CARP_ASSERT_RETURN(varBuffer, false);
+    CARP_ASSERT_RETURN(index <= varBuffer->carp_buffer_size, false);
+
+    const CarpVariable* var = sGetVariable(index, varBuffer);
+    const CarpToken* token = NULL;
+    sGetTokenIndex(
+        var->carpVariableTokenIndexName,
+        (const CarpToken*)tokenBuffer->carp_buffer_data,
+        &token);
+
+    CARP_LOG("%.*s", token->carpTokenLen, token->carpToken);
+
+
+    return true;
+}
+
+static bool sPrintExpressionHelper(
+    s32 index,
+    const CarpLangMemory* langMem,
+    s64* outValue)
 {
     #define TMP_SWITCH_HELPER(helperType, helperOper) \
         case helperType: \
-            CARP_ASSERT_RETURN(sPrintExprLeftRight( \
-                expr->carpExprLeft, \
-                expr->carpExprRight, \
-                helperOper, \
-                astBuffer, outValue), false); \
+            CARP_ASSERT_RETURN( \
+                sPrintExprLeftRight( \
+                    expr->carpExprLeft, \
+                    expr->carpExprRight, \
+                    helperOper, \
+                    langMem, \
+                    outValue), \
+                false); \
             break
 
-    const CarpExpr* expr = sGetExpr(index, astBuffer);
+    const CarpExpr* expr = sGetExpr(index, &langMem->carpLangMemoryAST);
     CARP_ASSERT_RETURN(expr, false);
     switch(expr->carpExprType)
     {
@@ -940,6 +1009,33 @@ static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* 
         case CarpExprTypeRealNumber:
             CARP_LOG("%f", expr->carpExprRealNumber);
             break;
+        case CarpExprTypeDefineConst:
+            CARP_LOG("const ");
+            CARP_ASSERT_RETURN(sPrintIdentifier(
+                    expr->carpExprLeft,
+                    &langMem->carpLangMemoryVars,
+                    &langMem->carpLangMemoryTokens),
+                false);
+            CARP_ASSERT_RETURN(sPrintExpressionHelper(
+                    expr->carpExprRight,
+                    langMem,
+                    outValue)
+                , false);
+            break;
+        case CarpExprTypeDefineVariable:
+            CARP_LOG("var ");
+            CARP_ASSERT_RETURN(sPrintIdentifier(
+                    expr->carpExprLeft,
+                    &langMem->carpLangMemoryVars,
+                    &langMem->carpLangMemoryTokens),
+                false);
+            CARP_ASSERT_RETURN(sPrintExpressionHelper(
+                    expr->carpExprRight,
+                    langMem,
+                    outValue)
+                , false);
+            break;
+
         default:
             break;
 
@@ -949,24 +1045,41 @@ static bool sPrintExpressionHelper(s32 index, const CarpBuffer* astBuffer, s64* 
     #undef TMP_SWITCH_HELPER
     return true;
 }
-static bool sPrintExpression(s32 index, const CarpBuffer* astBuffer)
+static bool sPrintExpression(s32 index, const CarpLangMemory* langMem)
 {
     CARP_LOG("Expr: ");
     s64 tmpValue = 0;
-    CARP_ASSERT_RETURN(sPrintExpressionHelper(index, astBuffer, &tmpValue), false);
-    CARP_LOG(" = %" PRIi64 "\n", tmpValue);
+
+    const CarpExpr* expr = sGetExpr(index, &langMem->carpLangMemoryAST);
+
+
+    CARP_ASSERT_RETURN(sPrintExpressionHelper(index, langMem, &tmpValue), false);
+    CARP_LOG(" = %" PRIi64 ", is const: %i\n",
+        tmpValue,
+        expr ? (expr->carpExprFlags & CarpExprFlagConst) : 0);
     return true;
 }
 
-static s32 sCheckIfVariableExists(const CarpToken* token, const CarpBuffer* buffer)
+static s32 sCheckIfVariableExists(
+    const CarpToken* nameToken,
+    const CarpBuffer* varBuffer,
+    const CarpBuffer* tokenBuffer)
 {
-    CARP_ASSERT_RETURN(token, -1);
-    CARP_ASSERT_RETURN(buffer, -1);
+    CARP_ASSERT_RETURN(nameToken, -1);
+    CARP_ASSERT_RETURN(varBuffer, -1);
+    CARP_ASSERT_RETURN(tokenBuffer, -1);
 
-    for(s32 i = 0; i < buffer->carp_buffer_size;)
+    for(s32 i = 0; i < varBuffer->carp_buffer_size;)
     {
-        if(carp_lib_memcmp(
-            buffer->carp_buffer_data + i, token->carpToken, token->carpTokenLen) == 0)
+        const CarpVariable* var = sGetVariable(i * sizeof(CarpVariable) + 1, varBuffer);
+        const CarpToken* otherToken = NULL;
+        sGetTokenIndex(
+            var->carpVariableTokenIndexName,
+            (const CarpToken*)tokenBuffer->carp_buffer_data,
+            &otherToken);
+
+        if(otherToken->carpTokenLen == nameToken->carpTokenLen && carp_lib_memcmp(
+            otherToken->carpToken, nameToken->carpToken, nameToken->carpTokenLen) == 0)
         {
             return i + 1;
         }
@@ -981,22 +1094,44 @@ static s32 sParseVariable(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem
     CARP_ASSERT_RETURN(tokenIndexer, -1);
     CARP_ASSERT_RETURN(outMem, -1);
 
+    s32 nameTokenIndex = tokenIndexer->carpTokenIndexerIndex;
     const CarpToken* nameToken;
     sGetToken(tokenIndexer, &nameToken);
     CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeIdentifier), -1);
 
-    CARP_ASSERT_RETURN(sCheckIfVariableExists(nameToken, &outMem->carpLangMemoryConsts), -1);
-    CARP_ASSERT_RETURN(sCheckIfVariableExists(nameToken, &outMem->carpLangMemoryVars), -1);
+    CARP_ASSERT_RETURN(sCheckIfVariableExists(nameToken, &outMem->carpLangMemoryConsts, &outMem->carpLangMemoryTokens) == 0, -1);
+    CARP_ASSERT_RETURN(sCheckIfVariableExists(nameToken, &outMem->carpLangMemoryVars, &outMem->carpLangMemoryTokens) == 0, -1);
 
     CARP_ASSERT_RETURN(sAdvanceIfToken(tokenIndexer, CarpTokenTypeAssign), -1);
 
     s32 exprValue = sParseExpression(tokenIndexer, CarpExprPresedenceTypeLowest, &outMem->carpLangMemoryAST);
     CARP_ASSERT_RETURN(exprValue > 0, -1);
 
+    const CarpExpr* rightExpr = sGetExpr(exprValue, &outMem->carpLangMemoryAST);
+    CARP_ASSERT_RETURN(rightExpr, -1);
+
+
+    CarpVariable variable = { 0 };
+    variable.carpVariableTokenIndexName = nameTokenIndex;
+    if(rightExpr->carpExprType == CarpExprTypeRealNumber)
+        variable.carpVariableTypeFlags = CarpVariableTypeFloat;
+    else if(rightExpr->carpExprType == CarpExprTypeIntNumber)
+        variable.carpVariableTypeFlags = CarpVariableTypeInt;
+
+    s32 defineVar = sPushVariable(&variable, &outMem->carpLangMemoryVars);
+    CARP_ASSERT_RETURN(defineVar > 0, -1);
+
     CarpExpr expr = { 0 };
     expr.carpExprStart = outMem->carpLangMemoryAST.carp_buffer_size;
+    expr.carpExprLeft = defineVar;
+    expr.carpExprRight = exprValue;
+    expr.carpExprType = CarpExprTypeDefineVariable;
+    expr.carpExprPresedence = CarpExprPresedenceTypeDefineVariable;
 
-    return 1;
+    s32 defineExpr = sPushExpr(&expr, &outMem->carpLangMemoryAST);
+    CARP_ASSERT_RETURN(defineExpr > 0, -1);
+
+    return defineExpr;
 }
 
 static s32 sParseConst(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem)
@@ -1006,7 +1141,13 @@ static s32 sParseConst(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outMem)
     s32 result = sParseVariable(tokenIndexer, outMem);
 
     CARP_ASSERT_RETURN(result > 0, -1);
+    CarpExpr* expr = sGetExpr(result, &outMem->carpLangMemoryAST);
+    expr->carpExprType = CarpExprTypeDefineConst;
+    expr->carpExprPresedence = CarpExprPresedenceTypeDefineConst;
 
+    const CarpExpr* rightExpr = sGetExpr(expr->carpExprRight, &outMem->carpLangMemoryAST);
+    if(rightExpr->carpExprFlags & CarpExprFlagConst)
+        expr->carpExprFlags |= CarpExprFlagConst;
     return result;
 }
 
@@ -1015,13 +1156,22 @@ static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outM
     CARP_ASSERT_RETURN(tokenIndexer, false);
     CARP_ASSERT_RETURN(outMem, false);
 
+    const CarpToken* next = NULL;
+    CARP_ASSERT_RETURN(sGetToken(tokenIndexer, &next), false);
+
     if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeConst))
     {
-
+        s32 expr = sParseConst(tokenIndexer, outMem);
+        CARP_ASSERT_RETURN(expr >= 0, false);
+        sPrintExpression(expr, outMem);
+        return true;
     }
     else if(sAdvanceIfToken(tokenIndexer, CarpTokenTypeVar))
     {
-
+        s32 expr = sParseVariable(tokenIndexer, outMem);
+        CARP_ASSERT_RETURN(expr >= 0, false);
+        sPrintExpression(expr, outMem);
+        return true;
     }
 
 
@@ -1030,9 +1180,7 @@ static bool sParseStatement(CarpTokenIndexer* tokenIndexer, CarpLangMemory* outM
     CARP_ASSERT_RETURN(expr == 0 || sAdvanceIfToken(tokenIndexer, CarpTokenTypeSemiColon), false);
     if(expr > 0)
     {
-        sPrintExpression(expr, &outMem->carpLangMemoryAST);
-
-
+        sPrintExpression(expr, outMem);
     }
     return expr;
 }
@@ -1042,9 +1190,10 @@ static bool sParseAST(CarpLangMemory* outMem)
     CARP_ASSERT_RETURN(outMem, false);
 
     CARP_ASSERT_RETURN(carp_buffer_create((1 << 20), 16, &outMem->carpLangMemoryAST), false);
+    CARP_ASSERT_RETURN(carp_buffer_create((1 << 20), 16, &outMem->carpLangMemoryVars), false);
 
 
-    const CarpToken* tokens = (const CarpToken*)&outMem->carpLangMemoryTokens.carp_buffer_data;
+    const CarpToken* tokens = (const CarpToken*)(outMem->carpLangMemoryTokens.carp_buffer_data);
     CarpTokenIndexer indexer = {0};
 
     indexer.carpTokenIndexerTokens = tokens;
@@ -1093,8 +1242,19 @@ static s32 sParseBinomRight(
         s32 rightIndex = sParseExpression(tokenIndexer, presedenceType, outASTBuffer);
         expr.carpExprLeft = leftIndex;
         expr.carpExprRight = rightIndex;
+        const CarpExpr* left = sGetExpr(leftIndex, outASTBuffer);
+        const CarpExpr* right = sGetExpr(rightIndex, outASTBuffer);
 
-
+        bool isConstExpr = left != NULL;
+        if(!(left && (left->carpExprFlags & CarpExprFlagConst)))
+        {
+            isConstExpr = false;
+        }
+        else if(right && !(left->carpExprFlags & CarpExprFlagConst))
+        {
+            isConstExpr = false;
+        }
+        expr.carpExprFlags = isConstExpr ? CarpExprFlagConst : 0;
         s32 result = sPushExpr(&expr, outASTBuffer);
         CARP_ASSERT_RETURN(result > 0, -1);
         return result;
@@ -1163,8 +1323,8 @@ typedef enum CarpRegType
     CarpRegTypeRBP,
     CarpRegTypeRSP,
     CarpRegTypeRBX,
-    CarpRegTypeR8,
-    CarpRegTypeR9,
+    CarpRegTypeR08,
+    CarpRegTypeR09,
     CarpRegTypeR10,
     CarpRegTypeR11,
     CarpRegTypeR12,
@@ -1175,16 +1335,16 @@ typedef enum CarpRegType
     CarpRegTypeRIP,
     CarpRegTypeRFlags,
 
-    CarpRegTypeXMM0,
-    CarpRegTypeXMM1,
-    CarpRegTypeXMM2,
-    CarpRegTypeXMM3,
-    CarpRegTypeXMM4,
-    CarpRegTypeXMM5,
-    CarpRegTypeXMM6,
-    CarpRegTypeXMM7,
-    CarpRegTypeXMM8,
-    CarpRegTypeXMM9,
+    CarpRegTypeXMM00,
+    CarpRegTypeXMM01,
+    CarpRegTypeXMM02,
+    CarpRegTypeXMM03,
+    CarpRegTypeXMM04,
+    CarpRegTypeXMM05,
+    CarpRegTypeXMM06,
+    CarpRegTypeXMM07,
+    CarpRegTypeXMM08,
+    CarpRegTypeXMM09,
     CarpRegTypeXMM10,
     CarpRegTypeXMM11,
     CarpRegTypeXMM12,
@@ -1226,7 +1386,7 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
         CARP_LOGERROR("Failed to parse tokens\n");
         return false;
     }
-    sPrintTokens(&tokenIndex.carpTokenIndexBuffer, &mem.carpLangMemoryTokens);
+    sPrintTokens(&mem.carpLangMemoryTokens);
 
     /*
     for(int i = 0; i < CarpTokenHelperCount; ++i)
@@ -1245,7 +1405,10 @@ CARP_FN bool carp_lang_compileToSpecialBuffer(
         return false;
     }
 
+    carp_buffer_free(&mem.carpLangMemoryVars);
     carp_buffer_free(&mem.carpLangMemoryTokens);
     carp_buffer_free(&mem.carpLangMemoryAST);
     return true;
 }
+
+

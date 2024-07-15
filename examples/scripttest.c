@@ -82,13 +82,18 @@ static const char program[] =
     //" */ \n"
     //" asdf // commented out text asdf2 \0 \n"
     //" aftercomments \n"
+    "var foovar := 3;\n"
+    "const fooconst := 3;\n"
+
     "(); \n"
     " ;;; \n"
     "(24); ((32.72)); \n"
     "(24 + 32);\n"
     "(24 + 32 * 28 + 103 + 96 * 12);\n"
 
-    "variable; fntest(); array[];"
+    "variable; fntest(); array[];\n"
+
+
     "\0"
     ;
 
