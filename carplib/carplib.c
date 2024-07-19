@@ -48,3 +48,8 @@ CARP_FN void carp_lib_memmove(void* dst, const void* src, size_t size)
     CARP_ASSERT_RETURN((dstPtr + size <= srcPtr || dstPtr >= srcPtr + size), ;);
     memmove(dst, src, size);
 }
+
+CARP_FN bool carp_lib_isnumber(char c)
+{
+    return (c >= '0' && c <= '9');
+}

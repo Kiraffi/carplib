@@ -93,7 +93,6 @@ static const char program[] =
 
     "variable; fntest(); array[];\n"
 
-
     "\0"
     ;
 

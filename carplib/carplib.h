@@ -16,6 +16,8 @@ CARP_FN void carp_lib_memset(void* dst, u8 value, size_t size);
 CARP_FN void carp_lib_memcopy(void* dst, const void* src, size_t size);
 CARP_FN void carp_lib_memmove(void* dst, const void* src, size_t size);
 
+CARP_FN bool carp_lib_isnumber(char c);
+
 
 #endif // CARPLIB_HH
 
