@@ -151,12 +151,16 @@ static const CarpTokenHelper CarpTokenHelpers[] =
     CarpTokenHelperLine("}", CarpTokenTypeCurlyBracketClose),
     CarpTokenHelperLine("<", CarpTokenTypeAngleBracketOpen), // <>
     CarpTokenHelperLine(">", CarpTokenTypeAngleBracketClose),
+    CarpTokenHelperLine("|specialchars end|", CarpTokenTypeSpecialCharactersEnd),
 
     CarpTokenHelperLine("const", CarpTokenTypeConst),
     CarpTokenHelperLine("while", CarpTokenTypeWhile),
     CarpTokenHelperLine("fn", CarpTokenTypeFunc),
     CarpTokenHelperLine("let", CarpTokenTypeLet),
     CarpTokenHelperLine("var", CarpTokenTypeVar),
+    CarpTokenHelperLine("|keywords end|", CarpTokenTypeKeyWordsEnd),
+
+
 };
 static const s32 CarpTokenHelperCount
     = (s32)(sizeof(CarpTokenHelpers) / sizeof(CarpTokenHelper));
@@ -467,7 +471,11 @@ static bool sParseTokens(s32* inputIndex, CarpLangBuffers *outBuffers)
             pushToken.carpTokenType = CarpTokenTypeIdentifier;
             pushToken.carpTokenLen = idLen;
 
-            for(s32 helperIndex = CarpTokenTypeKeyWordsBegin; helperIndex < CarpTokenTypeKeyWordsEnd; ++helperIndex)
+            s32 helperIndex = 0;
+            while(CarpTokenHelpers[helperIndex].carpTokenHelperType != CarpTokenTypeKeyWordsBegin)
+                ++helperIndex;
+
+            while(CarpTokenHelpers[helperIndex].carpTokenHelperType != CarpTokenTypeKeyWordsEnd)
             {
                 const CarpTokenHelper* helper = CarpTokenHelpers + helperIndex;
                 if(idLen ==  helper->carpTokenHelperLen
@@ -479,6 +487,7 @@ static bool sParseTokens(s32* inputIndex, CarpLangBuffers *outBuffers)
                     pushToken.carpTokenLen = helper->carpTokenHelperLen;
                     break;
                 }
+                ++helperIndex;
             }
         }
         else if(carp_lib_isnumber(*pos))
@@ -503,7 +512,11 @@ static bool sParseTokens(s32* inputIndex, CarpLangBuffers *outBuffers)
         }
         else
         {
-            for(s32 helperIndex = CarpTokenTypeSpecialCharactersBegin; helperIndex < CarpTokenTypeSpecialCharactersEnd; ++helperIndex)
+            s32 helperIndex = 0;
+            while(CarpTokenHelpers[helperIndex].carpTokenHelperType != CarpTokenTypeSpecialCharactersBegin)
+                ++helperIndex;
+
+            while(CarpTokenHelpers[helperIndex].carpTokenHelperType != CarpTokenTypeSpecialCharactersEnd)
             {
                 const CarpTokenHelper* helper = CarpTokenHelpers + helperIndex;
                 if(carp_lib_memcmp(helper->carpTokenHelperStr, pos, helper->carpTokenHelperLen) == 0)
@@ -543,6 +556,7 @@ static bool sParseTokens(s32* inputIndex, CarpLangBuffers *outBuffers)
                     }
                     break;
                 }
+                ++helperIndex;
             }
             if(pushToken.carpTokenType == CarpTokenTypeCommentLine
                 || pushToken.carpTokenType == CarpTokenTypeCommentBlockBegin)
@@ -1177,7 +1191,7 @@ static s32 sParseVariable(CarpTokenIndexer* tokenIndexer, CarpLangBuffers* outBu
     CARP_ASSERT_RETURN(exprValue > 0, -1);
 
     const CarpExpr* rightExpr = sGetExpr(exprValue, outBuffers);
-    CARP_ASSERT_RETURN(rightExpr, -1);
+    CARP_ASSERT_RETURN(rightExpr > 0, -1);
 
 
     CarpVariable variable = { 0 };
