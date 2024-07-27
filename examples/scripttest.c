@@ -82,8 +82,15 @@ static const char program[] =
     //" */ \n"
     //" asdf // commented out text asdf2 \0 \n"
     //" aftercomments \n"
-    "var foovar := 3;\n"
     "const fooconst := 3;\n"
+    "const fooconst2 := fooconst\n"
+    "var foovar := fooconst;\n"
+    "var foovar2 := foovar;\n"
+    "var foovar3 := fooconst + (24 + 32 * 28 + 103 + 96 * 12);\n"
+    "var foovar4 := foovar3 + foovar2;\n"
+
+    // asserts since trying to define const with var
+    // "const fooconst3 := foovar4\n"
 
     "(); \n"
     " ;;; \n"
@@ -91,7 +98,7 @@ static const char program[] =
     "(24 + 32);\n"
     "(24 + 32 * 28 + 103 + 96 * 12);\n"
 
-    "foovar := fooconst + 1; \n"
+    "foovar := fooconst * 7; \n"
     "foovar := foovar - 2; \n"
     //"variable; fntest(); array[];\n"
 
