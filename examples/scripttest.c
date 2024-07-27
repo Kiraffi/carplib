@@ -91,7 +91,9 @@ static const char program[] =
     "(24 + 32);\n"
     "(24 + 32 * 28 + 103 + 96 * 12);\n"
 
-    "variable; fntest(); array[];\n"
+    "foovar := fooconst + 1; \n"
+    "foovar := foovar - 2; \n"
+    //"variable; fntest(); array[];\n"
 
     "\0"
     ;
