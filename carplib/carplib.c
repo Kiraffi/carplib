@@ -5,6 +5,91 @@
 #include <stdlib.h>
 #include <string.h>
 
+static bool sCarp_lib_loadFileHelper(FILE* f, CarpBuffer* outBuffer)
+{
+    CARP_ASSERT_RETURN(f, false);
+    CARP_ASSERT_RETURN(outBuffer, false);
+
+    CARP_ASSERT_RETURN(fseek(f, 0L, SEEK_END) == 0, false);
+
+    long bufferSize = ftell(f) + 1;
+    CARP_ASSERT_RETURN(bufferSize > 0, false);
+
+    carp_buffer_create(bufferSize, 16, outBuffer);
+        
+    CARP_ASSERT_RETURN(fseek(f, 0L, SEEK_SET) == 0, false);
+
+    size_t newLen = fread(outBuffer->carp_buffer_data, sizeof(char), bufferSize, f);
+    CARP_ASSERT_RETURN(ferror(f) == 0, false);
+
+    return true;
+}
+
+CARP_FN bool carp_lib_loadFile(const char* fileName, CarpBuffer* outBuffer)
+{
+    CARP_ASSERT_RETURN(fileName, false);
+    CARP_ASSERT_RETURN(outBuffer, false);
+    FILE* f = NULL;
+    
+    #if CARP_WIN32
+    fopen_s(&f, fileName, "rb");
+    #else
+    fopen(fileName, "rb");
+    #endif
+    CARP_ASSERT_RETURN(f, false);
+    bool result = sCarp_lib_loadFileHelper(f, outBuffer);
+
+    fclose(f);
+    if(!result)
+    {
+        carp_buffer_free(outBuffer);
+    }
+
+    CARP_ASSERT_RETURN(result, false);
+    return result;
+}
+
+CARP_FN bool carp_lib_skipWhiteSpace(const char** pos)
+{
+    CARP_ASSERT_RETURN(pos, false);
+    while(**pos)
+    {
+        switch(**pos)
+        {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+                break;
+            default:
+                return true;
+        }
+        ++(*pos);
+    }
+    return true;
+}
+
+CARP_FN bool carp_lib_skipUntilWhiteSpace(const char** pos)
+{
+    CARP_ASSERT_RETURN(pos, false);
+    while(**pos)
+    {
+        switch(**pos)
+        {
+            case ' ':
+            case '\t':
+            case '\r':
+            case '\n':
+                return true;
+            default:
+                break;
+        }
+        ++(*pos);
+    }
+    return true;
+}
+
+
 CARP_FN s64 carp_lib_strtoll(const char* src, const char** end, size_t radix)
 {
     return strtoll(src, (char**)end, radix);

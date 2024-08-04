@@ -11,11 +11,6 @@ typedef struct CarpSpecialBuffer
 
 } CarpSpecialBuffer;
 
-typedef struct CarpLangFns
-{
-
-}CarpLangFns;
-
 CARP_FN bool carp_lang_compileToSpecialBuffer(
     const char* input,
     s32 inputLen,

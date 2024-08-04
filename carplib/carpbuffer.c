@@ -5,7 +5,7 @@
 
 // Note, aligned_alloc seemed to only use 32bit version returning int instead of void*.
 
-static bool carp_buffer_createAlignedBuffer(s32 size, s32 alignment, CarpBuffer* outBuffer)
+static bool s_carp_buffer_createAlignedBuffer(s32 size, s32 alignment, CarpBuffer* outBuffer)
 {
     CARP_ASSERT_RETURN(outBuffer, false);
     CARP_ASSERT_RETURN(outBuffer->carp_buffer_actual_pointer == NULL, false);
@@ -31,12 +31,14 @@ CARP_FN bool carp_buffer_create(s32 size, s32 alignment, CarpBuffer* outBuffer)
     CARP_ASSERT_RETURN(alignment >= 16, false);
     CARP_ASSERT_RETURN(size >= 32 , false);
     CARP_ASSERT_RETURN(outBuffer->carp_buffer_data == NULL, false);
+    
+    size = (size + alignment - 1) & (~(alignment - 1)); 
     // only accept power of 2 reserves
-    CARP_ASSERT_RETURN(((size - 1) & size) == 0, false);
+    //CARP_ASSERT_RETURN(((size - 1) & size) == 0, false);
     // only accept power of 2 alignments
     CARP_ASSERT_RETURN(((alignment - 1) & alignment) == 0, false);
 
-    CARP_ASSERT_RETURN(carp_buffer_createAlignedBuffer(size, alignment, outBuffer), false);
+    CARP_ASSERT_RETURN(s_carp_buffer_createAlignedBuffer(size, alignment, outBuffer), false);
     return true;
 }
 
@@ -66,7 +68,7 @@ CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s3
         while(capacity < oldSize + pushBufferSize)
             capacity *= 2;
         CarpBuffer newBuffer = {0};
-        CARP_ASSERT_RETURN(carp_buffer_createAlignedBuffer(
+        CARP_ASSERT_RETURN(s_carp_buffer_createAlignedBuffer(
             capacity,
             buffer->carp_buffer_alignment,
             &newBuffer

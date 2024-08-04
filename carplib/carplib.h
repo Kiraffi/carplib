@@ -3,6 +3,13 @@
 
 #include "carptype.h"
 
+#include "carpbuffer.h"
+
+CARP_FN bool carp_lib_loadFile(const char* fileName, CarpBuffer* outBuffer);
+
+CARP_FN bool carp_lib_skipWhiteSpace(const char** pos);
+CARP_FN bool carp_lib_skipUntilWhiteSpace(const char** pos);
+
 CARP_FN s64 carp_lib_strtoll(const char* src, const char** end, size_t radix);
 CARP_FN f64 carp_lib_strtod(const char* src, const char** end);
 
