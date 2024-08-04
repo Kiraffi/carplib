@@ -6,6 +6,7 @@
 // something overwrited aligned_alloc
 #include "carplib/carpbuffer.c"
 #include "carplib/carpdynlib.c"
+#include "carplib/carpecsparser.c"
 #include "carplib/carpgl.c"
 #include "carplib/carpkeyboard.c"
 #include "carplib/carplang.c"

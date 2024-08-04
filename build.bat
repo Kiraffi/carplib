@@ -11,7 +11,8 @@ set final=%links% %linkfolders%
 rem set compilesource=examples/triangle.c
 rem set compilesource=examples/hotreload.c
 rem set compilesource=examples/cubes.c
-set compilesource=examples/scripttest.c
+rem set compilesource=examples/scripttest.c
+set compilesource=examples/ecstest.c
 
 
 md buildout
