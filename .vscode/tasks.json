@@ -9,7 +9,7 @@
         "command": "clang",
         "args": [
           "-g",
-          "examples/scripttest.c",
+          "examples/ecstest.c",
           "-obuildout/main.exe",
           "-std=c11",
           //"-O2",

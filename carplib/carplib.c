@@ -1,11 +1,22 @@
 #include "carplib.h"
 
 #include "carpassert.h"
+#include "carptype.h"
 
 #include <stdlib.h>
 #include <string.h>
 
-static bool sCarp_lib_loadFileHelper(FILE* f, CarpBuffer* outBuffer)
+static void s_carp_lib_fopen(FILE** f, const char* fileName, const char* mode)
+{
+    #if CARP_WIN32 && !CARP_TCC
+        fopen_s(f, fileName, mode);
+    #else
+        *f = fopen(fileName, mode);
+    #endif
+
+}
+
+static bool s_carp_lib_loadFileHelper(FILE* f, CarpBuffer* outBuffer)
 {
     CARP_ASSERT_RETURN(f, false);
     CARP_ASSERT_RETURN(outBuffer, false);
@@ -29,15 +40,12 @@ CARP_FN bool carp_lib_loadFile(const char* fileName, CarpBuffer* outBuffer)
 {
     CARP_ASSERT_RETURN(fileName, false);
     CARP_ASSERT_RETURN(outBuffer, false);
+
     FILE* f = NULL;
-    
-    #if CARP_WIN32
-    fopen_s(&f, fileName, "rb");
-    #else
-    fopen(fileName, "rb");
-    #endif
+    s_carp_lib_fopen(&f, fileName, "rb");
+
     CARP_ASSERT_RETURN(f, false);
-    bool result = sCarp_lib_loadFileHelper(f, outBuffer);
+    bool result = s_carp_lib_loadFileHelper(f, outBuffer);
 
     fclose(f);
     if(!result)
@@ -48,6 +56,22 @@ CARP_FN bool carp_lib_loadFile(const char* fileName, CarpBuffer* outBuffer)
     CARP_ASSERT_RETURN(result, false);
     return result;
 }
+CARP_FN bool carp_lib_writeFile(const char* fileName, const char* data, s32 dataLen)
+{
+    CARP_ASSERT_RETURN(fileName, false);
+    CARP_ASSERT_RETURN(data, false);
+
+    FILE* f = NULL;
+    s_carp_lib_fopen(&f, fileName, "wb");
+
+    CARP_ASSERT_RETURN(f, false);
+
+    fwrite(data, 1, dataLen, f);
+    s32 err = ferror(f);
+
+    return fclose(f) == 0 && err == 0;
+}
+
 
 CARP_FN bool carp_lib_skipWhiteSpace(const char** pos)
 {
@@ -134,7 +158,12 @@ CARP_FN void carp_lib_memmove(void* dst, const void* src, size_t size)
     memmove(dst, src, size);
 }
 
-CARP_FN bool carp_lib_isnumber(char c)
+CARP_FN bool carp_lib_isNumber(char c)
 {
     return (c >= '0' && c <= '9');
+}
+
+CARP_FN bool carp_lib_isAlpha(char c)
+{
+    return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
 }

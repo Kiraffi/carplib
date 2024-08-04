@@ -5,7 +5,7 @@
 #include "carptype.h"
 
 #if defined(_M_X64) || defined(_M_AMD64) || defined(__x86_64__)
-#ifndef __TINYC__
+#ifndef CARP_TCC
     //#include <immintrin.h> // takes slightly bit longer to compile
     #include <smmintrin.h>
     //#include <emmintrin.h> // once popcnt or trailing zeroes needed...
@@ -19,7 +19,7 @@
 
 #endif
 
-#if __TINYC__
+#if CARP_TCC
     #define ASM_LABEL(name) #name
 #else
     #define ASM_LABEL(name) #name"%="

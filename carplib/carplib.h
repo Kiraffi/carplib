@@ -6,6 +6,7 @@
 #include "carpbuffer.h"
 
 CARP_FN bool carp_lib_loadFile(const char* fileName, CarpBuffer* outBuffer);
+CARP_FN bool carp_lib_writeFile(const char* fileName, const char* data, s32 dataLen);
 
 CARP_FN bool carp_lib_skipWhiteSpace(const char** pos);
 CARP_FN bool carp_lib_skipUntilWhiteSpace(const char** pos);
@@ -23,7 +24,8 @@ CARP_FN void carp_lib_memset(void* dst, u8 value, size_t size);
 CARP_FN void carp_lib_memcopy(void* dst, const void* src, size_t size);
 CARP_FN void carp_lib_memmove(void* dst, const void* src, size_t size);
 
-CARP_FN bool carp_lib_isnumber(char c);
+CARP_FN bool carp_lib_isNumber(char c);
+CARP_FN bool carp_lib_isAlpha(char c);
 
 
 #endif // CARPLIB_HH

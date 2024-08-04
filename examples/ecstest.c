@@ -9,10 +9,15 @@
 #include "carplib/carpshader.h"
 #include "carplib/carpwindow.h"
 
+#include "ecsteststructs.h"
+
 #define WINDOW_WIDTH 800
 #define WINDOW_HEIGHT 600
 #define WINDOW_POS_X 1000
 #define WINDOW_POS_Y 1000
+
+
+
 
 static const char vertexShaderCode[] =
     "#version 450 core\n"
@@ -34,21 +39,51 @@ static const char fragmentShaderCode[] =
 
 static const char ecsData[] =
     " \n"
-    
-    "PositionComponent \n"
-    "    pos : V3A \n"
-    "\n"
-    "ScaleComponent \n"
-    "    scale : V3A \n"
-    " \n"
-    "RotationComponent \n"
+    "TestComponent \n"
+    "{\n"
+    "    as08  : s8 \n"
+    "    au08  : u8 \n"
+    "    au16  : u16 \n"
+    "    as16  : s16 \n"
+    "    as32  : s32 \n"
+    "    as64  : s64 \n"
+    "    au32  : u32 \n"
+    "    au64  : u64 \n"
+    "    af32  : f32 \n"
+    "    af64  : f64 \n"
+    "    av2   : Vec2 \n"
+    "    av3   : Vec3 \n"
+    "    aquat : Quat \n"
+    "    am34  : M34 \n"
+    "    am44  : M44 \n"
+    "    forcepadding : s8 \n"
+    "}\n"
+    "TestSmallComponent \n"
+    "{\n"
+    "    v : s8\n"
+    "}\n"
+    /* Empty component fails to pass
+    "TestEmptyComponent \n"
+    "{\n"
+    "}\n"
+    */
+    "TestArrComponent \n"
+    "{\n"
+    "    as08_32  : s8[32] \n"
+    // empty array is not valid
+    //"    as08_0  : s8[0] \n"
+    "}\n"
+    "TransformComponent \n"
+    "{\n"
+    "    pos : Vec3 \n"
     "    rot : Quat \n"
-    "\n"
+    "    scale : Vec3 \n"
+    "}\n"
     "VelocityComponent \n"
-    "    vel : V3A \n"
-    " \n"
+    "{\n"
+    "    vel : Vec3 \n"
+    "}\n"
     ""
-
 
 
     "";
@@ -180,9 +215,20 @@ s32 main(s32 argc, char** argv)
         carp_memory_destroy();
         return -1;
     }
-
+    
     s32 result = sMain();
 
+    if(!carp_lib_writeFile(
+        "examples/ecsteststructs.h",
+        (const char*)file.data.carp_buffer_data,
+        file.data.carp_buffer_size))
+    {
+        CARP_LOGERROR("Failed to write file\n");
+        carp_buffer_free(&file.data);
+        carp_memory_destroy();
+        return -1;
+    }
+    carp_buffer_free(&file.data);
     carp_memory_destroy();
 
     return result;

@@ -1,4 +1,6 @@
 
+#include "carplib/carpbuffer.c"
+#include "carplib/carplib.c"
 #include "carplib/carpmath.c"
 
 #include "carplib/carplog.h"

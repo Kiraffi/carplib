@@ -34,6 +34,10 @@ typedef double f64;
 #error "Not supported system"
 #endif // _WIN32
 
+#if __TINYC__
+#define CARP_TCC 1
+#endif //__TINYC__
+
 #if CARP_WIN32
 #ifndef CARP_LIBEXPORT
 #define CARP_LIBEXPORT __declspec(dllexport)

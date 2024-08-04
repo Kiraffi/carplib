@@ -387,10 +387,7 @@ static s32 s_tryParseIdentifier(const char** pos)
     CARP_ASSERT_RETURN(pos, -1);
 
     char c = **pos;
-    if(!(
-        (c >= 'a' && c <= 'z')
-        || (c >= 'A' && c <= 'Z')
-        || c == '_'))
+    if(!(carp_lib_isAlpha(c) || c == '_'))
     {
         return 0;
     }
@@ -399,11 +396,7 @@ static s32 s_tryParseIdentifier(const char** pos)
     while(**pos)
     {
         char c = **pos;
-        if(!(
-            (c >= 'a' && c <= 'z')
-            || (c >= 'A' && c <= 'Z')
-            || (c >= '0' && c <= '9')
-            || c == '_'))
+        if(!(carp_lib_isAlpha(c) || carp_lib_isNumber(c) || c == '_'))
         {
             return len;
         }
@@ -482,7 +475,7 @@ static bool s_parseTokens(s32* inputIndex, CarpLangBuffers *outBuffers)
                 ++helperIndex;
             }
         }
-        else if(carp_lib_isnumber(*pos))
+        else if(carp_lib_isNumber(*pos))
         {
             const char* end = NULL;
 

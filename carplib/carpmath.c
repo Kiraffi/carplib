@@ -3,14 +3,15 @@
 #include "carpmath.h"
 
 #include "carpassert.h"
+#include "carplib.h"
 #include "carplog.h"
 #include "carptype.h"
 
 // for memory
 // "movl $0x3F800000, 0xc(%%rax)\n\t" // set w to 1.0f
-#if CARP_WIN32 && ( __TINYC__ ) //  || __clang__)
+#if CARP_WIN32 && ( CARP_TCC ) //  || __clang__)
 #define USE_ASM_WINDOWS 1
-#elif CARP_LINUX && (__TINYC__)
+#elif CARP_LINUX && (CARP_TCC)
 #define USE_ASM_LINUX 1
 #elif CARP_WIN32 || CARP_LINUX
 #else
@@ -1719,7 +1720,7 @@ CARP_FN void carp_math_getM34Identity(CarpM34* outM34)
         0.0f, 0.0f, 1.0f, 0.0f,
     };
     static const CarpM34* ptrM34Identity = &M34Identity;
-    memmove(outM34, &M34Identity, sizeof(CarpM34));
+    carp_lib_memmove(outM34, &M34Identity, sizeof(CarpM34));
 }
 
 CARP_FN void carp_math_getM44Identity(CarpM44* outM44)
@@ -1730,21 +1731,21 @@ CARP_FN void carp_math_getM44Identity(CarpM44* outM44)
         0.0f, 0.0f, 1.0f, 0.0f,
         0.0f, 0.0f, 0.0f, 1.0f
     };
-    memmove(outM44, &M44Identity, sizeof(CarpM44));
+    carp_lib_memmove(outM44, &M44Identity, sizeof(CarpM44));
 }
 
 CARP_FN void carp_math_set_m34(const CarpM34* a, CarpM34* outM34)
 {
     if(a != outM34)
     {
-        memmove(outM34, a, sizeof(CarpM34));
+        carp_lib_memmove(outM34, a, sizeof(CarpM34));
     }
 }
 CARP_FN void carp_math_set_m44(const CarpM44* a, CarpM44* outM44)
 {
     if(a != outM44)
     {
-        memmove(outM44, a, sizeof(CarpM44));
+        carp_lib_memmove(outM44, a, sizeof(CarpM44));
     }
 }
 

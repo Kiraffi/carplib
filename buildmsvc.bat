@@ -12,7 +12,8 @@ set linkeroptions=/link /MACHINE:X64
 rem set compilesource=examples/triangle.c
 rem set compilesource=examples/hotreload.c
 rem set compilesource=examples/cubes.c
-set compilesource=examples/scripttest.c
+rem set compilesource=examples/scripttest.c
+set compilesource=examples/ecstest.c
 
 rem Oi = intrinsics, Ot = fast, Gv use vectorcall, MT multithreading /Gv 
 rem /arch:AVX 

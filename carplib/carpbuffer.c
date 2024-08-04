@@ -42,26 +42,26 @@ CARP_FN bool carp_buffer_create(s32 size, s32 alignment, CarpBuffer* outBuffer)
     return true;
 }
 
-CARP_FN bool carp_buffer_free(CarpBuffer* buffer)
+CARP_FN bool carp_buffer_free(CarpBuffer* outBuffer)
 {
-    CARP_ASSERT_RETURN(buffer, false);
-    CARP_ASSERT_RETURN(buffer->carp_buffer_data, false);
-    carp_lib_free(buffer->carp_buffer_actual_pointer);
+    CARP_ASSERT_RETURN(outBuffer, false);
+    CARP_ASSERT_RETURN(outBuffer->carp_buffer_data, false);
+    carp_lib_free(outBuffer->carp_buffer_actual_pointer);
     CarpBuffer tmp = {0};
-    *buffer = tmp;
+    *outBuffer = tmp;
     return true;
 }
 
 
-CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s32 pushBufferSize)
+CARP_FN bool carp_buffer_pushBuffer(const u8* pushBuffer, s32 pushBufferSize, CarpBuffer* outBuffer)
 {
-    CARP_ASSERT_RETURN(buffer, false);
-    CARP_ASSERT_RETURN(buffer->carp_buffer_data, false);
+    CARP_ASSERT_RETURN(outBuffer, false);
+    CARP_ASSERT_RETURN(outBuffer->carp_buffer_data, false);
 
-    if(buffer->carp_buffer_size + pushBufferSize >= buffer->carp_buffer_capacity)
+    if(outBuffer->carp_buffer_size + pushBufferSize >= outBuffer->carp_buffer_capacity)
     {
-        s32 oldSize = buffer->carp_buffer_size;
-        s32 capacity = buffer->carp_buffer_capacity;
+        s32 oldSize = outBuffer->carp_buffer_size;
+        s32 capacity = outBuffer->carp_buffer_capacity;
         if(capacity < 32)
             capacity = 32;
 
@@ -70,38 +70,46 @@ CARP_FN bool carp_buffer_pushBuffer(CarpBuffer* buffer, const u8* pushBuffer, s3
         CarpBuffer newBuffer = {0};
         CARP_ASSERT_RETURN(s_carp_buffer_createAlignedBuffer(
             capacity,
-            buffer->carp_buffer_alignment,
+            outBuffer->carp_buffer_alignment,
             &newBuffer
         ), false);
         newBuffer.carp_buffer_size = oldSize;
 
         carp_lib_memcopy(
-            newBuffer.carp_buffer_data, buffer->carp_buffer_data, oldSize);
-        carp_buffer_free(buffer);
+            newBuffer.carp_buffer_data, outBuffer->carp_buffer_data, oldSize);
+        carp_buffer_free(outBuffer);
 
-        *buffer = newBuffer;
+        *outBuffer = newBuffer;
     }
     carp_lib_memcopy(
-        buffer->carp_buffer_data + buffer->carp_buffer_size, pushBuffer, pushBufferSize);
-    buffer->carp_buffer_size += pushBufferSize;
+        outBuffer->carp_buffer_data + outBuffer->carp_buffer_size, pushBuffer, pushBufferSize);
+    outBuffer->carp_buffer_size += pushBufferSize;
     return true;
 }
+CARP_FN bool carp_buffer_pushS32ToStr(s32 value, CarpBuffer* outBuffer)
+{
+    u8 tmpBuff[64] = { 0 };
+    s32 len = snprintf((char*)tmpBuff, 63, "%d", value);
+    return carp_buffer_pushBuffer(tmpBuff, len, outBuffer);
+
+}
+
 
 #define BufferPushHelper(helperFnName, helperFnType) \
-CARP_FN bool carp_buffer_push##helperFnName (CarpBuffer* buffer, helperFnType value) \
+CARP_FN bool carp_buffer_push##helperFnName (helperFnType value, CarpBuffer* outBuffer) \
 { \
-    return carp_buffer_pushBuffer(buffer, (const u8*)(&value), sizeof(helperFnType)); \
+    return carp_buffer_pushBuffer((const u8*)(&value), sizeof(helperFnType), outBuffer); \
 }
 
 #define BufferPopHelper(helperFnName, helperFnType) \
-CARP_FN bool carp_buffer_pop##helperFnName (CarpBuffer* buffer, helperFnType* outValue) \
+CARP_FN bool carp_buffer_pop##helperFnName (helperFnType* outValue, CarpBuffer* outBuffer) \
 { \
-    CARP_ASSERT_RETURN(buffer, false); \
+    CARP_ASSERT_RETURN(outBuffer, false); \
     CARP_ASSERT_RETURN(outValue, false); \
-    CARP_ASSERT_RETURN(buffer->carp_buffer_data, false); \
-    CARP_ASSERT_RETURN(buffer->carp_buffer_size < sizeof(helperFnType), false); \
-    buffer->carp_buffer_size -= sizeof(helperFnType); \
-    *outValue = *((helperFnType*)(buffer->carp_buffer_data + buffer->carp_buffer_size)); \
+    CARP_ASSERT_RETURN(outBuffer->carp_buffer_data, false); \
+    CARP_ASSERT_RETURN(outBuffer->carp_buffer_size < sizeof(helperFnType), false); \
+    outBuffer->carp_buffer_size -= sizeof(helperFnType); \
+    *outValue = *((helperFnType*)(outBuffer->carp_buffer_data + outBuffer->carp_buffer_size)); \
     return true; \
 }
 
