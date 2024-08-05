@@ -3,6 +3,7 @@
 #include "carpassert.h"
 #include "carptype.h"
 
+#include <ctype.h> //tolower, toupper?
 #include <stdlib.h>
 #include <string.h>
 
@@ -27,7 +28,7 @@ static bool s_carp_lib_loadFileHelper(FILE* f, CarpBuffer* outBuffer)
     CARP_ASSERT_RETURN(bufferSize > 0, false);
 
     carp_buffer_create(bufferSize, 16, outBuffer);
-        
+
     CARP_ASSERT_RETURN(fseek(f, 0L, SEEK_SET) == 0, false);
 
     size_t newLen = fread(outBuffer->carp_buffer_data, sizeof(char), bufferSize, f);
@@ -122,6 +123,10 @@ CARP_FN f64 carp_lib_strtod(const char* src, const char** end)
 {
     return strtod(src, (char**)end);
 }
+CARP_FN s64 carp_lib_strlen(const char* src)
+{
+    return (s64)strlen(src);
+}
 
 CARP_FN void* carp_lib_calloc(size_t cnt, size_t amnt)
 {
@@ -166,4 +171,13 @@ CARP_FN bool carp_lib_isNumber(char c)
 CARP_FN bool carp_lib_isAlpha(char c)
 {
     return (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z');
+}
+
+CARP_FN char carp_lib_toLower(char c)
+{
+    return (char)tolower(c);
+}
+CARP_FN char carp_lib_toUpper(char c)
+{
+    return (char)toupper(c);
 }

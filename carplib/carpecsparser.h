@@ -10,7 +10,7 @@ typedef struct CarpECSParsedFile
 } CarpECSParsedFile;
 
 
-CARP_FN bool carp_ecs_parseEcsStructs(const char* data, CarpECSParsedFile* outParsedFile);
+CARP_FN bool carp_ecs_parseEcsStructs(const char* data, const char* headerGuard, CarpECSParsedFile* outParsedFile);
 
 
 

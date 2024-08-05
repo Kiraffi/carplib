@@ -13,7 +13,7 @@ CARP_FN bool carp_lib_skipUntilWhiteSpace(const char** pos);
 
 CARP_FN s64 carp_lib_strtoll(const char* src, const char** end, size_t radix);
 CARP_FN f64 carp_lib_strtod(const char* src, const char** end);
-
+CARP_FN s64 carp_lib_strlen(const char* src);
 
 CARP_FN void* carp_lib_calloc(size_t cnt, size_t amnt);
 CARP_FN void carp_lib_free(void* ptr);
@@ -26,6 +26,10 @@ CARP_FN void carp_lib_memmove(void* dst, const void* src, size_t size);
 
 CARP_FN bool carp_lib_isNumber(char c);
 CARP_FN bool carp_lib_isAlpha(char c);
+
+CARP_FN char carp_lib_toLower(char c);
+CARP_FN char carp_lib_toUpper(char c);
+
 
 
 #endif // CARPLIB_HH

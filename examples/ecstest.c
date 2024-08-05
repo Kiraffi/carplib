@@ -209,13 +209,13 @@ s32 main(s32 argc, char** argv)
     }
     CarpECSParsedFile file = { 0 };
 
-    if(!carp_ecs_parseEcsData(ecsData, &file))
+    if(!carp_ecs_parseEcsData(ecsData, "CARP_ECS_TEST_STRUCTS_HH", &file))
     {
         CARP_LOGERROR("Failed to parse ecs data\n");
         carp_memory_destroy();
         return -1;
     }
-    
+
     s32 result = sMain();
 
     if(!carp_lib_writeFile(

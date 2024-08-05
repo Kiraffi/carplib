@@ -127,7 +127,6 @@ static s32 sMainAfterWindow(void)
         return -1;
     }
 
-
     // An array of 3 vectors which represents 3 vertices
     static const f32 VertexBufferData[] = {
         // front

@@ -67,7 +67,7 @@ typedef struct CarpECSComponentDef
 
     s32 carpEcsComponentDefVarIndexStart;
     s32 carpEcsComponentDefVarAmount;
-    
+
     s32 carpEcsComponentDefComponentSizeInBytes;
     s32 carpEcsComponentDefComponentAlignInBytes;
 
@@ -81,7 +81,7 @@ static bool s_carp_ecs_pushStringToBuffer(const char* str, CarpBuffer* outBuffer
     CARP_ASSERT_RETURN(str, false);
     CARP_ASSERT_RETURN(outBuffer, false);
 
-    s32 len = strlen(str);
+    s32 len = carp_lib_strlen(str);
     CARP_ASSERT_RETURN(carp_buffer_pushBuffer((const u8*)str, len, outBuffer), false);
     return true;
 }
@@ -210,7 +210,7 @@ static s32 s_carp_ecs_getVariableDefTypeAlignSize(CarpECSVariableDefType varType
 static void s_carp_ecs_printVariable(s32 varIndex, const CarpECSParseMemory* mem)
 {
     CARP_ASSERT_RETURN(mem, );
-    CARP_ASSERT_RETURN(varIndex >= 0, );    
+    CARP_ASSERT_RETURN(varIndex >= 0, );
     CARP_ASSERT_RETURN(varIndex < mem->CarpECSVariableDefCount, );
 
     const CarpECSVariableDef* var = mem->carpECSVariableDefs + varIndex;
@@ -218,7 +218,7 @@ static void s_carp_ecs_printVariable(s32 varIndex, const CarpECSParseMemory* mem
     CARP_ASSERT_RETURN(var, );
     if(var->carpECSVariableDefArrSize > 0)
     {
-        CARP_LOG("Variable: %-.*s  : %s[%i], offset: %i\n", 
+        CARP_LOG("Variable: %-.*s  : %s[%i], offset: %i\n",
             var->carpECSVariableDefNameLen,
             var->carpECSVariableDefName,
             s_carp_ecs_getVariableDefType(var->carpECSVariableDefType),
@@ -228,7 +228,7 @@ static void s_carp_ecs_printVariable(s32 varIndex, const CarpECSParseMemory* mem
     }
     else
     {
-        CARP_LOG("Variable: %-.*s  : %s, offset: %i\n", 
+        CARP_LOG("Variable: %-.*s  : %s, offset: %i\n",
             var->carpECSVariableDefNameLen,
             var->carpECSVariableDefName,
             s_carp_ecs_getVariableDefType(var->carpECSVariableDefType),
@@ -241,19 +241,19 @@ static void s_carp_ecs_printVariable(s32 varIndex, const CarpECSParseMemory* mem
 static void s_carp_ecs_printComponent(s32 compIndex, const CarpECSParseMemory* mem)
 {
     CARP_ASSERT_RETURN(mem, );
-    CARP_ASSERT_RETURN(compIndex >= 0, );    
+    CARP_ASSERT_RETURN(compIndex >= 0, );
     CARP_ASSERT_RETURN(compIndex < mem->carpECSComponentDefCount, );
 
-    const CarpECSComponentDef* comp = mem->carpECSComponentDefs + compIndex; 
+    const CarpECSComponentDef* comp = mem->carpECSComponentDefs + compIndex;
 
-    CARP_LOG("Component: %-.*s, size:%i\n", 
-        comp->carpEcsComponentDefNameLen, 
+    CARP_LOG("Component: %-.*s, size:%i\n",
+        comp->carpEcsComponentDefNameLen,
         comp->carpEcsComponentDefName,
         comp->carpEcsComponentDefComponentSizeInBytes);
 
     for(s32 i = 0; i < comp->carpEcsComponentDefVarAmount; ++i)
     {
-        CARP_LOG("    "); 
+        CARP_LOG("    ");
         s_carp_ecs_printVariable(comp->carpEcsComponentDefVarIndexStart + i, mem);
     }
 }
@@ -317,7 +317,7 @@ static bool s_carp_ecs_tryParseVariables(CarpECSParseMemory* outMem)
         CARP_ASSERT_RETURN(s_carp_ecs_advanceIfChar(':', &outMem->dataPtr), false);
 
         CARP_ASSERT_RETURN(carp_lib_skipWhiteSpace(&outMem->dataPtr), false);
-        
+
         const char* typeStart = outMem->dataPtr;
         s32 typeLen = s_carp_ecs_parseNameLen(&outMem->dataPtr);
         CARP_ASSERT_RETURN(typeLen > 0, false);
@@ -331,15 +331,15 @@ static bool s_carp_ecs_tryParseVariables(CarpECSParseMemory* outMem)
         CARP_ASSERT_RETURN(carp_lib_skipWhiteSpace(&outMem->dataPtr), false);
 
         CARP_ASSERT_RETURN(outMem->CarpECSVariableDefCount < CarpECSVariableDefMaxAmount, false);
-        
+
         CarpECSVariableDef* newVar = outMem->carpECSVariableDefs + outMem->CarpECSVariableDefCount;
         ++outMem->CarpECSVariableDefCount;
 
         newVar->carpECSVariableDefName = nameStart;
         newVar->carpECSVariableDefNameLen = nameLen;
         newVar->carpECSVariableDefType = varType;
-        
-        
+
+
         componentSizeInBytes = (componentSizeInBytes + alignSize - 1) & (~(alignSize - 1));
         newVar->carpECSVariableDefComponentMemOffset = componentSizeInBytes;
 
@@ -353,7 +353,7 @@ static bool s_carp_ecs_tryParseVariables(CarpECSParseMemory* outMem)
             CARP_ASSERT_RETURN(num > 0, false);
 
             newVar->carpECSVariableDefArrSize = num;
-            varSize *= num; 
+            varSize *= num;
 
             CARP_ASSERT_RETURN(carp_lib_skipWhiteSpace(&outMem->dataPtr), false);
 
@@ -372,14 +372,14 @@ static bool s_carp_ecs_tryParseVariables(CarpECSParseMemory* outMem)
     };
     CARP_ASSERT_RETURN(s_carp_ecs_advanceIfChar('}', &outMem->dataPtr), false);
 
-    s32 compSize = componentSizeInBytes; 
+    s32 compSize = componentSizeInBytes;
     componentSizeInBytes = (componentSizeInBytes + highestAlign - 1) & (~(highestAlign - 1));
     if(compSize != componentSizeInBytes)
     {
         s32 paddingSize = componentSizeInBytes - compSize;
 
         CARP_ASSERT_RETURN(outMem->CarpECSVariableDefCount < CarpECSVariableDefMaxAmount, false);
-        
+
         CarpECSVariableDef* newVar = outMem->carpECSVariableDefs + outMem->CarpECSVariableDefCount;
         ++outMem->CarpECSVariableDefCount;
 
@@ -428,10 +428,10 @@ static bool s_carp_ecs_tryParseComponent(CarpECSParseMemory* outMem)
     component->carpEcsComponentDefNameLen = nameLen;
 
     s32 currentVariableCount = outMem->CarpECSVariableDefCount;
-    component->carpEcsComponentDefVarIndexStart = currentVariableCount; 
+    component->carpEcsComponentDefVarIndexStart = currentVariableCount;
 
     CARP_ASSERT_RETURN(s_carp_ecs_tryParseVariables(outMem), false);
-    component->carpEcsComponentDefVarAmount = outMem->CarpECSVariableDefCount - currentVariableCount; 
+    component->carpEcsComponentDefVarAmount = outMem->CarpECSVariableDefCount - currentVariableCount;
 
     CARP_ASSERT_RETURN(component->carpEcsComponentDefVarAmount > 0, false);
     s32 componentSizeInBytes = 0;
@@ -446,7 +446,7 @@ static bool s_carp_ecs_tryParseComponent(CarpECSParseMemory* outMem)
     }
     --var;
     s32 varSize = s_carp_ecs_getVariableDefTypeSize(var->carpECSVariableDefType);
-    varSize *= var->carpECSVariableDefArrSize > 0 
+    varSize *= var->carpECSVariableDefArrSize > 0
         ? var->carpECSVariableDefArrSize
         : 1;
 
@@ -477,6 +477,7 @@ static bool s_carp_ecs_tryParseDefinitions(CarpECSParseMemory* outMem)
 
 static bool s_carp_ecs_parseWriteOut(
     const CarpECSParseMemory* mem,
+    const char* headerGuard,
     CarpECSParsedFile* outParsedFile)
 {
     CARP_ASSERT_RETURN(outParsedFile, false);
@@ -484,16 +485,20 @@ static bool s_carp_ecs_parseWriteOut(
 
     carp_buffer_create(1024, 16, &outParsedFile->data);
 
+    s_carp_ecs_pushStringToBuffer("#ifndef ", &outParsedFile->data);
+    s_carp_ecs_pushStringToBuffer(headerGuard, &outParsedFile->data);
+    s_carp_ecs_pushStringToBuffer("\r\n#define ", &outParsedFile->data);
+    s_carp_ecs_pushStringToBuffer(headerGuard, &outParsedFile->data);
+
     s_carp_ecs_pushStringToBuffer(
-            "#ifndef CARP_ECS_STRUCTS_HH\r\n"
-            "#define CARP_ECS_STRUCTS_HH\r\n"
+            "\r\n"
             "\r\n"
             "#include \"carplib/carpmath.h\"\r\n"
             "\r\n"
             "#include <stdalign.h> //alignof\r\n"
             "\r\n"
         , &outParsedFile->data);
-        
+
 
     char compName[256] = { 0 };
     char varName[256] = { 0 };
@@ -514,17 +519,18 @@ static bool s_carp_ecs_parseWriteOut(
 
         carp_lib_memcopy(compName, comp->carpEcsComponentDefName, comp->carpEcsComponentDefNameLen);
         compName[comp->carpEcsComponentDefNameLen] = '\0';
-        compName[0] = tolower(compName[0]);
+        compName[0] = carp_lib_toLower(compName[0]);
 
         s_carp_ecs_pushStringToBuffer("\r\n{\r\n", &outParsedFile->data);
         const CarpECSVariableDef* var = mem->carpECSVariableDefs + comp->carpEcsComponentDefVarIndexStart;
+        s32 currentOffset = 0;
         for(s32 j = 0; j < comp->carpEcsComponentDefVarAmount; ++j)
         {
             CARP_ASSERT_RETURN(var->carpECSVariableDefNameLen < 256, false);
 
             carp_lib_memcopy(varName, var->carpECSVariableDefName, var->carpECSVariableDefNameLen);
             varName[var->carpECSVariableDefNameLen] = '\0';
-            varName[0] = toupper(varName[0]);
+            varName[0] = carp_lib_toUpper(varName[0]);
 
             s_carp_ecs_pushStringToBuffer("    ", &outParsedFile->data);
             s_carp_ecs_pushStringToBuffer(s_carp_ecs_getVariableDefType(var->carpECSVariableDefType), &outParsedFile->data);
@@ -540,9 +546,20 @@ static bool s_carp_ecs_parseWriteOut(
             }
             s_carp_ecs_pushStringToBuffer("; // offset: ", &outParsedFile->data);
             carp_buffer_pushS32ToStr(var->carpECSVariableDefComponentMemOffset, &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer(", size: ", &outParsedFile->data);
+            s32 varSize = s_carp_ecs_getVariableDefTypeSize(var->carpECSVariableDefType);
+            varSize *= var->carpECSVariableDefArrSize > 0 ? var->carpECSVariableDefArrSize : 1;
+            carp_buffer_pushS32ToStr(varSize, &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer(", alignment: ", &outParsedFile->data);
+            s32 varAlignment = s_carp_ecs_getVariableDefTypeAlignSize(var->carpECSVariableDefType);
+            carp_buffer_pushS32ToStr(varAlignment, &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer(", padding: ", &outParsedFile->data);
+            s32 paddingAmnt = var->carpECSVariableDefComponentMemOffset - currentOffset;
+            carp_buffer_pushS32ToStr(paddingAmnt, &outParsedFile->data);
 
             s_carp_ecs_pushStringToBuffer("\r\n", &outParsedFile->data);
 
+            currentOffset = var->carpECSVariableDefComponentMemOffset + varSize;
             ++var;
         }
         s_carp_ecs_pushStringToBuffer("} ", &outParsedFile->data);
@@ -562,13 +579,15 @@ static bool s_carp_ecs_parseWriteOut(
         s_carp_ecs_pushStringToBuffer("\r\n", &outParsedFile->data);
 
     }
-    s_carp_ecs_pushStringToBuffer("#endif // CARP_ECS_STRUCTS_HH\r\n\0", &outParsedFile->data);
+    s_carp_ecs_pushStringToBuffer("#endif // ", &outParsedFile->data);
+    s_carp_ecs_pushStringToBuffer(headerGuard, &outParsedFile->data);
+    s_carp_ecs_pushStringToBuffer("\r\n\r\n\0", &outParsedFile->data);
 
 
     return true;
 }
 
-CARP_FN bool carp_ecs_parseEcsData(const char* data, CarpECSParsedFile* outParsedFile)
+CARP_FN bool carp_ecs_parseEcsData(const char* data, const char* headerGuard, CarpECSParsedFile* outParsedFile)
 {
     CARP_ASSERT_RETURN(data, false);
     CARP_ASSERT_RETURN(outParsedFile, false);
@@ -588,7 +607,7 @@ CARP_FN bool carp_ecs_parseEcsData(const char* data, CarpECSParsedFile* outParse
         {
             //s_carp_ecs_printComponent(i, &ecsParseMem);
         }
-        result = s_carp_ecs_parseWriteOut(&ecsParseMem, outParsedFile);
+        result = s_carp_ecs_parseWriteOut(&ecsParseMem, headerGuard, outParsedFile);
         //s_carp_ecs_printBuffer(outParsedFile);
     }
     //outParsedFile->data.

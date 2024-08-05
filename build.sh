@@ -8,7 +8,7 @@ mkdir buildout
 fi
 
 compiler=$1
-compileoptions="-std=c11 -lX11 -lGL -lm -m64 -g -gdwarf"
+compileoptions="-std=c11 -lX11 -lGL -lm -m64 -g -gdwarf -Wpedantic"
 #compileoptionsreport="-ftime-report"
 #"-fno-inline-small-functions"
 #compilernoinline="-fno-inline"
@@ -19,9 +19,10 @@ tcccompileoptionsextra="-L../tinycc -I../tinycc/include"
 #compilesource="examples/triangle.c"
 #compilesource="examples/hotreload.c"
 #compilesource="examples/cubes.c"
-compilesource="examples/scripttest.c"
+#compilesource="examples/scripttest.c"
+compilesource="examples/ecstest.c"
 
-#launchprog="buildout/main.out"
+launchprog="buildout/main.out"
 
 # echo ''
 # echo 'clang'
