@@ -83,6 +83,18 @@ static const char ecsData[] =
     "{\n"
     "    vel : Vec3 \n"
     "}\n"
+
+    "PlayerEntity \n"
+    "{\n"
+    "    transform : TransformComponent\n"
+    "    velocity : VelocityComponent\n"
+    "}\n"
+
+    "TestEntity \n"
+    "{\n"
+    "    first : TestArrComponent\n"
+    "}\n"
+
     ""
 
 
