@@ -2,8 +2,18 @@
 #define CARP_ECS_TEST_STRUCTS_HH
 
 #include "carplib/carpmath.h"
+#include "carplib/carpecsentityheader.h"
 
 #include <stdalign.h> //alignof
+
+
+typedef enum CarpEcsEntityType
+{
+    CarpEcsEntityTypeNone,
+    CarpEcsEntityTypePlayerEntity,
+    CarpEcsEntityTypeTestEntity,
+    CarpEcsEntityTypeCount,
+} CarpEcsEntityType;
 
 // size: 224, align: 16
 typedef struct TestComponent
@@ -62,6 +72,42 @@ typedef struct VelocityComponent
 } VelocityComponent;
 static_assert(sizeof(VelocityComponent) == 16, "size not matching!");
 static_assert(alignof(VelocityComponent) == 16, "align not matching!");
+
+
+typedef struct PlayerEntity
+{
+    CarpEcsEntityHeader playerEntityHeader;
+    struct TransformComponent* playerEntityTransform;
+    struct VelocityComponent* playerEntityVelocity;
+} PlayerEntity;
+
+
+typedef struct TestEntity
+{
+    CarpEcsEntityHeader testEntityHeader;
+    struct TestArrComponent* testEntityFirst;
+} TestEntity;
+
+static CarpEcsEntityHeader* carp_ecs_create_entity(CarpEcsEntityType type, s32 amount)
+{
+    CarpEcsEntityHeader* result = NULL;
+    switch(type)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return NULL;
+
+        case CarpEcsEntityTypePlayerEntity:
+        {
+        }
+
+        case CarpEcsEntityTypeTestEntity:
+        {
+        }
+
+    };
+    return NULL;
+}
 
 #endif // CARP_ECS_TEST_STRUCTS_HH
 

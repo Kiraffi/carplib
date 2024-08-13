@@ -696,14 +696,35 @@ static bool s_carp_ecs_parseWriteOut(
             "\r\n"
             "\r\n"
             "#include \"carplib/carpmath.h\"\r\n"
+            "#include \"carplib/carpecsentityheader.h\"\r\n"
             "\r\n"
             "#include <stdalign.h> //alignof\r\n"
             "\r\n"
         , &outParsedFile->data);
 
 
+    char entName[256] = { 0 };
     char compName[256] = { 0 };
     char varName[256] = { 0 };
+
+    // enums
+    {
+        s_carp_ecs_pushStringToBuffer("\r\ntypedef enum CarpEcsEntityType\r\n{\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("    CarpEcsEntityTypeNone,\r\n", &outParsedFile->data);
+
+        for(s32 i = 0; i < mem->carpEcsParseMemoryEntityDefCount; ++i)
+        {
+            const CarpECSEntityDef* entity = mem->carpEcsParseMemoryEntityDefs + i;
+            CARP_ASSERT_RETURN(entity->carpEcsEntityDefNameLen < 256, false);
+
+            s_carp_ecs_pushStringToBuffer("    CarpEcsEntityType", &outParsedFile->data);
+            carp_buffer_pushBuffer((const u8*)entity->carpEcsEntityDefName, entity->carpEcsEntityDefNameLen, &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer(",\r\n", &outParsedFile->data);
+        }
+        s_carp_ecs_pushStringToBuffer("    CarpEcsEntityTypeCount,\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("} CarpEcsEntityType;\r\n\r\n", &outParsedFile->data);
+    }
+
 
     for(s32 i = 0; i < mem->carpEcsParseMemoryComponentDefCount; ++i)
     {
@@ -781,10 +802,96 @@ static bool s_carp_ecs_parseWriteOut(
         s_carp_ecs_pushStringToBuffer("\r\n", &outParsedFile->data);
 
     }
-    s_carp_ecs_pushStringToBuffer("#endif // ", &outParsedFile->data);
-    s_carp_ecs_pushStringToBuffer(headerGuard, &outParsedFile->data);
-    s_carp_ecs_pushStringToBuffer("\r\n\r\n\0", &outParsedFile->data);
 
+
+
+
+
+    for(s32 i = 0; i < mem->carpEcsParseMemoryEntityDefCount; ++i)
+    {
+        const CarpECSEntityDef* entity = mem->carpEcsParseMemoryEntityDefs + i;
+        CARP_ASSERT_RETURN(entity->carpEcsEntityDefNameLen < 256, false);
+
+        carp_lib_memcopy(entName, entity->carpEcsEntityDefName, entity->carpEcsEntityDefNameLen);
+        entName[entity->carpEcsEntityDefNameLen] = '\0';
+        entName[0] = carp_lib_toLower(entName[0]);
+
+        s_carp_ecs_pushStringToBuffer("\r\ntypedef struct ", &outParsedFile->data);
+        carp_buffer_pushBuffer((const u8*)entity->carpEcsEntityDefName, entity->carpEcsEntityDefNameLen, &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("\r\n{\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("    CarpEcsEntityHeader ", &outParsedFile->data);
+        carp_buffer_pushBuffer((const u8*)entName, entity->carpEcsEntityDefNameLen, &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("Header;\n", &outParsedFile->data);
+
+
+        for(s32 j = 0; j < entity->carpEcsEntityDefComponentAmount; ++j)
+        {
+            const CarpECSEntityComponentDef* comp = mem->carpEcsParseMemoryEntityComponentDefs
+                + entity->carpEcsEntityDefComponentIndexStart + j;
+
+            CARP_ASSERT_RETURN(comp->carpECSEntityComponentDefTypeIndex < mem->carpEcsParseMemoryComponentDefCount, false);
+            CarpECSComponentDef* compDef = mem->carpEcsParseMemoryComponentDefs
+                + comp->carpECSEntityComponentDefTypeIndex;
+
+
+            CARP_ASSERT_RETURN(comp->carpECSEntityComponentDefNameLen < 256, false);
+            carp_lib_memcopy(compName, comp->carpECSEntityComponentDefName, comp->carpECSEntityComponentDefNameLen);
+            compName[comp->carpECSEntityComponentDefNameLen] = '\0';
+            compName[0] = carp_lib_toUpper(compName[0]);
+
+
+
+
+            s_carp_ecs_pushStringToBuffer("    struct ", &outParsedFile->data);
+            carp_buffer_pushBuffer((const u8*)compDef->carpEcsComponentDefName, compDef->carpEcsComponentDefNameLen, &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer("* ", &outParsedFile->data);
+            carp_buffer_pushBuffer((const u8*)entName, entity->carpEcsEntityDefNameLen, &outParsedFile->data);
+            carp_buffer_pushBuffer((const u8*)compName, comp->carpECSEntityComponentDefNameLen, &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer(";\r\n", &outParsedFile->data);
+
+        }
+
+
+        s_carp_ecs_pushStringToBuffer("} ", &outParsedFile->data);
+        carp_buffer_pushBuffer((const u8*)entity->carpEcsEntityDefName, entity->carpEcsEntityDefNameLen, &outParsedFile->data);
+
+        s_carp_ecs_pushStringToBuffer(";\r\n\r\n", &outParsedFile->data);
+
+    }
+
+
+    {
+        s_carp_ecs_pushStringToBuffer("static CarpEcsEntityHeader* carp_ecs_create_entity(CarpEcsEntityType type, s32 amount)\r\n{\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("    CarpEcsEntityHeader* result = NULL;\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("    switch(type)\r\n    {\r\n", &outParsedFile->data);
+
+        s_carp_ecs_pushStringToBuffer("        case CarpEcsEntityTypeNone:\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("        case CarpEcsEntityTypeCount:\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("            return NULL;\r\n\r\n", &outParsedFile->data);
+
+
+        for(s32 i = 0; i < mem->carpEcsParseMemoryEntityDefCount; ++i)
+        {
+            const CarpECSEntityDef* entity = mem->carpEcsParseMemoryEntityDefs + i;
+            CARP_ASSERT_RETURN(entity->carpEcsEntityDefNameLen < 256, false);
+
+            s_carp_ecs_pushStringToBuffer("        case CarpEcsEntityType", &outParsedFile->data);
+            carp_buffer_pushBuffer((const u8*)entity->carpEcsEntityDefName, entity->carpEcsEntityDefNameLen, &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer(":\r\n", &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer("        {\r\n", &outParsedFile->data);
+
+            s_carp_ecs_pushStringToBuffer("        }\r\n\r\n", &outParsedFile->data);
+        }
+
+        s_carp_ecs_pushStringToBuffer("    };\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("    return NULL;\r\n", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("}\r\n\r\n", &outParsedFile->data);
+
+
+        s_carp_ecs_pushStringToBuffer("#endif // ", &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer(headerGuard, &outParsedFile->data);
+        s_carp_ecs_pushStringToBuffer("\r\n\r\n\0", &outParsedFile->data);
+    }
 
     return true;
 }
