@@ -39,6 +39,7 @@ static const char fragmentShaderCode[] =
 
 static const char ecsData[] =
     " \n"
+    /*
     "TestComponent \n"
     "{\n"
     "    as08  : s8 \n"
@@ -62,17 +63,22 @@ static const char ecsData[] =
     "{\n"
     "    v : s8\n"
     "}\n"
+    */
     /* Empty component fails to pass
     "TestEmptyComponent \n"
     "{\n"
     "}\n"
     */
+
+/*
+
     "TestArrComponent \n"
     "{\n"
     "    as08_32  : s8[32] \n"
     // empty array is not valid
     //"    as08_0  : s8[0] \n"
     "}\n"
+    */
     "TransformComponent \n"
     "{\n"
     "    pos : Vec3 \n"
@@ -83,18 +89,24 @@ static const char ecsData[] =
     "{\n"
     "    vel : Vec3 \n"
     "}\n"
+    "UsedComponent \n"
+    "{\n"
+    "    used : u8 \n"
+    "}\n"
 
     "PlayerEntity \n"
     "{\n"
     "    transform : TransformComponent\n"
     "    velocity : VelocityComponent\n"
+    "    used : UsedComponent\n"
     "}\n"
-
+/*
     "TestEntity \n"
     "{\n"
     "    first : TestArrComponent\n"
+    "    used : UsedComponent\n"
     "}\n"
-
+*/
     ""
 
 
@@ -117,6 +129,13 @@ static s32 sMainAfterWindow(void)
     {
         CARP_LOGERROR("Failed to compile shader\n");
         carp_shader_deletePixelShader(&shader);
+        return -1;
+    }
+
+    CarpEcsEntities entities = {0};
+    if(!carp_ecs_createEntities(CarpEcsEntityTypePlayerEntity, 8192, &entities))
+    {
+        CARP_LOGERROR("Failed to create entities\n");
         return -1;
     }
 
@@ -156,8 +175,6 @@ static s32 sMainAfterWindow(void)
 
 
 
-
-
     carp_window_setWindowSizeChangedCallbackFn(&memory->carp_window, sWindowSizeChanged);
     carp_window_enableVSync(&memory->carp_window, true);
 
@@ -169,6 +186,19 @@ static s32 sMainAfterWindow(void)
         carp_window_update(&memory->carp_window, 0.0f);
         if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
             memory->carp_window.carp_window_running = false;
+
+        TransformComponent* transform;
+        if(carp_ecs_getTransformComponentMut(&entities, &transform))
+        {
+            for(s32 i = 0; i < entities.carpEcsEntitiesCapacity; ++i)
+            {
+                CarpV3A* v = &(transform[i].transformComponentPos);
+                v->x += 1.0f + i;
+                v->y += 1.0f + i;
+                v->z += 1.0f + i;
+            }
+        }
+
 
         glClearColor(0.2f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -184,8 +214,21 @@ static s32 sMainAfterWindow(void)
     CARP_LOGINFO("Window finished running\n");
 
 
-    carp_shader_deletePixelShader(&shader);
+    const TransformComponent* transform;
+    if(carp_ecs_getTransformComponent(&entities, &transform))
+    {
+        {
+            const CarpV3A* v = &transform->transformComponentPos;
+            CARP_LOGINFO("x: %f, y: %f, z: %f\n", v->x, v->y, v->z);
+        }
+        {
+            const CarpV3A* v = &(transform[entities.carpEcsEntitiesCapacity - 1].transformComponentPos);
+            CARP_LOGINFO("x: %f, y: %f, z: %f\n", v->x, v->y, v->z);
+        }
+    }
 
+    carp_shader_deletePixelShader(&shader);
+    carp_ecs_freeEntities(&entities);
     return 0;
 }
 
@@ -228,7 +271,6 @@ s32 main(s32 argc, char** argv)
         return -1;
     }
 
-    s32 result = sMain();
 
     if(!carp_lib_writeFile(
         "examples/ecsteststructs.h",
@@ -240,6 +282,9 @@ s32 main(s32 argc, char** argv)
         carp_memory_destroy();
         return -1;
     }
+
+    s32 result = sMain();
+
     carp_buffer_free(&file.data);
     carp_memory_destroy();
 

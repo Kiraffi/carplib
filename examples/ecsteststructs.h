@@ -1,8 +1,9 @@
 #ifndef CARP_ECS_TEST_STRUCTS_HH
 #define CARP_ECS_TEST_STRUCTS_HH
 
+#include "carplib/carpecsentities.h"
+#include "carplib/carplib.h"
 #include "carplib/carpmath.h"
-#include "carplib/carpecsentityheader.h"
 
 #include <stdalign.h> //alignof
 
@@ -10,50 +11,9 @@
 typedef enum CarpEcsEntityType
 {
     CarpEcsEntityTypeNone,
-    CarpEcsEntityTypePlayerEntity,
-    CarpEcsEntityTypeTestEntity,
+    CarpEcsEntityTypePlayerEntity, // size per entity: 65
     CarpEcsEntityTypeCount,
 } CarpEcsEntityType;
-
-// size: 224, align: 16
-typedef struct TestComponent
-{
-    s8 testComponentAs08; // offset: 0, size: 1, alignment: 1, padding: 0
-    u8 testComponentAu08; // offset: 1, size: 1, alignment: 1, padding: 0
-    u16 testComponentAu16; // offset: 2, size: 2, alignment: 2, padding: 0
-    s16 testComponentAs16; // offset: 4, size: 2, alignment: 2, padding: 0
-    s32 testComponentAs32; // offset: 8, size: 4, alignment: 4, padding: 2
-    s64 testComponentAs64; // offset: 16, size: 8, alignment: 8, padding: 4
-    u32 testComponentAu32; // offset: 24, size: 4, alignment: 4, padding: 0
-    u64 testComponentAu64; // offset: 32, size: 8, alignment: 8, padding: 4
-    f32 testComponentAf32; // offset: 40, size: 4, alignment: 4, padding: 0
-    f64 testComponentAf64; // offset: 48, size: 8, alignment: 8, padding: 4
-    CarpV2 testComponentAv2; // offset: 56, size: 8, alignment: 8, padding: 0
-    CarpV3A testComponentAv3; // offset: 64, size: 16, alignment: 16, padding: 0
-    CarpQuat testComponentAquat; // offset: 80, size: 16, alignment: 16, padding: 0
-    CarpM34 testComponentAm34; // offset: 96, size: 48, alignment: 16, padding: 0
-    CarpM44 testComponentAm44; // offset: 144, size: 64, alignment: 16, padding: 0
-    s8 testComponentForcepadding; // offset: 208, size: 1, alignment: 1, padding: 0
-    s8 testComponentPadding[15]; // offset: 209, size: 15, alignment: 1, padding: 0
-} TestComponent;
-static_assert(sizeof(TestComponent) == 224, "size not matching!");
-static_assert(alignof(TestComponent) == 16, "align not matching!");
-
-// size: 1, align: 1
-typedef struct TestSmallComponent
-{
-    s8 testSmallComponentV; // offset: 0, size: 1, alignment: 1, padding: 0
-} TestSmallComponent;
-static_assert(sizeof(TestSmallComponent) == 1, "size not matching!");
-static_assert(alignof(TestSmallComponent) == 1, "align not matching!");
-
-// size: 32, align: 1
-typedef struct TestArrComponent
-{
-    s8 testArrComponentAs08_32[32]; // offset: 0, size: 32, alignment: 1, padding: 0
-} TestArrComponent;
-static_assert(sizeof(TestArrComponent) == 32, "size not matching!");
-static_assert(alignof(TestArrComponent) == 1, "align not matching!");
 
 // size: 48, align: 16
 typedef struct TransformComponent
@@ -73,40 +33,176 @@ typedef struct VelocityComponent
 static_assert(sizeof(VelocityComponent) == 16, "size not matching!");
 static_assert(alignof(VelocityComponent) == 16, "align not matching!");
 
-
-typedef struct PlayerEntity
+// size: 1, align: 1
+typedef struct UsedComponent
 {
-    CarpEcsEntityHeader playerEntityHeader;
-    struct TransformComponent* playerEntityTransform;
-    struct VelocityComponent* playerEntityVelocity;
-} PlayerEntity;
+    u8 usedComponentUsed; // offset: 0, size: 1, alignment: 1, padding: 0
+} UsedComponent;
+static_assert(sizeof(UsedComponent) == 1, "size not matching!");
+static_assert(alignof(UsedComponent) == 1, "align not matching!");
 
-
-typedef struct TestEntity
+static bool carp_ecs_createEntities(CarpEcsEntityType type, s32 amount, CarpEcsEntities* outEntities)
 {
-    CarpEcsEntityHeader testEntityHeader;
-    struct TestArrComponent* testEntityFirst;
-} TestEntity;
+    // amount needs to be divisable by 32
+    CARP_ASSERT_RETURN(amount > 0 && (amount & 31) == 0, false);
+    CARP_ASSERT_RETURN(outEntities, false);
+    CARP_ASSERT_RETURN(outEntities->carpEcsEntitiesData == NULL, false);
+    CARP_ASSERT_RETURN((s32)type > (s32)CarpEcsEntityTypeNone, false);
+    CARP_ASSERT_RETURN((s32)type < (s32)CarpEcsEntityTypeCount, false);
 
-static CarpEcsEntityHeader* carp_ecs_create_entity(CarpEcsEntityType type, s32 amount)
-{
-    CarpEcsEntityHeader* result = NULL;
+    outEntities->carpEcsEntitiesVersion = 1;
+    outEntities->carpEcsEntitiesEntityType = (s32)type;
+    outEntities->carpEcsEntitiesNextIndex = 0;
+    outEntities->carpEcsEntitiesSize = 0;
+    outEntities->carpEcsEntitiesCapacity = amount;
+
     switch(type)
     {
         case CarpEcsEntityTypeNone:
         case CarpEcsEntityTypeCount:
-            return NULL;
+            return false;
 
         case CarpEcsEntityTypePlayerEntity:
         {
-        }
-
-        case CarpEcsEntityTypeTestEntity:
-        {
+            outEntities->carpEcsEntitiesData = carp_lib_calloc(65, amount);
         }
 
     };
-    return NULL;
+    return true;
+}
+
+static void carp_ecs_freeEntities(CarpEcsEntities* outEntities)
+{
+    CARP_ASSERT_RETURN(outEntities, );
+    CARP_ASSERT_RETURN(outEntities->carpEcsEntitiesData != NULL, );
+    carp_lib_free(outEntities->carpEcsEntitiesData);
+    outEntities->carpEcsEntitiesData = NULL;
+}
+
+static bool carp_ecs_getTransformComponentMut(CarpEcsEntities* entities, TransformComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+        {
+            *outComponents = (TransformComponent*)(entities->carpEcsEntitiesData + (0 * entities->carpEcsEntitiesCapacity));
+        }
+
+    };
+    return true;
+}
+
+static bool carp_ecs_getTransformComponent(const CarpEcsEntities* entities, const TransformComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+        {
+            *outComponents = (const TransformComponent*)(entities->carpEcsEntitiesData + (0 * entities->carpEcsEntitiesCapacity));
+        }
+
+    };
+    return true;
+}
+
+static bool carp_ecs_getVelocityComponentMut(CarpEcsEntities* entities, VelocityComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+        {
+            *outComponents = (VelocityComponent*)(entities->carpEcsEntitiesData + (48 * entities->carpEcsEntitiesCapacity));
+        }
+
+    };
+    return true;
+}
+
+static bool carp_ecs_getVelocityComponent(const CarpEcsEntities* entities, const VelocityComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+        {
+            *outComponents = (const VelocityComponent*)(entities->carpEcsEntitiesData + (48 * entities->carpEcsEntitiesCapacity));
+        }
+
+    };
+    return true;
+}
+
+static bool carp_ecs_getUsedComponentMut(CarpEcsEntities* entities, UsedComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+        {
+            *outComponents = (UsedComponent*)(entities->carpEcsEntitiesData + (64 * entities->carpEcsEntitiesCapacity));
+        }
+
+    };
+    return true;
+}
+
+static bool carp_ecs_getUsedComponent(const CarpEcsEntities* entities, const UsedComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+        {
+            *outComponents = (const UsedComponent*)(entities->carpEcsEntitiesData + (64 * entities->carpEcsEntitiesCapacity));
+        }
+
+    };
+    return true;
 }
 
 #endif // CARP_ECS_TEST_STRUCTS_HH

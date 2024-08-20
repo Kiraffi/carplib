@@ -35,6 +35,7 @@
         "uintrintrin.h": "c",
         "pmmintrin.h": "c",
         "wmmintrin.h": "c",
-        "xmmintrin.h": "c"
+        "xmmintrin.h": "c",
+        "carpecsentities.h": "c"
     }
 }
