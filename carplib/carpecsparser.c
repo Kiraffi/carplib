@@ -765,6 +765,7 @@ static bool s_carp_ecs_parseWriteOutComponentGetters(
 
             carp_buffer_pushS32ToStr(entityComponentDef->carpECSEntityComponentDefMemoryOffset, &outParsedFile->data);
             s_carp_ecs_pushStringToBuffer(" * entities->carpEcsEntitiesCapacity));\r\n", &outParsedFile->data);
+            s_carp_ecs_pushStringToBuffer("            break;\n", &outParsedFile->data);
 
             s_carp_ecs_pushStringToBuffer("        }\r\n\r\n", &outParsedFile->data);
         }
@@ -1008,6 +1009,7 @@ static bool s_carp_ecs_parseWriteOut(
             carp_buffer_pushS32ToStr(entity->carpEcsEntityDefComponentSizeInBytes, &outParsedFile->data);
             s_carp_ecs_pushStringToBuffer(", amount);\r\n", &outParsedFile->data);
 
+            s_carp_ecs_pushStringToBuffer("            break;\n", &outParsedFile->data);
             s_carp_ecs_pushStringToBuffer("        }\r\n\r\n", &outParsedFile->data);
         }
 

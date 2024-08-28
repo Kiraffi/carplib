@@ -9,6 +9,7 @@ fi
 
 compiler=$1
 compileoptions="-std=c11 -lX11 -lGL -lm -m64 -g -gdwarf -Wpedantic"
+#compileoptions="-std=c11 -lX11 -lGL -lm -m64 -O3"
 #compileoptionsreport="-ftime-report"
 #"-fno-inline-small-functions"
 #compilernoinline="-fno-inline"

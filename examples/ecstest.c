@@ -16,17 +16,42 @@
 #define WINDOW_POS_X 1000
 #define WINDOW_POS_Y 1000
 
-
+#define USE_2D_POS 1
 
 
 static const char vertexShaderCode[] =
     "#version 450 core\n"
-    "    layout(location = 0) in vec3 vertexPosition_modelspace;\n"
-    "    void main()\n"
-    "    {\n"
-    "        gl_Position.xyz = vertexPosition_modelspace;\n"
-    "        gl_Position.w = 1.0;\n"
-    "    };\n";
+
+    "layout(location = 0) in vec4 vertexPos;\n"
+
+    "layout(std140, binding = 0) uniform FrameData\n"
+    "{\n"
+    "    vec4 screenSize;\n"
+    "} frameData;\n"
+
+    "layout(std140, binding = 1) restrict readonly buffer InstanceData\n"
+    "{\n"
+    "    vec4 pos[];\n"
+    "} instanceData;\n"
+
+    "layout(std140, binding = 2) restrict readonly buffer InstanceData2D\n"
+    "{\n"
+    "    vec2 pos[];\n"
+    "} instanceData2D;\n"
+
+    "void main()\n"
+    "{\n"
+    "    vec4 p = vertexPos * 3.0;\n"
+#if USE_2D_POS
+    "    p.xy += instanceData2D.pos[gl_InstanceID].xy;\n"
+#else
+    "    p.xy += instanceData.pos[gl_InstanceID].xy;\n"
+#endif
+    "    p.xy = (2.0 * p.xy / frameData.screenSize.xy) - 1.0;\n"
+    "    p.z = 0.0;\n"
+    "    p.w = 1.0;\n"
+    "    gl_Position = p;\n"
+    "};\n";
 
 static const char fragmentShaderCode[] =
     "#version 450 core \n"
@@ -79,6 +104,11 @@ static const char ecsData[] =
     //"    as08_0  : s8[0] \n"
     "}\n"
     */
+    "MatComponent\n"
+    "{\n"
+    "    m4 : M44 \n"
+    "}\n"
+
     "TransformComponent \n"
     "{\n"
     "    pos : Vec3 \n"
@@ -94,10 +124,29 @@ static const char ecsData[] =
     "    used : u8 \n"
     "}\n"
 
+
+    "Pos2DComponent \n"
+    "{\n"
+    "    pos : Vec2 \n"
+    "}\n"
+    "Vel2DComponent \n"
+    "{\n"
+    "    vel : Vec2 \n"
+    "}\n"
+
+
     "PlayerEntity \n"
     "{\n"
     "    transform : TransformComponent\n"
     "    velocity : VelocityComponent\n"
+    "    mat: MatComponent\n"
+    "    used : UsedComponent\n"
+    "}\n"
+
+    "Player2DEntity \n"
+    "{\n"
+    "    pos : Pos2DComponent\n"
+    "    vel : Vel2DComponent\n"
     "    used : UsedComponent\n"
     "}\n"
 /*
@@ -119,6 +168,65 @@ static void sWindowSizeChanged(int width, int height)
 }
 
 
+static bool sUpdate3D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
+{
+    CarpV3A newVel;
+    TransformComponent* transform;
+    VelocityComponent* vel;
+    if(!carp_ecs_getTransformComponentMut(entities, &transform)
+        || !carp_ecs_getVelocityComponentMut(entities, &vel)
+    )
+    {
+        return false;
+    }
+    for(s32 i = 0; i < entities->carpEcsEntitiesCapacity; ++i)
+    {
+        CarpV3A* p = &(transform[i].transformComponentPos);
+        CarpV3A* v = &(vel[i].velocityComponentVel);
+
+        carp_math_mul_v3_f(v, dt, &newVel);
+        carp_math_add_v3_v3(p, &newVel, p);
+
+        if(p->x < 0.0f | p->x > w)
+            v->x = -v->x;
+        if(p->y < 0.0f | p->y > h)
+            v->y = -v->y;
+    }
+
+    return true;
+}
+
+
+static bool sUpdate2D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
+{
+    CarpV2 newVel;
+    Pos2DComponent* pos;
+    Vel2DComponent* vel;
+    if(!carp_ecs_getPos2DComponentMut(entities, &pos)
+        || !carp_ecs_getVel2DComponentMut(entities, &vel)
+    )
+    {
+        return false;
+    }
+    for(s32 i = 0; i < entities->carpEcsEntitiesCapacity; ++i)
+    {
+        CarpV2* p = &(pos[i].pos2DComponentPos);
+        CarpV2* v = &(vel[i].vel2DComponentVel);
+
+
+        carp_math_mul_v2_f(v, dt, &newVel);
+        carp_math_add_v2_v2(p, &newVel, p);
+
+        if(p->x < 0.0f | p->x > w)
+            v->x = -v->x;
+        if(p->y < 0.0f | p->y > h)
+            v->y = -v->y;
+    }
+
+    return true;
+}
+
+
 
 static s32 sMainAfterWindow(void)
 {
@@ -131,13 +239,26 @@ static s32 sMainAfterWindow(void)
         carp_shader_deletePixelShader(&shader);
         return -1;
     }
-
+    static const s32 EntitiyCount = 512 * 1024;
     CarpEcsEntities entities = {0};
-    if(!carp_ecs_createEntities(CarpEcsEntityTypePlayerEntity, 8192, &entities))
+    CarpEcsEntities entities2D = {0};
+
+    if(!carp_ecs_createEntities(CarpEcsEntityTypePlayerEntity, EntitiyCount, &entities))
+    {
+        CARP_LOGERROR("Failed to create entities\n");
+        carp_ecs_freeEntities(&entities);
+        return -1;
+    }
+    if(!carp_ecs_createEntities(CarpEcsEntityTypePlayer2DEntity, EntitiyCount, &entities2D))
     {
         CARP_LOGERROR("Failed to create entities\n");
         return -1;
     }
+
+    CarpOGLBuffer vertexBuffer = {0};
+    CarpOGLBuffer uniformBuffer = {0};
+    CarpOGLBuffer instanceDataBuffer = {0};
+    CarpOGLBuffer instanceDataBuffer2D = {0};
 
     GLuint vertexbuffer = 0;
     {
@@ -149,21 +270,106 @@ static s32 sMainAfterWindow(void)
         glBindVertexArray(vertexArrayID);
 
         // An array of 3 vectors which represents 3 vertices
-        f32 vertexBufferData[] = {
+        static const f32 VertexBufferData[] = {
             -1.0f, -1.0f, 0.0f,
             1.0f, -1.0f, 0.0f,
             0.0f,  1.0f, 0.0f,
         };
 
-        glGenBuffers(1, &vertexbuffer);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertexBufferData),
-            vertexBufferData, GL_STATIC_DRAW);
+        carp_ogl_createBuffer(
+            1024,
+            NULL,
+            GL_STATIC_DRAW,
+            &vertexBuffer);
+
+        carp_ogl_createBuffer(
+            16 * 1024,
+            NULL,
+            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
+            &uniformBuffer);
+
+        carp_ogl_createBuffer(
+            sizeof(TransformComponent) * EntitiyCount,
+            NULL,
+            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
+            &instanceDataBuffer);
+
+        carp_ogl_createBuffer(
+            sizeof(CarpV2) * EntitiyCount,
+            NULL,
+            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
+            &instanceDataBuffer2D);
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
+        glBufferData(GL_ARRAY_BUFFER, sizeof(VertexBufferData),
+            VertexBufferData, GL_STATIC_DRAW);
 
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    }
 
+    // Init entities
+    {
+        TransformComponent* transform;
+        VelocityComponent *vel;
+        if(carp_ecs_getTransformComponentMut(&entities, &transform)
+            && carp_ecs_getVelocityComponentMut(&entities, &vel))
+        {
+            entities.carpEcsEntitiesSize = entities.carpEcsEntitiesCapacity;
+            CarpV3A mulC = {
+                memory->carp_window.carp_window_width,
+                memory->carp_window.carp_window_height,
+                1.0f
+            };
+            for(s32 i = 0; i < entities.carpEcsEntitiesCapacity; ++i)
+            {
+                CarpV3A* p = &(transform[i].transformComponentPos);
+                p->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                p->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                p->z = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+
+                carp_math_mul_v3_v3(p, &mulC, p);
+                p->w = 1.0f;
+
+                CarpV3A* v = &(vel[i].velocityComponentVel);
+
+                v->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                v->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                v->z = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+
+                carp_math_mul_v3_f(v, 5.0f, v);
+                v->w = 1.0f;
+            }
+        }
+    }
+    {
+        Pos2DComponent* pos2D;
+        Vel2DComponent* vel2D;
+        if(carp_ecs_getPos2DComponentMut(&entities2D, &pos2D)
+            && carp_ecs_getVel2DComponentMut(&entities2D, &vel2D))
+        {
+            entities2D.carpEcsEntitiesSize = entities.carpEcsEntitiesCapacity;
+            CarpV2 mulC = {
+                memory->carp_window.carp_window_width,
+                memory->carp_window.carp_window_height,
+            };
+            for(s32 i = 0; i < entities.carpEcsEntitiesCapacity; ++i)
+            {
+                CarpV2* p = &(pos2D[i].pos2DComponentPos);
+                p->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                p->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+
+                carp_math_mul_v2_v2(p, &mulC, p);
+
+                CarpV2* v = &(vel2D[i].vel2DComponentVel);
+
+                v->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                v->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+
+                carp_math_mul_v2_f(v, 5.0f, v);
+            }
+        }
     }
 
 
@@ -174,31 +380,77 @@ static s32 sMainAfterWindow(void)
 
 
 
-
     carp_window_setWindowSizeChangedCallbackFn(&memory->carp_window, sWindowSizeChanged);
-    carp_window_enableVSync(&memory->carp_window, true);
+    carp_window_enableVSync(&memory->carp_window, false);
 
     CARP_LOGINFO("Window start running\n");
     memory->carp_window.carp_window_running = true;
 
+    CarpTime carpTime;
+    carp_time_getCurrentTime(&carpTime);
+
+    f64 sincePrint = 0.0;
+    s32 frames = 0;
     while(memory->carp_window.carp_window_running)
     {
-        carp_window_update(&memory->carp_window, 0.0f);
-        if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
-            memory->carp_window.carp_window_running = false;
-
-        TransformComponent* transform;
-        if(carp_ecs_getTransformComponentMut(&entities, &transform))
+        CarpTime newTime;
+        carp_time_getCurrentTime(&newTime);
+        f64 dt = carp_time_getDifference(&carpTime, &newTime);
+        ++frames;
+        sincePrint += dt;
+        if(sincePrint > 1)
         {
-            for(s32 i = 0; i < entities.carpEcsEntitiesCapacity; ++i)
-            {
-                CarpV3A* v = &(transform[i].transformComponentPos);
-                v->x += 1.0f + i;
-                v->y += 1.0f + i;
-                v->z += 1.0f + i;
-            }
+            CARP_LOGINFO("Fps: %i\n", frames);
+            frames = 0;
+            sincePrint = 0.0;
         }
 
+        carpTime = newTime;
+
+        carp_window_update(&memory->carp_window, dt);
+        if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
+            memory->carp_window.carp_window_running = false;
+#if USE_2D_POS
+        if(sUpdate2D(
+            dt,
+            memory->carp_window.carp_window_width,
+            memory->carp_window.carp_window_height,
+            &entities2D))
+        {
+            const Pos2DComponent* pos;
+            if(carp_ecs_getPos2DComponent(&entities2D, &pos))
+            {
+                carp_ogl_updateBuffer(&instanceDataBuffer2D,
+                    0,
+                    pos,
+                    sizeof(CarpV2) * EntitiyCount);
+            }
+        }
+#else
+        if(sUpdate3D(
+            dt,
+            memory->carp_window.carp_window_width,
+            memory->carp_window.carp_window_height,
+            &entities))
+        {
+            const TransformComponent* transform;
+            if(carp_ecs_getTransformComponent(&entities, &transform))
+            {
+                carp_ogl_updateBuffer(&instanceDataBuffer,
+                    0,
+                    transform,
+                    sizeof(TransformComponent) * EntitiyCount);
+            }
+        }
+#endif
+        f32 sizes[64] = {
+            memory->carp_window.carp_window_width,
+            memory->carp_window.carp_window_height,
+        };
+        carp_ogl_updateBuffer(&uniformBuffer,
+            0,
+            sizes,
+            sizeof(sizes));
 
         glClearColor(0.2f, 1.0f, 1.0f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -206,7 +458,19 @@ static s32 sMainAfterWindow(void)
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        carp_ogl_bindBuffer(&uniformBuffer, 0, GL_UNIFORM_BUFFER);
+        carp_ogl_bindBuffer(&instanceDataBuffer, 1, GL_SHADER_STORAGE_BUFFER);
+        carp_ogl_bindBuffer(&instanceDataBuffer2D, 2, GL_SHADER_STORAGE_BUFFER);
+
+        glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
+
+        glDrawArraysInstanced(
+            GL_TRIANGLES,
+            0,
+            3,
+            EntitiyCount);
+
         glDisableVertexAttribArray(0);
 
         carp_window_swapBuffers(&memory->carp_window);
@@ -229,6 +493,7 @@ static s32 sMainAfterWindow(void)
 
     carp_shader_deletePixelShader(&shader);
     carp_ecs_freeEntities(&entities);
+    carp_ecs_freeEntities(&entities2D);
     return 0;
 }
 
@@ -262,6 +527,8 @@ s32 main(s32 argc, char** argv)
         CARP_LOGERROR("Failed to init the memory\n");
         return -1;
     }
+
+#if 1
     CarpECSParsedFile file = { 0 };
 
     if(!carp_ecs_parseEcsData(ecsData, "CARP_ECS_TEST_STRUCTS_HH", &file))
@@ -286,6 +553,10 @@ s32 main(s32 argc, char** argv)
     s32 result = sMain();
 
     carp_buffer_free(&file.data);
+#else
+    s32 result = sMain();
+#endif
+
     carp_memory_destroy();
 
     return result;
