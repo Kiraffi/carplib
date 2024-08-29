@@ -17,6 +17,7 @@
 #define WINDOW_POS_Y 1000
 
 #define USE_2D_POS 1
+#define USE_SIMD2D 1
 
 
 static const char vertexShaderCode[] =
@@ -199,7 +200,11 @@ static bool sUpdate3D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
 
 static bool sUpdate2D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
 {
+#if USE_SIMD2D
+    CarpV3A newVel;
+#else
     CarpV2 newVel;
+#endif
     Pos2DComponent* pos;
     Vel2DComponent* vel;
     if(!carp_ecs_getPos2DComponentMut(entities, &pos)
@@ -208,19 +213,38 @@ static bool sUpdate2D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
     {
         return false;
     }
-    for(s32 i = 0; i < entities->carpEcsEntitiesCapacity; ++i)
+#if USE_SIMD2D
+    s32 capacity = entities->carpEcsEntitiesCapacity / 2;
+    CarpV3A* p = (CarpV3A*)&(pos->pos2DComponentPos);
+    CarpV3A* v = (CarpV3A*)&(vel->vel2DComponentVel);
+    CarpV3A* pEnd = p + capacity;
+#else
+    s32 capacity = entities->carpEcsEntitiesCapacity;
+    CarpV2* p = &(pos->pos2DComponentPos);
+    CarpV2* v = &(vel->vel2DComponentVel);
+    CarpV2* pEnd = p + capacity;
+#endif
+    while(p < pEnd)
     {
-        CarpV2* p = &(pos[i].pos2DComponentPos);
-        CarpV2* v = &(vel[i].vel2DComponentVel);
+#if USE_SIMD2D
 
+        carp_math_mul_v3_f(v, dt, &newVel);
+        carp_math_add_v3_v3(p, &newVel, p);
 
+        v->x = (p->x < 0.0f | p->x > w) ? -v->x : v->x;
+        v->y = (p->y < 0.0f | p->y > h) ? -v->y : v->y;
+        v->z = (p->z < 0.0f | p->z > w) ? -v->z : v->z;
+        v->w = (p->w < 0.0f | p->w > h) ? -v->w : v->w;
+
+#else
         carp_math_mul_v2_f(v, dt, &newVel);
         carp_math_add_v2_v2(p, &newVel, p);
 
-        if(p->x < 0.0f | p->x > w)
-            v->x = -v->x;
-        if(p->y < 0.0f | p->y > h)
-            v->y = -v->y;
+        v->x = (p->x < 0.0f | p->x > w) ? -v->x : v->x;
+        v->y = (p->y < 0.0f | p->y > h) ? -v->y : v->y;
+#endif
+        ++p;
+        ++v;
     }
 
     return true;
