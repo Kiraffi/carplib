@@ -214,10 +214,17 @@ static bool sUpdate2D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
         return false;
     }
 #if USE_SIMD2D
+    static const CarpV3A zero = { 0 };
+    static const CarpV3A MaxIntF32 = {.intArr = {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}}; 
+    static const CarpV3A MinusZero =  {.intArr = {0x80000000, 0x80000000, 0x80000000, 0x80000000}}; 
+
     s32 capacity = entities->carpEcsEntitiesCapacity / 2;
     CarpV3A* p = (CarpV3A*)&(pos->pos2DComponentPos);
     CarpV3A* v = (CarpV3A*)&(vel->vel2DComponentVel);
-    CarpV3A* pEnd = p + capacity;
+    const CarpV3A* pEnd = p + capacity;
+    const CarpV3A sreenSize = { w, h, w, h };
+    CarpV3A tmp1;
+    CarpV3A tmp2;
 #else
     s32 capacity = entities->carpEcsEntitiesCapacity;
     CarpV2* p = &(pos->pos2DComponentPos);
@@ -230,11 +237,27 @@ static bool sUpdate2D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
 
         carp_math_mul_v3_f(v, dt, &newVel);
         carp_math_add_v3_v3(p, &newVel, p);
+#if 0   
+        // If highest bit set, remove highest bit. In other words make positive
+        tmp1.simdv3a = _mm_and_ps(MinusZero.simdv3a, p->simdv3a);
+        tmp1.simdv3a = _mm_andnot_ps(tmp1.simdv3a, v->simdv3a);
 
-        v->x = (p->x < 0.0f | p->x > w) ? -v->x : v->x;
-        v->y = (p->y < 0.0f | p->y > h) ? -v->y : v->y;
-        v->z = (p->z < 0.0f | p->z > w) ? -v->z : v->z;
-        v->w = (p->w < 0.0f | p->w > h) ? -v->w : v->w;
+        // If greater, add highest bit. Make velocity negative
+        tmp2.simdv3a = _mm_sub_ps(sreenSize.simdv3a, p->simdv3a);
+        
+        tmp2.simdv3a = _mm_and_ps(MinusZero.simdv3a, tmp2.simdv3a);
+        v->simdv3a = _mm_or_ps(tmp2.simdv3a, tmp1.simdv3a);
+
+#else
+        if(p->x < 0.0f) v->intArr[0] &= 0x7fffffff;
+        else if(p->x > w) v->intArr[0] |= 0x80000000;
+        if(p->y < 0.0f) v->intArr[1] &= 0x7fffffff;
+        else if(p->y > h) v->intArr[1] |= 0x80000000;
+        if(p->z < 0.0f) v->intArr[2] &= 0x7fffffff;
+        else if(p->z > w) v->intArr[2] |= 0x80000000;
+        if(p->w < 0.0f) v->intArr[3] &= 0x7fffffff;
+        else if(p->w > h) v->intArr[3] |= 0x80000000;
+#endif
 
 #else
         carp_math_mul_v2_f(v, dt, &newVel);
@@ -264,21 +287,26 @@ static s32 sMainAfterWindow(void)
         return -1;
     }
     static const s32 EntitiyCount = 512 * 1024;
-    CarpEcsEntities entities = {0};
-    CarpEcsEntities entities2D = {0};
 
+#if USE_2D_POS
+    CarpEcsEntities entities2D = {0};
+#else
+    CarpEcsEntities entities = {0};
+#endif
+#if USE_2D_POS
+    if(!carp_ecs_createEntities(CarpEcsEntityTypePlayer2DEntity, EntitiyCount, &entities2D))
+    {
+        CARP_LOGERROR("Failed to create entities\n");
+        return -1;
+    }
+#else
     if(!carp_ecs_createEntities(CarpEcsEntityTypePlayerEntity, EntitiyCount, &entities))
     {
         CARP_LOGERROR("Failed to create entities\n");
         carp_ecs_freeEntities(&entities);
         return -1;
     }
-    if(!carp_ecs_createEntities(CarpEcsEntityTypePlayer2DEntity, EntitiyCount, &entities2D))
-    {
-        CARP_LOGERROR("Failed to create entities\n");
-        return -1;
-    }
-
+#endif
     CarpOGLBuffer vertexBuffer = {0};
     CarpOGLBuffer uniformBuffer = {0};
     CarpOGLBuffer instanceDataBuffer = {0};
@@ -334,6 +362,36 @@ static s32 sMainAfterWindow(void)
     }
 
     // Init entities
+#if USE_2D_POS
+    {
+        Pos2DComponent* pos2D;
+        Vel2DComponent* vel2D;
+        if(carp_ecs_getPos2DComponentMut(&entities2D, &pos2D)
+            && carp_ecs_getVel2DComponentMut(&entities2D, &vel2D))
+        {
+            entities2D.carpEcsEntitiesSize = entities2D.carpEcsEntitiesCapacity;
+            CarpV2 mulC = {
+                memory->carp_window.carp_window_width,
+                memory->carp_window.carp_window_height,
+            };
+            for(s32 i = 0; i < entities2D.carpEcsEntitiesCapacity; ++i)
+            {
+                CarpV2* p = &(pos2D[i].pos2DComponentPos);
+                p->x = (float)(rand()) / (float)RAND_MAX;
+                p->y = (float)(rand()) / (float)RAND_MAX;
+
+                carp_math_mul_v2_v2(p, &mulC, p);
+
+                CarpV2* v = &(vel2D[i].vel2DComponentVel);
+
+                v->x = (((float)(rand())) / (float)RAND_MAX) * 2.0f - 1.0f;
+                v->y = (((float)(rand())) / (float)RAND_MAX) * 2.0f - 1.0f;
+
+                carp_math_mul_v2_f(v, 16.0f, v);
+            }
+        }
+    }
+#else
     {
         TransformComponent* transform;
         VelocityComponent *vel;
@@ -349,53 +407,25 @@ static s32 sMainAfterWindow(void)
             for(s32 i = 0; i < entities.carpEcsEntitiesCapacity; ++i)
             {
                 CarpV3A* p = &(transform[i].transformComponentPos);
-                p->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-                p->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-                p->z = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                p->x = (float)(rand()) / (float)RAND_MAX;
+                p->y = (float)(rand()) / (float)RAND_MAX;
+                p->z = (float)(rand()) / (float)RAND_MAX;
 
                 carp_math_mul_v3_v3(p, &mulC, p);
                 p->w = 1.0f;
 
                 CarpV3A* v = &(vel[i].velocityComponentVel);
 
-                v->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-                v->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-                v->z = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
+                v->x = (((float)(rand())) / (float)RAND_MAX) * 2.0f - 1.0f;
+                v->y = (((float)(rand())) / (float)RAND_MAX) * 2.0f - 1.0f;
+                v->z = (((float)(rand())) / (float)RAND_MAX) * 2.0f - 1.0f;
 
                 carp_math_mul_v3_f(v, 5.0f, v);
                 v->w = 1.0f;
             }
         }
     }
-    {
-        Pos2DComponent* pos2D;
-        Vel2DComponent* vel2D;
-        if(carp_ecs_getPos2DComponentMut(&entities2D, &pos2D)
-            && carp_ecs_getVel2DComponentMut(&entities2D, &vel2D))
-        {
-            entities2D.carpEcsEntitiesSize = entities.carpEcsEntitiesCapacity;
-            CarpV2 mulC = {
-                memory->carp_window.carp_window_width,
-                memory->carp_window.carp_window_height,
-            };
-            for(s32 i = 0; i < entities.carpEcsEntitiesCapacity; ++i)
-            {
-                CarpV2* p = &(pos2D[i].pos2DComponentPos);
-                p->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-                p->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-
-                carp_math_mul_v2_v2(p, &mulC, p);
-
-                CarpV2* v = &(vel2D[i].vel2DComponentVel);
-
-                v->x = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-                v->y = ((float)(rand() % 65536) / 65536.0f) * 2.0f - 1.0f;
-
-                carp_math_mul_v2_f(v, 5.0f, v);
-            }
-        }
-    }
-
+#endif
 
 
 
@@ -496,12 +526,12 @@ static s32 sMainAfterWindow(void)
             EntitiyCount);
 
         glDisableVertexAttribArray(0);
-
         carp_window_swapBuffers(&memory->carp_window);
     }
     CARP_LOGINFO("Window finished running\n");
 
-
+#if USE_2D_POS
+#else
     const TransformComponent* transform;
     if(carp_ecs_getTransformComponent(&entities, &transform))
     {
@@ -514,10 +544,13 @@ static s32 sMainAfterWindow(void)
             CARP_LOGINFO("x: %f, y: %f, z: %f\n", v->x, v->y, v->z);
         }
     }
-
+#endif
     carp_shader_deletePixelShader(&shader);
-    carp_ecs_freeEntities(&entities);
+#if USE_2D_POS
     carp_ecs_freeEntities(&entities2D);
+#else
+    carp_ecs_freeEntities(&entities);
+#endif
     return 0;
 }
 
@@ -552,7 +585,7 @@ s32 main(s32 argc, char** argv)
         return -1;
     }
 
-#if 1
+#if 0
     CarpECSParsedFile file = { 0 };
 
     if(!carp_ecs_parseEcsData(ecsData, "CARP_ECS_TEST_STRUCTS_HH", &file))

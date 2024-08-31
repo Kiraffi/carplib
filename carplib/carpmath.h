@@ -58,6 +58,7 @@ typedef struct CarpV3A
         };
         _Alignas(16) f32 v[4];
         _Alignas(16) s32 intArr[4];
+        _Alignas(16) s64 int64Arr[2];
         _Alignas(16) __m128 simdv3a;
     };
 } CarpV3A;

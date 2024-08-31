@@ -4,8 +4,13 @@
 #include "carptype.h"
 
 #include <ctype.h> //tolower, toupper?
+#include <stdalign.h>
 #include <stdlib.h>
 #include <string.h>
+
+
+static_assert(sizeof(s32) == sizeof(f32), "Float and s32 size not same");
+static_assert(alignof(s32) == alignof(f32), "Float and s32 align not same");
 
 static void s_carp_lib_fopen(FILE** f, const char* fileName, const char* mode)
 {
