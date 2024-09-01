@@ -12,7 +12,8 @@ typedef enum CarpEcsEntityType
 {
     CarpEcsEntityTypeNone,
     CarpEcsEntityTypePlayerEntity, // size per entity: 129
-    CarpEcsEntityTypePlayer2DEntity, // size per entity: 17
+    CarpEcsEntityTypePlayer2DEntity, // size per entity: 16
+    CarpEcsEntityTypeRegionEntity, // size per entity: 20
     CarpEcsEntityTypeCount,
 } CarpEcsEntityType;
 
@@ -66,6 +67,14 @@ typedef struct Vel2DComponent
 static_assert(sizeof(Vel2DComponent) == 8, "size not matching!");
 static_assert(alignof(Vel2DComponent) == 8, "align not matching!");
 
+// size: 4, align: 4
+typedef struct HitCountComponent
+{
+    s32 hitCountComponentHits; // offset: 0, size: 4, alignment: 4, padding: 0
+} HitCountComponent;
+static_assert(sizeof(HitCountComponent) == 4, "size not matching!");
+static_assert(alignof(HitCountComponent) == 4, "align not matching!");
+
 static bool carp_ecs_createEntities(CarpEcsEntityType type, s32 amount, CarpEcsEntities* outEntities)
 {
     // amount needs to be divisable by 32
@@ -95,7 +104,13 @@ static bool carp_ecs_createEntities(CarpEcsEntityType type, s32 amount, CarpEcsE
 
         case CarpEcsEntityTypePlayer2DEntity:
         {
-            outEntities->carpEcsEntitiesData = carp_lib_calloc(17, amount);
+            outEntities->carpEcsEntitiesData = carp_lib_calloc(16, amount);
+            break;
+        }
+
+        case CarpEcsEntityTypeRegionEntity:
+        {
+            outEntities->carpEcsEntitiesData = carp_lib_calloc(20, amount);
             break;
         }
 
@@ -132,6 +147,9 @@ static bool carp_ecs_getMatComponentMut(CarpEcsEntities* entities, MatComponent*
         case CarpEcsEntityTypePlayer2DEntity:
             return false;
 
+        case CarpEcsEntityTypeRegionEntity:
+            return false;
+
     };
     return true;
 }
@@ -155,6 +173,9 @@ static bool carp_ecs_getMatComponent(const CarpEcsEntities* entities, const MatC
         }
 
         case CarpEcsEntityTypePlayer2DEntity:
+            return false;
+
+        case CarpEcsEntityTypeRegionEntity:
             return false;
 
     };
@@ -182,6 +203,9 @@ static bool carp_ecs_getTransformComponentMut(CarpEcsEntities* entities, Transfo
         case CarpEcsEntityTypePlayer2DEntity:
             return false;
 
+        case CarpEcsEntityTypeRegionEntity:
+            return false;
+
     };
     return true;
 }
@@ -205,6 +229,9 @@ static bool carp_ecs_getTransformComponent(const CarpEcsEntities* entities, cons
         }
 
         case CarpEcsEntityTypePlayer2DEntity:
+            return false;
+
+        case CarpEcsEntityTypeRegionEntity:
             return false;
 
     };
@@ -232,6 +259,9 @@ static bool carp_ecs_getVelocityComponentMut(CarpEcsEntities* entities, Velocity
         case CarpEcsEntityTypePlayer2DEntity:
             return false;
 
+        case CarpEcsEntityTypeRegionEntity:
+            return false;
+
     };
     return true;
 }
@@ -257,6 +287,9 @@ static bool carp_ecs_getVelocityComponent(const CarpEcsEntities* entities, const
         case CarpEcsEntityTypePlayer2DEntity:
             return false;
 
+        case CarpEcsEntityTypeRegionEntity:
+            return false;
+
     };
     return true;
 }
@@ -280,10 +313,10 @@ static bool carp_ecs_getUsedComponentMut(CarpEcsEntities* entities, UsedComponen
         }
 
         case CarpEcsEntityTypePlayer2DEntity:
-        {
-            *outComponents = (UsedComponent*)(entities->carpEcsEntitiesData + (16 * entities->carpEcsEntitiesCapacity));
-            break;
-        }
+            return false;
+
+        case CarpEcsEntityTypeRegionEntity:
+            return false;
 
     };
     return true;
@@ -308,10 +341,10 @@ static bool carp_ecs_getUsedComponent(const CarpEcsEntities* entities, const Use
         }
 
         case CarpEcsEntityTypePlayer2DEntity:
-        {
-            *outComponents = (const UsedComponent*)(entities->carpEcsEntitiesData + (16 * entities->carpEcsEntitiesCapacity));
-            break;
-        }
+            return false;
+
+        case CarpEcsEntityTypeRegionEntity:
+            return false;
 
     };
     return true;
@@ -333,6 +366,12 @@ static bool carp_ecs_getPos2DComponentMut(CarpEcsEntities* entities, Pos2DCompon
             return false;
 
         case CarpEcsEntityTypePlayer2DEntity:
+        {
+            *outComponents = (Pos2DComponent*)(entities->carpEcsEntitiesData + (0 * entities->carpEcsEntitiesCapacity));
+            break;
+        }
+
+        case CarpEcsEntityTypeRegionEntity:
         {
             *outComponents = (Pos2DComponent*)(entities->carpEcsEntitiesData + (0 * entities->carpEcsEntitiesCapacity));
             break;
@@ -363,6 +402,12 @@ static bool carp_ecs_getPos2DComponent(const CarpEcsEntities* entities, const Po
             break;
         }
 
+        case CarpEcsEntityTypeRegionEntity:
+        {
+            *outComponents = (const Pos2DComponent*)(entities->carpEcsEntitiesData + (0 * entities->carpEcsEntitiesCapacity));
+            break;
+        }
+
     };
     return true;
 }
@@ -383,6 +428,12 @@ static bool carp_ecs_getVel2DComponentMut(CarpEcsEntities* entities, Vel2DCompon
             return false;
 
         case CarpEcsEntityTypePlayer2DEntity:
+        {
+            *outComponents = (Vel2DComponent*)(entities->carpEcsEntitiesData + (8 * entities->carpEcsEntitiesCapacity));
+            break;
+        }
+
+        case CarpEcsEntityTypeRegionEntity:
         {
             *outComponents = (Vel2DComponent*)(entities->carpEcsEntitiesData + (8 * entities->carpEcsEntitiesCapacity));
             break;
@@ -410,6 +461,68 @@ static bool carp_ecs_getVel2DComponent(const CarpEcsEntities* entities, const Ve
         case CarpEcsEntityTypePlayer2DEntity:
         {
             *outComponents = (const Vel2DComponent*)(entities->carpEcsEntitiesData + (8 * entities->carpEcsEntitiesCapacity));
+            break;
+        }
+
+        case CarpEcsEntityTypeRegionEntity:
+        {
+            *outComponents = (const Vel2DComponent*)(entities->carpEcsEntitiesData + (8 * entities->carpEcsEntitiesCapacity));
+            break;
+        }
+
+    };
+    return true;
+}
+
+static bool carp_ecs_getHitCountComponentMut(CarpEcsEntities* entities, HitCountComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+            return false;
+
+        case CarpEcsEntityTypePlayer2DEntity:
+            return false;
+
+        case CarpEcsEntityTypeRegionEntity:
+        {
+            *outComponents = (HitCountComponent*)(entities->carpEcsEntitiesData + (16 * entities->carpEcsEntitiesCapacity));
+            break;
+        }
+
+    };
+    return true;
+}
+
+static bool carp_ecs_getHitCountComponent(const CarpEcsEntities* entities, const HitCountComponent** outComponents)
+{
+    CARP_ASSERT_RETURN(entities, false);
+    CARP_ASSERT_RETURN(outComponents, false);
+    CARP_ASSERT_RETURN(entities->carpEcsEntitiesEntityType > 0 && entities->carpEcsEntitiesEntityType < CarpEcsEntityTypeCount, false);
+    *outComponents = NULL;
+    switch((CarpEcsEntityType)entities->carpEcsEntitiesEntityType)
+    {
+        case CarpEcsEntityTypeNone:
+        case CarpEcsEntityTypeCount:
+            return false;
+
+        case CarpEcsEntityTypePlayerEntity:
+            return false;
+
+        case CarpEcsEntityTypePlayer2DEntity:
+            return false;
+
+        case CarpEcsEntityTypeRegionEntity:
+        {
+            *outComponents = (const HitCountComponent*)(entities->carpEcsEntitiesData + (16 * entities->carpEcsEntitiesCapacity));
             break;
         }
 

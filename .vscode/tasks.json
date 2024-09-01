@@ -58,9 +58,10 @@
           "examples/ecstest.c",
           "-obuildout/main.out",
           "-std=c11",
-          "-fno-inline",
+          //"-fno-inline",
           "-lX11",
           "-m64",
+          //"-O2",
           "-lGL",
           "-lm",
           "-I./"

@@ -17,7 +17,7 @@
 #define WINDOW_POS_Y 1000
 
 #define USE_2D_POS 1
-#define USE_SIMD2D 1
+#define USE_SIMD2D 0
 
 
 static const char vertexShaderCode[] =
@@ -40,10 +40,22 @@ static const char vertexShaderCode[] =
     "    vec2 pos[];\n"
     "} instanceData2D;\n"
 
+    "layout(std140, binding = 3) restrict readonly buffer InstanceDataVel2D\n"
+    "{\n"
+    "    vec2 vel[];\n"
+    "} instanceDataVel2D;\n"
+
     "void main()\n"
     "{\n"
-    "    vec4 p = vertexPos * 3.0;\n"
+    "    vec4 p = vertexPos * 4.0;\n"
 #if USE_2D_POS
+    "    vec2 vel = instanceDataVel2D.vel[gl_InstanceID].xy;\n"
+    "    float angle = atan(vel.y, vel.x);\n"
+    "    float s = sin(angle);\n"
+    "    float c = cos(angle);\n"
+    "    vec2 tmpPos = p.xy;"
+    "    p.x = tmpPos.x * c - tmpPos.y * s;\n"
+    "    p.y = tmpPos.x * s + tmpPos.y * c;\n"
     "    p.xy += instanceData2D.pos[gl_InstanceID].xy;\n"
 #else
     "    p.xy += instanceData.pos[gl_InstanceID].xy;\n"
@@ -134,6 +146,10 @@ static const char ecsData[] =
     "{\n"
     "    vel : Vec2 \n"
     "}\n"
+    "HitCountComponent \n"
+    "{\n"
+    "    hits : s32 \n"
+    "}\n"
 
 
     "PlayerEntity \n"
@@ -148,8 +164,16 @@ static const char ecsData[] =
     "{\n"
     "    pos : Pos2DComponent\n"
     "    vel : Vel2DComponent\n"
-    "    used : UsedComponent\n"
+    //"    used : UsedComponent\n"
     "}\n"
+
+    "RegionEntity \n"
+    "{\n"
+    "    pos : Pos2DComponent\n"
+    "    vel : Vel2DComponent\n"
+    "    s32 : HitCountComponent\n"
+    "}\n"
+
 /*
     "TestEntity \n"
     "{\n"
@@ -198,7 +222,95 @@ static bool sUpdate3D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
 }
 
 
-static bool sUpdate2D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
+static bool sUpdateRegion(
+    s32 w,
+    s32 h,
+    s32 regionsX,
+    s32 regionsY,
+    const CarpEcsEntities* entities,
+    CarpEcsEntities* regions)
+{
+    const Pos2DComponent* posEnt;
+    const Vel2DComponent* velEnt;
+    if(!carp_ecs_getPos2DComponent(entities, &posEnt)
+        || !carp_ecs_getVel2DComponent(entities, &velEnt)
+    )
+    {
+        return false;
+    }
+
+
+    Pos2DComponent* posReg;
+    Vel2DComponent* velReg;
+    HitCountComponent* hitReg;
+    if(!carp_ecs_getPos2DComponentMut(regions, &posReg)
+        || !carp_ecs_getVel2DComponentMut(regions, &velReg)
+        || !carp_ecs_getHitCountComponentMut(regions, &hitReg)
+    )
+    {
+        return false;
+    }
+    carp_lib_memset(posReg, 0, sizeof(Pos2DComponent) * regions->carpEcsEntitiesSize);
+    carp_lib_memset(velReg, 0, sizeof(Vel2DComponent) * regions->carpEcsEntitiesSize);
+    carp_lib_memset(hitReg, 0, sizeof(HitCountComponent) * regions->carpEcsEntitiesSize);
+
+    CarpV2 cellSize = { (w + 4 + (regionsX - 1)) / regionsX, (w + 4 + (regionsY - 1)) / regionsY };
+    cellSize.x = 1.0f / cellSize.x;
+    cellSize.y = 1.0f / cellSize.y;
+
+    s32 capacity = entities->carpEcsEntitiesCapacity;
+    const CarpV2* p = &(posEnt->pos2DComponentPos);
+    const CarpV2* v = &(velEnt->vel2DComponentVel);
+    const CarpV2* pEnd = p + capacity;
+
+    while(p < pEnd)
+    {
+        f32 x = p->x * cellSize.x;
+        f32 y = p->y * cellSize.y;
+        s32 xI = x;
+        s32 yI = y;
+        while(xI < 0) xI += regionsX;
+        while(xI >= regionsX) xI -= regionsX;
+        while(yI < 0) yI += regionsY;
+        while(yI >= regionsY) yI -= regionsY;
+
+        CARP_ASSERT_RETURN(xI >= 0, false);
+        CARP_ASSERT_RETURN(yI >= 0, false);
+        CARP_ASSERT_RETURN(xI < regionsX, false);
+        CARP_ASSERT_RETURN(yI < regionsY, false);
+
+        CarpV2* pReg = &(posReg[xI + yI * regionsX].pos2DComponentPos);
+        CarpV2* vReg = &(velReg[xI + yI * regionsX].vel2DComponentVel);
+        s32* hReg = &(hitReg[xI + yI * regionsX].hitCountComponentHits);
+
+        carp_math_add_v2_v2(p, pReg, pReg);
+        carp_math_add_v2_v2(v, vReg, vReg);
+        *hReg += 1;
+
+        ++p;
+        ++v;
+    }
+    for(s32 i = 0; i < regionsX * regionsY; ++i)
+    {
+        CarpV2* pReg = &(posReg[i].pos2DComponentPos);
+        s32* hReg = &(hitReg[i].hitCountComponentHits);
+        if(*hReg > 0)
+            carp_math_div_v2_f(pReg, *hReg, pReg);
+    }
+
+
+    return true;
+}
+
+
+static bool sUpdate2D(
+    f32 dt,
+    s32 w,
+    s32 h,
+    s32 regionsX,
+    s32 regionsY,
+    const CarpEcsEntities* regions,
+    CarpEcsEntities* entities)
 {
 #if USE_SIMD2D
     CarpV3A newVel;
@@ -213,59 +325,230 @@ static bool sUpdate2D(f32 dt, s32 w, s32 h, CarpEcsEntities* entities)
     {
         return false;
     }
-#if USE_SIMD2D
-    static const CarpV3A zero = { 0 };
-    static const CarpV3A MaxIntF32 = {.intArr = {0x7fffffff, 0x7fffffff, 0x7fffffff, 0x7fffffff}}; 
-    static const CarpV3A MinusZero =  {.intArr = {0x80000000, 0x80000000, 0x80000000, 0x80000000}}; 
 
-    s32 capacity = entities->carpEcsEntitiesCapacity / 2;
-    CarpV3A* p = (CarpV3A*)&(pos->pos2DComponentPos);
-    CarpV3A* v = (CarpV3A*)&(vel->vel2DComponentVel);
-    const CarpV3A* pEnd = p + capacity;
-    const CarpV3A sreenSize = { w, h, w, h };
-    CarpV3A tmp1;
-    CarpV3A tmp2;
-#else
+    const Pos2DComponent* posReg;
+    const Vel2DComponent* velReg;
+    const HitCountComponent* hitReg;
+    if(!carp_ecs_getPos2DComponent(regions, &posReg)
+        || !carp_ecs_getVel2DComponent(regions, &velReg)
+        || !carp_ecs_getHitCountComponent(regions, &hitReg)
+    )
+    {
+        return false;
+    }
+
     s32 capacity = entities->carpEcsEntitiesCapacity;
     CarpV2* p = &(pos->pos2DComponentPos);
     CarpV2* v = &(vel->vel2DComponentVel);
     CarpV2* pEnd = p + capacity;
-#endif
+
+    CarpV2 cellSize = { (w + 4 + (regionsX - 1)) / regionsX, (w + 4 + (regionsY - 1)) / regionsY };
+    cellSize.x = 1.0f / cellSize.x;
+    cellSize.y = 1.0f / cellSize.y;
+
     while(p < pEnd)
     {
-#if USE_SIMD2D
+        CarpV2 posSum; carp_math_zero_v2(&posSum);
+        CarpV2 velSum; carp_math_zero_v2(&velSum);
+        CarpV2 diffSum; carp_math_zero_v2(&velSum);
 
-        carp_math_mul_v3_f(v, dt, &newVel);
-        carp_math_add_v3_v3(p, &newVel, p);
-#if 0   
-        // If highest bit set, remove highest bit. In other words make positive
-        tmp1.simdv3a = _mm_and_ps(MinusZero.simdv3a, p->simdv3a);
-        tmp1.simdv3a = _mm_andnot_ps(tmp1.simdv3a, v->simdv3a);
+        s32 inRangeCount = 0;
 
-        // If greater, add highest bit. Make velocity negative
-        tmp2.simdv3a = _mm_sub_ps(sreenSize.simdv3a, p->simdv3a);
-        
-        tmp2.simdv3a = _mm_and_ps(MinusZero.simdv3a, tmp2.simdv3a);
-        v->simdv3a = _mm_or_ps(tmp2.simdv3a, tmp1.simdv3a);
+        f32 vLen = carp_math_len_v2(v);
+        CarpV2 vUnit; carp_math_mul_v2_f(v, 1.0f / vLen, &vUnit);
 
+        f32 range = 75.0f;
+#if 1
+        {
+            s32 xLen = range * cellSize.x + 1;
+            s32 yLen = range * cellSize.y + 1;
+
+            s32 xs = range * cellSize.x;
+            s32 ys = range * cellSize.y;
+
+            s32 xp = p->x * cellSize.x;
+            s32 yp = p->y * cellSize.y;
+
+            s32 xEnd = xp + xLen;
+            s32 yEnd = yp + yLen;
+
+            xs = xp - xs;
+            ys = yp - ys;
+
+            for(s32 y = ys; y < yEnd; ++y)
+            {
+                s32 yi = (y + regionsY) % regionsY;
+                for(s32 x = xs; x < xEnd; ++x)
+                {
+                    s32 xi = (x + regionsX) % regionsX;
+                    s32 i = xi + yi * regionsX;
+                    const s32* hReg = &(hitReg[i].hitCountComponentHits);
+
+                    if(*hReg <= 0)
+                    {
+                        continue;
+                    }
+                    const CarpV2* pReg = &(posReg[i].pos2DComponentPos);
+
+
+                    CarpV2 tmp = *pReg;
+
+                    s32 vx = xp - x;
+                    if(vx > xLen + 1) tmp.x += w;
+                    if(vx < -xLen - 1) tmp.x -= w;
+
+                    s32 vy = y - yp;
+                    if(vy > yLen + 1) tmp.y += h;
+                    if(vy < -yLen - 1) tmp.y -= h;
+
+                    CarpV2 diff; carp_math_sub_v2_v2(p, &tmp, &diff);
+
+                    f32 diffLenSq = carp_math_sqrLen_v2(&diff);
+                    f32 diffLen = sqrtf(diffLenSq);
+
+                    f32 d = -carp_math_dot_v2(&diff, &vUnit);
+                    if(diffLenSq > 0.0f && diffLenSq < range * range && d / diffLen >= 0.15f)
+                    {
+                        const CarpV2* vReg = &(velReg[i].vel2DComponentVel);
+
+                        CarpV2 diffUnitSq; carp_math_mul_v2_f(&diff, 1.0f * (*hReg) / diffLen, &diffUnitSq);
+                        // put back the multiply
+                        carp_math_mul_v2_f(pReg, *hReg, &tmp);
+
+                        carp_math_add_v2_v2(&diffSum, &diffUnitSq, &diffSum);
+                        carp_math_add_v2_v2(&posSum, &tmp, &posSum);
+                        carp_math_add_v2_v2(&velSum, vReg, &velSum);
+
+                        inRangeCount += *hReg;
+                    }
+
+                }
+            }
+        }
 #else
-        if(p->x < 0.0f) v->intArr[0] &= 0x7fffffff;
-        else if(p->x > w) v->intArr[0] |= 0x80000000;
-        if(p->y < 0.0f) v->intArr[1] &= 0x7fffffff;
-        else if(p->y > h) v->intArr[1] |= 0x80000000;
-        if(p->z < 0.0f) v->intArr[2] &= 0x7fffffff;
-        else if(p->z > w) v->intArr[2] |= 0x80000000;
-        if(p->w < 0.0f) v->intArr[3] &= 0x7fffffff;
-        else if(p->w > h) v->intArr[3] |= 0x80000000;
+        {
+            CarpV2* pStart = &(pos->pos2DComponentPos);
+            CarpV2* vStart = &(vel->vel2DComponentVel);
+
+            while(pStart < pEnd)
+            {
+                if(pStart == p)
+                {
+                    ++pStart;
+                    ++vStart;
+                    continue;
+                }
+                CarpV2 diff; carp_math_sub_v2_v2(pStart, p, &diff);
+                if(diff.x > w * 0.5f) diff.x = w - diff.x;
+                if(diff.x < -w * 0.5f) diff.x = w + diff.x;
+                if(diff.y > h * 0.5f) diff.y = h - diff.y;
+                if(diff.y < -h * 0.5f) diff.y = h + diff.y;
+
+                f32 diffLenSq = carp_math_sqrLen_v2(&diff);
+                if(diffLenSq > 0.0f && diffLenSq < range * range)
+                {
+                    f32 diffLen = sqrtf(diffLenSq);
+                    CarpV2 diffUnit; carp_math_mul_v2_f(&diff, 1.0f / diffLen, &diffUnit);
+                    f32 see = carp_math_dot_v2(&diffUnit, &vUnit);
+                    if(see > 0.0f)
+                    {
+                        ++inRangeCount;
+
+                        //CarpV2 diffUnitSq; carp_math_mul_v2_f(&diff, 50.0f / diffLenSq, &diffUnitSq);
+
+                        carp_math_add_v2_v2(&posSum, pStart, &posSum);
+                        carp_math_add_v2_v2(&velSum, vStart, &velSum);
+                        carp_math_add_v2_v2(&diffSum, &diffUnit, &diffSum);
+                    }
+                }
+
+                ++pStart;
+                ++vStart;
+
+            }
+        }
 #endif
+        if(inRangeCount > 0)
+        {
+            carp_math_div_v2_f(&posSum, inRangeCount, &posSum);
+            carp_math_div_v2_f(&velSum, inRangeCount, &velSum);
 
-#else
+            carp_math_sub_v2_v2(&posSum, p, &posSum);
+
+            f32 posLen = carp_math_sqrLen_v2(&posSum);
+            f32 velLen = carp_math_sqrLen_v2(&velSum);
+            f32 velDiffLen = carp_math_sqrLen_v2(&diffSum);
+            #if 1
+            if(posLen > 0.0f)
+            {
+                carp_math_mul_v2_f(&posSum, (dt * 12.5f) / sqrtf(posLen), &posSum);
+                //carp_math_mul_v2_f(&posSum, (dt * 5.0f), &posSum);
+                carp_math_add_v2_v2(v, &posSum, v);
+            }
+            #endif
+            #if 1
+            if(velLen > 0.0f)
+            {
+                //carp_math_mul_v2_f(&velSum, (dt * 5.0f), &velSum);
+                carp_math_mul_v2_f(&velSum, (dt * 7.5f) / sqrtf(velLen), &velSum);
+                carp_math_add_v2_v2(v, &velSum, v);
+            }
+            #endif
+            #if 1
+            if(velDiffLen > 0.0f)
+            {
+                carp_math_mul_v2_f(&diffSum, (dt * 7.5f) / sqrtf(velDiffLen), &diffSum);
+                //carp_math_mul_v2_f(&diffSum, (dt * 5.0f), &diffSum);
+                carp_math_add_v2_v2(v, &diffSum, v);
+            }
+            #endif
+
+        }
+
+//bounce from walls
+/*
+        if(p->x < 100.0f) v->intArr[0] &= 0x7fffffff;
+        else if(p->x > w - 100.0f) v->intArr[0] |= 0x80000000;
+        if(p->y < 100.0f) v->intArr[1] &= 0x7fffffff;
+        else if(p->y > h - 100.0f) v->intArr[1] |= 0x80000000;
+*/
+
+
+        {
+            f32 velLen = carp_math_len_v2(v);
+            if(velLen > 0.0f)
+            {
+                CarpV2 vUnit; carp_math_mul_v2_f(v, dt * 5.0f / velLen, &vUnit);
+                carp_math_add_v2_v2(v, &vUnit, v);
+            }
+        }
+
+        {
+            f32 velLen = carp_math_len_v2(v);
+            if(velLen > 50.0f)
+            {
+                carp_math_mul_v2_f(v, 50.0f / velLen, v);
+            }
+        }
+
+
+/*
+        {
+            f32 velLen = carp_math_len_v2(v);
+            if(velLen > 50.0f)
+            {
+                carp_math_mul_v2_f(v, 50.0f / velLen, v);
+            }
+        }
+*/
         carp_math_mul_v2_f(v, dt, &newVel);
         carp_math_add_v2_v2(p, &newVel, p);
 
-        v->x = (p->x < 0.0f | p->x > w) ? -v->x : v->x;
-        v->y = (p->y < 0.0f | p->y > h) ? -v->y : v->y;
-#endif
+        while(p->x < 0.0f) p->x += w;
+        while(p->y < 0.0f) p->y += h;
+        while(p->x >= w) p->x -= w;
+        while(p->y >= h) p->y -= h;
+
         ++p;
         ++v;
     }
@@ -286,7 +569,15 @@ static s32 sMainAfterWindow(void)
         carp_shader_deletePixelShader(&shader);
         return -1;
     }
-    static const s32 EntitiyCount = 512 * 1024;
+    static const s32 EntitiyCount = 16 * 256 * 4;
+
+    static const s32 RegionsX = 32 * 1;
+    static const s32 RegionsY = 32 * 1;
+
+    const s32 Regions = RegionsX * RegionsY;
+
+
+    CarpEcsEntities entitiesRegions = {0};
 
 #if USE_2D_POS
     CarpEcsEntities entities2D = {0};
@@ -299,6 +590,13 @@ static s32 sMainAfterWindow(void)
         CARP_LOGERROR("Failed to create entities\n");
         return -1;
     }
+    if(!carp_ecs_createEntities(CarpEcsEntityTypeRegionEntity, Regions, &entitiesRegions))
+    {
+        CARP_LOGERROR("Failed to create entities\n");
+        return -1;
+    }
+    entities2D.carpEcsEntitiesSize = entities2D.carpEcsEntitiesCapacity;
+    entitiesRegions.carpEcsEntitiesSize = entitiesRegions.carpEcsEntitiesCapacity;
 #else
     if(!carp_ecs_createEntities(CarpEcsEntityTypePlayerEntity, EntitiyCount, &entities))
     {
@@ -310,7 +608,8 @@ static s32 sMainAfterWindow(void)
     CarpOGLBuffer vertexBuffer = {0};
     CarpOGLBuffer uniformBuffer = {0};
     CarpOGLBuffer instanceDataBuffer = {0};
-    CarpOGLBuffer instanceDataBuffer2D = {0};
+    CarpOGLBuffer instanceDataBuffer2DPos = {0};
+    CarpOGLBuffer instanceDataBuffer2DVelocity = {0};
 
     GLuint vertexbuffer = 0;
     {
@@ -324,8 +623,12 @@ static s32 sMainAfterWindow(void)
         // An array of 3 vectors which represents 3 vertices
         static const f32 VertexBufferData[] = {
             -1.0f, -1.0f, 0.0f,
-            1.0f, -1.0f, 0.0f,
-            0.0f,  1.0f, 0.0f,
+            2.0f,   0.0f, 0.0f,
+            -1.0f,  1.0f, 0.0f,
+
+//            -1.0f, -1.0f, 0.0f,
+//            1.0f, -1.0f, 0.0f,
+//            0.0f,  2.0f, 0.0f,
         };
 
         carp_ogl_createBuffer(
@@ -350,7 +653,14 @@ static s32 sMainAfterWindow(void)
             sizeof(CarpV2) * EntitiyCount,
             NULL,
             GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
-            &instanceDataBuffer2D);
+            &instanceDataBuffer2DPos);
+
+        carp_ogl_createBuffer(
+            sizeof(CarpV2) * EntitiyCount,
+            NULL,
+            GL_DYNAMIC_STORAGE_BIT | GL_MAP_WRITE_BIT,
+            &instanceDataBuffer2DVelocity);
+
 
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
         glBufferData(GL_ARRAY_BUFFER, sizeof(VertexBufferData),
@@ -371,8 +681,12 @@ static s32 sMainAfterWindow(void)
         {
             entities2D.carpEcsEntitiesSize = entities2D.carpEcsEntitiesCapacity;
             CarpV2 mulC = {
-                memory->carp_window.carp_window_width,
-                memory->carp_window.carp_window_height,
+                memory->carp_window.carp_window_width - 100,
+                memory->carp_window.carp_window_height - 100,
+            };
+            CarpV2 addC = {
+                50,
+                50,
             };
             for(s32 i = 0; i < entities2D.carpEcsEntitiesCapacity; ++i)
             {
@@ -381,6 +695,7 @@ static s32 sMainAfterWindow(void)
                 p->y = (float)(rand()) / (float)RAND_MAX;
 
                 carp_math_mul_v2_v2(p, &mulC, p);
+                carp_math_add_v2_v2(p, &addC, p);
 
                 CarpV2* v = &(vel2D[i].vel2DComponentVel);
 
@@ -465,18 +780,24 @@ static s32 sMainAfterWindow(void)
         if(carp_keyboard_wasKeyPressed(CarpKeyboardKey_Escape))
             memory->carp_window.carp_window_running = false;
 #if USE_2D_POS
-        if(sUpdate2D(
-            dt,
-            memory->carp_window.carp_window_width,
-            memory->carp_window.carp_window_height,
-            &entities2D))
+        s32 w = memory->carp_window.carp_window_width;
+        s32 h = memory->carp_window.carp_window_height;
+
+        if(sUpdateRegion(w, h, RegionsX, RegionsY, &entities2D, &entitiesRegions)
+            && sUpdate2D(dt, w, h, RegionsX, RegionsY, &entitiesRegions, &entities2D))
         {
             const Pos2DComponent* pos;
-            if(carp_ecs_getPos2DComponent(&entities2D, &pos))
+            const Vel2DComponent* vel;
+            if(carp_ecs_getPos2DComponent(&entities2D, &pos)
+                && carp_ecs_getVel2DComponent(&entities2D, &vel))
             {
-                carp_ogl_updateBuffer(&instanceDataBuffer2D,
+                carp_ogl_updateBuffer(&instanceDataBuffer2DPos,
                     0,
                     pos,
+                    sizeof(CarpV2) * EntitiyCount);
+                carp_ogl_updateBuffer(&instanceDataBuffer2DVelocity,
+                    0,
+                    vel,
                     sizeof(CarpV2) * EntitiyCount);
             }
         }
@@ -514,7 +835,8 @@ static s32 sMainAfterWindow(void)
 
         carp_ogl_bindBuffer(&uniformBuffer, 0, GL_UNIFORM_BUFFER);
         carp_ogl_bindBuffer(&instanceDataBuffer, 1, GL_SHADER_STORAGE_BUFFER);
-        carp_ogl_bindBuffer(&instanceDataBuffer2D, 2, GL_SHADER_STORAGE_BUFFER);
+        carp_ogl_bindBuffer(&instanceDataBuffer2DPos, 2, GL_SHADER_STORAGE_BUFFER);
+        carp_ogl_bindBuffer(&instanceDataBuffer2DVelocity, 3, GL_SHADER_STORAGE_BUFFER);
 
         glEnableVertexAttribArray(0);
         glBindBuffer(GL_ARRAY_BUFFER, vertexBuffer.carp_OGLBuffer_handle);
